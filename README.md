@@ -1,2 +1,2 @@
-# jack-compiler
-A compiler for Jack OO language written in Go
+# Jack Compiler
+A compiler for Jack OO language written in Go... That's it...
