@@ -106,6 +106,6 @@ func buy(productName string, amount float64, price float64) (output string, tota
 
 func sell(productName string, amount float64, price float64) (output string, totalAmount float64) {
 	totalAmount = price * amount
-	output = fmt.Sprintf("$$$ BUY $$$ %s\n%.2f", productName, totalAmount)
+	output = fmt.Sprintf("### BUY ### %s\n%.2f", productName, totalAmount)
 	return
 }
