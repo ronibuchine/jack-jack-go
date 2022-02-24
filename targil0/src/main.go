@@ -15,18 +15,18 @@ import (
 const OUTPUT_FILE_NAME string = "Tar0.asm"
 
 func main() {
-    args := os.Args[1:]
-    if len(args) == 0 { 
-        log.Fatal("Path unspecified")
-    }
-    dir := args[0]
+	args := os.Args[1:]
+	if len(args) == 0 {
+		log.Fatal("Path unspecified")
+	}
+	dir := args[0]
 
-    var outputFileName string
-    if len(args) == 1 {
-        outputFileName = OUTPUT_FILE_NAME
-    } else {
-        outputFileName = args[1]
-    }
+	var outputFileName string
+	if len(args) == 1 {
+		outputFileName = OUTPUT_FILE_NAME
+	} else {
+		outputFileName = args[1]
+	}
 
 	ASMfile, err := os.Create(outputFileName)
 	if err != nil {
@@ -75,10 +75,10 @@ func main() {
 		}
 	}
 
-    total := fmt.Sprintf("TOTAL BUY: %.2f\nTOTAL SELL: %.2f", buyAmount, sellAmount)
-    fmt.Print(total)
-    ASMfile.WriteString(output + "\n" + total)
-    ASMfile.Close()
+	total := fmt.Sprintf("TOTAL BUY: %.2f\nTOTAL SELL: %.2f", buyAmount, sellAmount)
+	fmt.Print(total)
+	ASMfile.WriteString(output + "\n" + total)
+	ASMfile.Close()
 }
 
 func getVMFiles(dir string) []fs.FileInfo {
