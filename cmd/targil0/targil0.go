@@ -1,4 +1,4 @@
-package main
+package targil0
 
 import (
 	"bufio"
@@ -34,9 +34,9 @@ func main() {
 	}
 
 	vmfiles := getVMFiles(dir)
-    if len(vmfiles) == 0 {
+	if len(vmfiles) == 0 {
 		log.Fatal("No VM files found in given directory")
-    }
+	}
 
 	var buyAmount float64 = 0
 	var sellAmount float64 = 0
