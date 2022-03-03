@@ -18,11 +18,11 @@ var (
 )
 
 func CompileAllRegex() {
-	RE_ARITHMETIC = regexp.MustCompile("(?m)^\\s+(add|sub|eq|gt|lt|and|or|not)\\s+$")
-	RE_PUSH_POP = regexp.MustCompile("(?m)^\\s+(push|pop)\\s+(local|argument|this|that|constant|static|pointer|temp)\\s+(\\d+)\\s+$")
-	RE_IF_LABEL_GOTO = regexp.MustCompile("(?m)^\\s+(if|label|goto)\\s+([A-Za-z_][A-Za-z0-9_]*)\\s+$")
-	RE_FUNCTION_CALL = regexp.MustCompile("(?m)^\\s+(function|call)\\s+([A-Za-z_][A-Za-z0-9_]*)\\s+(\\d+)\\s+$")
-	RE_RETURN = regexp.MustCompile("(?m)^\\s+return")
+	RE_ARITHMETIC = regexp.MustCompile("(?m)^\\s*(add|sub|eq|gt|lt|and|or|not)\\s*$")
+	RE_PUSH_POP = regexp.MustCompile("(?m)^\\s*(push|pop)\\s+(local|argument|this|that|constant|static|pointer|temp)\\s+(\\d+)\\s*$")
+	RE_IF_LABEL_GOTO = regexp.MustCompile("(?m)^\\s*(if|label|goto)\\s+([A-Za-z_][A-Za-z0-9_]*)\\s*$")
+	RE_FUNCTION_CALL = regexp.MustCompile("(?m)^\\s*(function|call)\\s+([A-Za-z_][A-Za-z0-9_]*)\\s+(\\d+)\\s*$")
+	RE_RETURN = regexp.MustCompile("(?m)^\\s*return\\s*")
 }
 
 type C_TYPE int
@@ -100,7 +100,7 @@ func parseCommand(s string) (Command, error) {
 	if cmd := RE_FUNCTION_CALL.FindStringSubmatch(s); cmd != nil {
 		arg2, err := strconv.Atoi(cmd[3])
 		if err != nil {
-			// error??
+			// error stuff ??
 		}
 		switch cmd[1] {
 		case "function":
@@ -117,11 +117,13 @@ func parseCommand(s string) (Command, error) {
 
 
 func ParseFile(file *os.File) (commands []Command) {
+    CompileAllRegex()
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		line := scanner.Text()
 		command, err := parseCommand(line)
 		if err != nil {
+            // more error stuff??
 			continue
 		}
 		commands = append(commands, command)
