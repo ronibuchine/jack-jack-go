@@ -32,7 +32,11 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	vmfiles := getVMFiles(dir)
+    if len(vmfiles) == 0 {
+		log.Fatal("No VM files found in given directory")
+    }
 
 	var buyAmount float64 = 0
 	var sellAmount float64 = 0
@@ -49,6 +53,7 @@ func main() {
 		for scanner.Scan() {
 			line := scanner.Text()
 			words := strings.Fields(line)
+
 			amount, err := strconv.ParseFloat(words[2], 64)
 			if err != nil {
 				log.Fatal(err)
