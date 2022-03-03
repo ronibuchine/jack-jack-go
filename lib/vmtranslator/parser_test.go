@@ -27,6 +27,11 @@ func Test_parseCommand(t *testing.T) {
 			want:    &Command{cmdType: C_ARITHMETIC, arg1: "add", arg2: ""},
 			wantErr: false,
 		},
+		{name: "poopy butt",
+			args:    args{s: "poopy butt\t"},
+			want:    nil,
+			wantErr: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
