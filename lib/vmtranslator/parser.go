@@ -17,6 +17,7 @@ var (
 )
 
 func CompileAllRegex() {
+    // MustCompile takes care of lazy compilation of regex
 	RE_ARITHMETIC = regexp.MustCompile(`(?m)^\s*(add|sub|eq|gt|lt|and|or|not)\s*$`)
 	RE_PUSH_POP = regexp.MustCompile(`(?m)^\s*(push|pop)\s+(local|argument|this|that|constant|static|pointer|temp)\s+(\d+)\s*$`)
 	RE_IF_LABEL_GOTO = regexp.MustCompile(`(?m)^\s*(if|label|goto)\s+([A-Za-z_][A-Za-z0-9_]*)\s*$`)
