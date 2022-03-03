@@ -15,7 +15,7 @@ type AsmCommand_t struct{}
 
 type AsmCommand interface{}
 
-func TranslateCommand(cmd Command) (asmCommand string, err error) {
+func TranslateCommand(cmd *Command) (asmCommand string, err error) {
 	log.Fatal("unimplemented")
 	return
 }

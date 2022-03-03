@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"strings"
+	"path/filepath"
 )
 
 const output_file_name string = "out.asm"
@@ -35,8 +36,8 @@ func Translate(path string) {
 		}
 
 		for _, file := range files {
-			if suffix := strings.Split(file.Name(), "."); suffix[len(suffix)-1] == "vm" {
-				temp := strings.Join([]string{path, file.Name()}, "")
+            if filepath.Ext(file.Name()) == ".vm" {
+				temp := strings.Join([]string{path, file.Name()}, "") // can this be just `path + file.name()` ?
 				Translate(temp)
 			}
 		}

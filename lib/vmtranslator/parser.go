@@ -3,10 +3,8 @@ package vmtranslator
 import (
 	"bufio"
 	"errors"
-	"log"
 	"os"
 	"regexp"
-	"strconv"
 )
 
 var (
@@ -40,83 +38,51 @@ const (
 	C_CALL
 )
 
-type Command interface {
-	cmdType() C_TYPE
-	arg1() (string, error)
-	arg2() (int, error)
+
+type Command struct {
+	cmdType C_TYPE
+	arg1    string
+	arg2    string
 }
 
-type Command_t struct {
-	_cmdType C_TYPE
-	_arg1    string
-	_arg2    int
-}
 
-func (c Command_t) cmdType() C_TYPE {
-	return c._cmdType
-}
-
-func (c Command_t) arg1() (string, error) {
-	if c._cmdType == C_RETURN {
-		return "", errors.New("return command does not have arg 1")
-	} else {
-		return c._arg1, nil
-	}
-}
-
-func (c Command_t) arg2() (int, error) {
-	if c._cmdType == C_PUSH || c._cmdType == C_POP || c._cmdType == C_FUNCTION || c._cmdType == C_CALL {
-		return c._arg2, nil
-	} else {
-		return -1, errors.New("the current command does not have arg 2")
-	}
-}
-
-func parseCommand(s string) (Command, error) {
+func parseCommand(s string) (*Command, error) {
 	if cmd := RE_ARITHMETIC.FindStringSubmatch(s); cmd != nil {
-		return Command_t{_cmdType: C_ARITHMETIC, _arg1: cmd[1], _arg2: -1}, nil
+		return &Command{cmdType: C_ARITHMETIC, arg1: cmd[1], arg2: ""}, nil
 	}
 	if cmd := RE_PUSH_POP.FindStringSubmatch(s); cmd != nil {
-		arg2, err := strconv.Atoi(cmd[3])
-		if err != nil {
-			log.Fatal(err)
-		}
 		switch cmd[1] {
 		case "push":
-			return Command_t{_cmdType: C_PUSH, _arg1: cmd[2], _arg2: arg2}, nil
+			return &Command{cmdType: C_PUSH, arg1: cmd[2], arg2: cmd[3]}, nil
 		case "pop":
-			return Command_t{_cmdType: C_POP, _arg1: cmd[2], _arg2: arg2}, nil
+			return &Command{cmdType: C_POP, arg1: cmd[2], arg2: cmd[3]}, nil
 		}
 	}
 	if cmd := RE_IF_LABEL_GOTO.FindStringSubmatch(s); cmd != nil {
 		switch cmd[1] {
 		case "if-goto":
-			return Command_t{_cmdType: C_IF, _arg1: cmd[2], _arg2: -1}, nil
+			return &Command{cmdType: C_IF, arg1: cmd[2], arg2: ""}, nil
 		case "goto":
-			return Command_t{_cmdType: C_GOTO, _arg1: cmd[2], _arg2: -1}, nil
+			return &Command{cmdType: C_GOTO, arg1: cmd[2], arg2: ""}, nil
 		case "label":
-			return Command_t{_cmdType: C_LABEL, _arg1: cmd[2], _arg2: -1}, nil
+			return &Command{cmdType: C_LABEL, arg1: cmd[2], arg2: ""}, nil
 		}
 	}
 	if cmd := RE_FUNCTION_CALL.FindStringSubmatch(s); cmd != nil {
-		arg2, err := strconv.Atoi(cmd[3])
-		if err != nil {
-			log.Fatal(err)
-		}
 		switch cmd[1] {
 		case "function":
-			return Command_t{_cmdType: C_FUNCTION, _arg1: cmd[2], _arg2: arg2}, nil
+			return &Command{cmdType: C_FUNCTION, arg1: cmd[2], arg2: cmd[3]}, nil
 		case "pop":
-			return Command_t{_cmdType: C_CALL, _arg1: cmd[2], _arg2: arg2}, nil
+			return &Command{cmdType: C_CALL, arg1: cmd[2], arg2: cmd[3]}, nil
 		}
 	}
 	if cmd := RE_RETURN.FindStringSubmatch(s); cmd != nil {
-		return Command_t{_cmdType: C_RETURN, _arg1: "", _arg2: -1}, nil
+		return &Command{cmdType: C_RETURN, arg1: "", arg2: ""}, nil
 	}
 	return nil, errors.New("command not recognized")
 }
 
-func ParseFile(file *os.File) (commands []Command) {
+func ParseFile(file *os.File) (commands []*Command) {
     CompileAllRegex()
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {

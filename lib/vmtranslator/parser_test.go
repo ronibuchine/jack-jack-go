@@ -14,17 +14,17 @@ func Test_parseCommand(t *testing.T) {
 	tests := []struct {
 		name    string
 		args    args
-		want    Command
+		want    *Command
 		wantErr bool
 	}{
 		{name: "pop",
 			args:    args{s: "pop local 5"},
-			want:    Command_t{_cmdType: C_POP, _arg1: "local", _arg2: 5},
+			want:    &Command{cmdType: C_POP, arg1: "local", arg2: "5"},
 			wantErr: false,
 		},
 		{name: "add",
 			args:    args{s: "   add  \t"},
-			want:    Command_t{_cmdType: C_ARITHMETIC, _arg1: "add", _arg2: -1},
+			want:    &Command{cmdType: C_ARITHMETIC, arg1: "add", arg2: ""},
 			wantErr: false,
 		},
 	}
