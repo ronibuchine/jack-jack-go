@@ -5,47 +5,47 @@ import (
 	"strings"
 )
 
-func writePushPop(command Command_t, file os.File) {
+func writePushPop(command Command, file os.File) {
 	var hack string
 
-	if segment := command._cmdType; segment == C_PUSH {
+	if segment := command.cmdType; segment == C_PUSH {
 
 		// Place VM argument data in D register
-		switch strings.ToLower(command._arg1) {
+		switch strings.ToLower(command.arg1) {
 		case "local":
 			hack = "@LCL\nD=M\n"
-			if arg2 := command._arg2; arg2 == '0' {
-			} else if arg2 == '1' {
+			if arg2 := command.arg2; arg2 == "0" {
+			} else if arg2 == "1" {
 				hack += "A=A+1\nD=M\n"
 			} else {
 				hack += "@" + arg2 + "\nA=D+A\nD=M\n"
 			}
 		case "argument":
 			hack = "@ARG\nD=M\n"
-			if arg2 := command._arg2; arg2 == '0' {
-			} else if arg2 == '1' {
+			if arg2 := command.arg2; arg2 == "0" {
+			} else if arg2 == "1" {
 				hack += "A=A+1\nD=M\n"
 			} else {
 				hack += "@" + arg2 + "\nA=D+A\nD=M\n"
 			}
 		case "this":
 			hack = "@THIS\nD=M\n"
-			if arg2 := command._arg2; arg2 == '0' {
-			} else if arg2 == '1' {
+			if arg2 := command.arg2; arg2 == "0" {
+			} else if arg2 == "1" {
 				hack += "A=A+1\nD=M\n"
 			} else {
 				hack += "@" + arg2 + "\nA=D+A\nD=M\n"
 			}
 		case "that":
 			hack = "@THAT\nD=M\n"
-			if arg2 := command._arg2; arg2 == '0' {
-			} else if arg2 == '1' {
+			if arg2 := command.arg2; arg2 == "0" {
+			} else if arg2 == "1" {
 				hack += "A=A+1\nD=M\n"
 			} else {
 				hack += "@" + arg2 + "\nA=D+A\nD=M\n"
 			}
 		case "constant":
-			hack = "@" + command._arg2 + "\nA=M\n"
+			hack = "@" + command.arg2 + "\nA=M\n"
 		default: //ERROR
 		}
 
@@ -59,35 +59,35 @@ func writePushPop(command Command_t, file os.File) {
 		var hack string
 
 		// Place VM argument address in D register
-		switch strings.ToLower(command._arg1) {
+		switch strings.ToLower(command.arg1) {
 		case "local":
 			hack = "@LCL\nD=M\n"
-			if arg2 := command._arg2; arg2 == '0' {
-			} else if arg2 == '1' {
+			if arg2 := command.arg2; arg2 == "0" {
+			} else if arg2 == "1" {
 				hack += "D=D+1\n"
 			} else {
 				hack += "@" + arg2 + "\nD=D+A\n"
 			}
 		case "argument":
 			hack = "@ARG\nD=M\n"
-			if arg2 := command._arg2; arg2 == '0' {
-			} else if arg2 == '1' {
+			if arg2 := command.arg2; arg2 == "0" {
+			} else if arg2 == "1" {
 				hack += "D=D+1\n"
 			} else {
 				hack += "@" + arg2 + "\nD=D+A\n"
 			}
 		case "this":
 			hack = "@THIS\nD=M\n"
-			if arg2 := command._arg2; arg2 == '0' {
-			} else if arg2 == '1' {
+			if arg2 := command.arg2; arg2 == "0" {
+			} else if arg2 == "1" {
 				hack += "D=D+1\n"
 			} else {
 				hack += "@" + arg2 + "\nD=D+A\n"
 			}
 		case "that":
 			hack = "@THAT\nD=M\n"
-			if arg2 := command._arg2; arg2 == '0' {
-			} else if arg2 == '1' {
+			if arg2 := command.arg2; arg2 == "0" {
+			} else if arg2 == "1" {
 				hack += "D=D+1\n"
 			} else {
 				hack += "@" + arg2 + "\nD=D+A\n"

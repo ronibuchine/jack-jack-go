@@ -18,7 +18,7 @@ func translateAdd(cmd Command) string {
     add numbers
     push to SP
     */
-    hack := ""
+    hack := "@SP\n"
 
 
 
