@@ -3,6 +3,7 @@ package vmtranslator
 import (
 	"bufio"
 	"errors"
+	"log"
 	"os"
 	"regexp"
 	"strconv"
@@ -18,11 +19,11 @@ var (
 )
 
 func CompileAllRegex() {
-	RE_ARITHMETIC = regexp.MustCompile("(?m)^\\s*(add|sub|eq|gt|lt|and|or|not)\\s*$")
-	RE_PUSH_POP = regexp.MustCompile("(?m)^\\s*(push|pop)\\s+(local|argument|this|that|constant|static|pointer|temp)\\s+(\\d+)\\s*$")
-	RE_IF_LABEL_GOTO = regexp.MustCompile("(?m)^\\s*(if|label|goto)\\s+([A-Za-z_][A-Za-z0-9_]*)\\s*$")
-	RE_FUNCTION_CALL = regexp.MustCompile("(?m)^\\s*(function|call)\\s+([A-Za-z_][A-Za-z0-9_]*)\\s+(\\d+)\\s*$")
-	RE_RETURN = regexp.MustCompile("(?m)^\\s*return\\s*")
+	RE_ARITHMETIC = regexp.MustCompile(`(?m)^\s*(add|sub|eq|gt|lt|and|or|not)\s*$`)
+	RE_PUSH_POP = regexp.MustCompile(`(?m)^\s*(push|pop)\s+(local|argument|this|that|constant|static|pointer|temp)\s+(\d+)\s*$`)
+	RE_IF_LABEL_GOTO = regexp.MustCompile(`(?m)^\s*(if|label|goto)\s+([A-Za-z_][A-Za-z0-9_]*)\s*$`)
+	RE_FUNCTION_CALL = regexp.MustCompile(`(?m)^\s*(function|call)\s+([A-Za-z_][A-Za-z0-9_]*)\s+(\d+)\s*$`)
+	RE_RETURN = regexp.MustCompile(`(?m)^\s*return\s*`)
 }
 
 type C_TYPE int
@@ -67,7 +68,7 @@ func (c Command_t) arg2() (int, error) {
 	if c._cmdType == C_PUSH || c._cmdType == C_POP || c._cmdType == C_FUNCTION || c._cmdType == C_CALL {
 		return c._arg2, nil
 	} else {
-		return -1, errors.New("The current command does not have arg 2")
+		return -1, errors.New("the current command does not have arg 2")
 	}
 }
 
@@ -78,7 +79,7 @@ func parseCommand(s string) (Command, error) {
 	if cmd := RE_PUSH_POP.FindStringSubmatch(s); cmd != nil {
 		arg2, err := strconv.Atoi(cmd[3])
 		if err != nil {
-			// error??
+			log.Fatal(err)
 		}
 		switch cmd[1] {
 		case "push":
@@ -100,7 +101,7 @@ func parseCommand(s string) (Command, error) {
 	if cmd := RE_FUNCTION_CALL.FindStringSubmatch(s); cmd != nil {
 		arg2, err := strconv.Atoi(cmd[3])
 		if err != nil {
-			// error stuff ??
+			log.Fatal(err)
 		}
 		switch cmd[1] {
 		case "function":
@@ -112,9 +113,8 @@ func parseCommand(s string) (Command, error) {
 	if cmd := RE_RETURN.FindStringSubmatch(s); cmd != nil {
 		return Command_t{_cmdType: C_RETURN, _arg1: "", _arg2: -1}, nil
 	}
-	return nil, errors.New("Command not recognized")
+	return nil, errors.New("command not recognized")
 }
-
 
 func ParseFile(file *os.File) (commands []Command) {
     CompileAllRegex()
