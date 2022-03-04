@@ -5,18 +5,24 @@ import (
 )
 
 func pushPopToHack(command Command) (hack string) {
-	if segment := command.cmdType; segment == C_PUSH {
+	if command.cmdType == C_PUSH {
 
 		// Place VM argument data in D register
-		hack = vmArgumentAddressToAD(command) + "D=M\n"
+		if strings.ToLower(command.arg1) == "constant" {
+			hack = "@" + command.arg2 + "\nD=A\n"
+		} else {
+			hack = vmArgumentAddressToAD(command) + "D=M\n"
+		}
 
+		// Place D in M[SP++]
 		hack += pushFromD()
 
-	} else if segment == C_POP {
+	} else if command.cmdType == C_POP {
 		// Place VM argument address in M[13] (temp)
-		hack += vmArgumentAddressToAD(command) + "@R13\nM=D\n"
+		hack += vmArgumentAddressToAD(command) + tempSaveD("R13")
+
 		// Place M[--SP] in D and store it in M[M[13]] (M[VM argument address])
-		hack += popToD() + "@R13\nA=M\nM=D"
+		hack += popToD() + tempToA("R13") + "\nM=D"
 
 	} else {
 	} //ERROR
@@ -63,7 +69,28 @@ func vmArgumentAddressToAD(command Command) (hack string) {
 }
 
 func arithmeticToHack(command Command) (hack string) {
+	hack = popToD()
 
+	switch strings.ToLower(command.arg1) {
+	case "add":
+		hack += tempSaveD("R13") + popToD()
+		hack += tempToA("R13") + "D=D+A\n" + pushFromD()
+	case "sub":
+		hack += tempSaveD("R13") + popToD()
+		hack += tempToA("R13") + "D=D-A\n" + pushFromD()
+	case "neg":
+		hack += "D=-D\n" + pushFromD()
+	case "eq":
+		hack += "@SP\nA=M-1\n"  // A points to top of stack (without moving SP)
+		hack += "M=M-D\nM=-M\n" // Subtract D from top of stack and invert its boolean value
+	case "gt":
+	case "lt":
+	case "and":
+	case "or":
+	case "not":
+	}
+
+	return hack
 }
 
 // popToD Place M[--SP] in D
@@ -74,4 +101,11 @@ func popToD() string {
 // pushFromD Place D in M[SP++]
 func pushFromD() string {
 	return "@SP\nA=M\nM=D\n@SP\nM=M+1\n"
+}
+
+func tempSaveD(register string) string {
+	return "@" + register + "\nM=D\n"
+}
+func tempToA(register string) string {
+	return "@" + register + "\nA=M\n"
 }
