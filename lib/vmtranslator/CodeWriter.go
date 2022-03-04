@@ -1,103 +1,77 @@
 package vmtranslator
 
 import (
-	"os"
 	"strings"
 )
 
-func writePushPop(command Command, file os.File) {
-	var hack string
-
+func pushPopToHack(command Command) (hack string) {
 	if segment := command.cmdType; segment == C_PUSH {
 
 		// Place VM argument data in D register
-		switch strings.ToLower(command.arg1) {
-		case "local":
-			hack = "@LCL\nD=M\n"
-			if arg2 := command.arg2; arg2 == "0" {
-			} else if arg2 == "1" {
-				hack += "A=A+1\nD=M\n"
-			} else {
-				hack += "@" + arg2 + "\nA=D+A\nD=M\n"
-			}
-		case "argument":
-			hack = "@ARG\nD=M\n"
-			if arg2 := command.arg2; arg2 == "0" {
-			} else if arg2 == "1" {
-				hack += "A=A+1\nD=M\n"
-			} else {
-				hack += "@" + arg2 + "\nA=D+A\nD=M\n"
-			}
-		case "this":
-			hack = "@THIS\nD=M\n"
-			if arg2 := command.arg2; arg2 == "0" {
-			} else if arg2 == "1" {
-				hack += "A=A+1\nD=M\n"
-			} else {
-				hack += "@" + arg2 + "\nA=D+A\nD=M\n"
-			}
-		case "that":
-			hack = "@THAT\nD=M\n"
-			if arg2 := command.arg2; arg2 == "0" {
-			} else if arg2 == "1" {
-				hack += "A=A+1\nD=M\n"
-			} else {
-				hack += "@" + arg2 + "\nA=D+A\nD=M\n"
-			}
-		case "constant":
-			hack = "@" + command.arg2 + "\nA=M\n"
-		default: //ERROR
-		}
+		hack = vmArgumentAddressToAD(command) + "D=M\n"
 
-		// Place D in M[SP]
-		hack += "@SP\nA=M\nM=D\n"
-
-		// Increment SP
-		hack += "@SP\nM=M+1\n"
+		hack += pushFromD()
 
 	} else if segment == C_POP {
-		var hack string
+		// Place VM argument address in M[13] (temp)
+		hack += vmArgumentAddressToAD(command) + "@R13\nM=D\n"
+		// Place M[--SP] in D and store it in M[M[13]] (M[VM argument address])
+		hack += popToD() + "@R13\nA=M\nM=D"
 
-		// Place VM argument address in D register
-		switch strings.ToLower(command.arg1) {
-		case "local":
-			hack = "@LCL\nD=M\n"
-			if arg2 := command.arg2; arg2 == "0" {
-			} else if arg2 == "1" {
-				hack += "D=D+1\n"
-			} else {
-				hack += "@" + arg2 + "\nD=D+A\n"
-			}
-		case "argument":
-			hack = "@ARG\nD=M\n"
-			if arg2 := command.arg2; arg2 == "0" {
-			} else if arg2 == "1" {
-				hack += "D=D+1\n"
-			} else {
-				hack += "@" + arg2 + "\nD=D+A\n"
-			}
-		case "this":
-			hack = "@THIS\nD=M\n"
-			if arg2 := command.arg2; arg2 == "0" {
-			} else if arg2 == "1" {
-				hack += "D=D+1\n"
-			} else {
-				hack += "@" + arg2 + "\nD=D+A\n"
-			}
-		case "that":
-			hack = "@THAT\nD=M\n"
-			if arg2 := command.arg2; arg2 == "0" {
-			} else if arg2 == "1" {
-				hack += "D=D+1\n"
-			} else {
-				hack += "@" + arg2 + "\nD=D+A\n"
-			}
-		default: //ERROR
-		}
-
-		// Decrement SP and place M[SP] in M[D]
-		hack += "@SP\nAM=M-1\nM=D\n"
 	} else {
 	} //ERROR
-	file.WriteString(hack)
+
+	return hack
+}
+
+func vmArgumentAddressToAD(command Command) (hack string) {
+	switch strings.ToLower(command.arg1) {
+	case "local":
+		hack = "@LCL\nAD=M\n"
+		if arg2 := command.arg2; arg2 == "0" {
+		} else if arg2 == "1" {
+			hack += "AD=A+1\n"
+		} else {
+			hack += "@" + arg2 + "\nAD=D+A\n"
+		}
+	case "argument":
+		hack = "@ARG\nAD=M\n"
+		if arg2 := command.arg2; arg2 == "0" {
+		} else if arg2 == "1" {
+			hack += "AD=A+1\n"
+		} else {
+			hack += "@" + arg2 + "\nAD=D+A\n"
+		}
+	case "this":
+		hack = "@THIS\nAD=M\n"
+		if arg2 := command.arg2; arg2 == "0" {
+		} else if arg2 == "1" {
+			hack += "AD=A+1\n"
+		} else {
+			hack += "@" + arg2 + "\nAD=D+A\n"
+		}
+	case "that":
+		hack = "@THAT\nAD=M\n"
+		if arg2 := command.arg2; arg2 == "0" {
+		} else if arg2 == "1" {
+			hack += "AD=A+1\n"
+		} else {
+			hack += "@" + arg2 + "\nAD=D+A\n"
+		}
+	}
+	return hack
+}
+
+func arithmeticToHack(command Command) (hack string) {
+
+}
+
+// popToD Place M[--SP] in D
+func popToD() string {
+	return "@SP\nAM=M-1\nD=M\n"
+}
+
+// pushFromD Place D in M[SP++]
+func pushFromD() string {
+	return "@SP\nA=M\nM=D\n@SP\nM=M+1\n"
 }
