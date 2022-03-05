@@ -4,8 +4,8 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
-	"strings"
 	"path/filepath"
+	"strings"
 )
 
 const output_file_name string = "out.asm"
@@ -36,7 +36,7 @@ func Translate(path string) {
 		}
 
 		for _, file := range files {
-            if filepath.Ext(file.Name()) == ".vm" {
+			if filepath.Ext(file.Name()) == ".vm" {
 				temp := strings.Join([]string{path, file.Name()}, "") // can this be just `path + file.name()` ?
 				Translate(temp)
 			}
@@ -56,7 +56,9 @@ func Translate(path string) {
 			if err != nil {
 				log.Fatal(err)
 			}
-			os.WriteFile(output.Name(), []byte(asmCommand), os.ModePerm)
+
+			output.WriteString(asmCommand)
+			//os.WriteFile(output.Name(), []byte(asmCommand), os.ModePerm)
 		}
 
 	}
