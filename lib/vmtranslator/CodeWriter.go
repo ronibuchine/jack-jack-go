@@ -1,6 +1,7 @@
 package vmtranslator
 
 import (
+	"strconv"
 	"strings"
 )
 
@@ -34,60 +35,58 @@ func vmArgumentAddressToAD(command Command) (hack string) {
 	switch strings.ToLower(command.arg1) {
 	case "local":
 		hack = "@LCL\nAD=M\n"
-		if arg2 := command.arg2; arg2 == "0" {
-		} else if arg2 == "1" {
-			hack += "AD=A+1\n"
-		} else {
-			hack += "@" + arg2 + "\nAD=D+A\n"
-		}
 	case "argument":
 		hack = "@ARG\nAD=M\n"
-		if arg2 := command.arg2; arg2 == "0" {
-		} else if arg2 == "1" {
-			hack += "AD=A+1\n"
-		} else {
-			hack += "@" + arg2 + "\nAD=D+A\n"
-		}
 	case "this":
 		hack = "@THIS\nAD=M\n"
-		if arg2 := command.arg2; arg2 == "0" {
-		} else if arg2 == "1" {
-			hack += "AD=A+1\n"
-		} else {
-			hack += "@" + arg2 + "\nAD=D+A\n"
-		}
 	case "that":
 		hack = "@THAT\nAD=M\n"
-		if arg2 := command.arg2; arg2 == "0" {
-		} else if arg2 == "1" {
-			hack += "AD=A+1\n"
-		} else {
-			hack += "@" + arg2 + "\nAD=D+A\n"
-		}
 	}
+
+	if arg2 := command.arg2; arg2 == "0" {
+	} else if arg2 == "1" {
+		hack += "AD=A+1\n"
+	} else {
+		hack += "@" + arg2 + "\nAD=D+A\n"
+	}
+
 	return hack
 }
 
-func arithmeticToHack(command Command) (hack string) {
-	hack = popToD()
+var jmpLabel int = 0
 
-	switch strings.ToLower(command.arg1) {
+func arithmeticToHack(command Command) (hack string) {
+
+	switch arithmeticType := strings.ToLower(command.arg1); arithmeticType {
 	case "add":
-		hack += tempSaveD("R13") + popToD()
-		hack += tempToA("R13") + "D=D+A\n" + pushFromD()
+		hack = popToD() + "@SP\nA=M-1\nM=M+D\n"
 	case "sub":
-		hack += tempSaveD("R13") + popToD()
-		hack += tempToA("R13") + "D=D-A\n" + pushFromD()
+		hack = popToD() + "@SP\nA=M-1\nM=M-D\n"
 	case "neg":
-		hack += "D=-D\n" + pushFromD()
-	case "eq":
-		hack += "@SP\nA=M-1\n"  // A points to top of stack (without moving SP)
-		hack += "M=M-D\nM=-M\n" // Subtract D from top of stack and invert its boolean value
-	case "gt":
-	case "lt":
+		hack = "@SP\nA=M-1\nM=-M\n"
+	case "eq", "gt", "lt":
+		hack = popToD()
+		hack += "@SP\nA=M-1\n" // A points to top of stack (without moving SP)
+		hack += "M=M-D\n@-1\nD=A\n@JMP" + strconv.Itoa(jmpLabel) + "\n"
+		if arithmeticType == "eq" {
+			hack += "M;JEQ"
+		} else if arithmeticType == "gt" {
+			hack += "M;JGT\n"
+		} else {
+			hack += "M;JLT\n"
+		}
+		hack += "@0\nD=A\n(JMP" + strconv.Itoa(jmpLabel) + ")\n" + pushFromD()
+		//hack += pushValue("-1") + "@ENDIF" + strconv.Itoa(jmpLabel) + "\n0;JMP\n"                                      // if condition is true, push true to stack and jump to endif
+		//hack += "(FALSE" + strconv.Itoa(jmpLabel) + ")\n" + pushValue("0") + "(ENDIF" + strconv.Itoa(jmpLabel) + ")\n" // if condition is false, push false to stack
+		jmpLabel += 1
 	case "and":
+		hack = popToD()
+		hack += "@SP\nA=M-1\nM=D&M\n"
 	case "or":
+		hack = popToD()
+		hack += "@SP\nA=M-1\nM=D|M\n"
 	case "not":
+		hack = "@SP\nA=M-1\nM=!M\n"
 	}
 
 	return hack
@@ -100,7 +99,7 @@ func popToD() string {
 
 // pushFromD Place D in M[SP++]
 func pushFromD() string {
-	return "@SP\nA=M\nM=D\n@SP\nM=M+1\n"
+	return "@SP\nM=M+1\nA=M-1\nM=D\n"
 }
 
 func tempSaveD(register string) string {
