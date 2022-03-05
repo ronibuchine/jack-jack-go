@@ -72,6 +72,8 @@ func vmArgumentAddressToAD(command *Command) (hack string) {
 		hack = "@5\nD=A\n"
 	case "pointer":
 		hack = "@THIS\nD=A\n"
+	case "static":
+		return "@" + filename + "." + command.arg2 + "\nD=A\n"
 	}
 
 	if arg2 := command.arg2; arg2 == "0" {
