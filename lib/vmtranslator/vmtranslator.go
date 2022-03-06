@@ -51,7 +51,7 @@ func Translate(path string) {
 
 		parsedCommands := ParseFile(input)
 
-        hack := ""
+        hack := "// Code Generated from " + input.Name() + "\nPowered by GO (TM)\n"
 		for _, command := range parsedCommands {
 			hackCommand, err := TranslateCommand(command)
 			if err != nil {
