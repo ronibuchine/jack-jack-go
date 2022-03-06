@@ -3,7 +3,7 @@ package vmtranslator
 import (
 	"bufio"
 	"errors"
-	"os"
+	"io"
 	"regexp"
 )
 
@@ -86,7 +86,7 @@ func parseCommand(s string) (*Command, error) {
 	return nil, errors.New("command not recognized")
 }
 
-func ParseFile(file *os.File) (commands []*Command) {
+func ParseFile(file io.Reader) (commands []*Command) {
 	CompileAllRegex()
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {

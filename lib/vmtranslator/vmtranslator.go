@@ -51,16 +51,15 @@ func Translate(path string) {
 
 		parsedCommands := ParseFile(input)
 
+        hack := ""
 		for _, command := range parsedCommands {
-			asmCommand, err := TranslateCommand(command)
+			hackCommand, err := TranslateCommand(command)
 			if err != nil {
 				log.Fatal(err)
 			}
-
-			output.WriteString(asmCommand)
-			//os.WriteFile(output.Name(), []byte(asmCommand), os.ModePerm)
+            hack += hackCommand
 		}
-
+        output.WriteString(hack)
 	}
 
 }

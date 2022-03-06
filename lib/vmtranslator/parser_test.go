@@ -1,8 +1,8 @@
 package vmtranslator
 
 import (
-	"os"
 	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -58,19 +58,23 @@ func Test_parseCommand(t *testing.T) {
 }
 
 func TestParseFile(t *testing.T) {
-	type args struct {
-		file *os.File
-	}
 	tests := []struct {
 		name         string
-		args         args
-		wantCommands []Command
+		arg          string
+		wantCommands []*Command
 	}{
-		// TODO: Add test cases.
+		{name: "push and pop",
+			arg:          "push local 5\npop local 9",
+			wantCommands: []*Command{{cmdType: C_PUSH, arg1: "local", arg2: "5"}, {cmdType: C_POP, arg1: "local", arg2: "9"}},
+		},
+		{name: "push, push, add",
+			arg:          "push constant 5//push 5\npop constant 9//push 9\nadd // now add them together\n",
+            wantCommands: []*Command{{cmdType: C_PUSH, arg1: "constant", arg2: "5"}, {cmdType: C_POP, arg1: "constant", arg2: "9"}, {cmdType: C_ARITHMETIC, arg1: "add", arg2: ""}},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if gotCommands := ParseFile(tt.args.file); !reflect.DeepEqual(gotCommands, tt.wantCommands) {
+			if gotCommands := ParseFile(strings.NewReader(tt.arg)); !reflect.DeepEqual(gotCommands, tt.wantCommands) {
 				t.Errorf("ParseFile() = %v, want %v", gotCommands, tt.wantCommands)
 			}
 		})
