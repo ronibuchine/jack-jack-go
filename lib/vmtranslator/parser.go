@@ -8,21 +8,23 @@ import (
 )
 
 var (
-	RE_ARITHMETIC    *regexp.Regexp
-	RE_PUSH_POP      *regexp.Regexp
-	RE_IF_LABEL_GOTO *regexp.Regexp
-	RE_FUNCTION_CALL *regexp.Regexp
-	RE_RETURN        *regexp.Regexp
-	RE_CALL          *regexp.Regexp
+	RE_ARITHMETIC      *regexp.Regexp
+	RE_PUSH_POP        *regexp.Regexp
+	RE_IF_LABEL_GOTO   *regexp.Regexp
+	RE_FUNCTION_CALL   *regexp.Regexp
+	RE_RETURN          *regexp.Regexp
+	RE_CALL            *regexp.Regexp
+	RE_REMOVE_COMMENTS *regexp.Regexp
 )
 
 func CompileAllRegex() {
-    // MustCompile takes care of lazy compilation of regex
+	// MustCompile takes care of lazy compilation of regex
 	RE_ARITHMETIC = regexp.MustCompile(`(?m)^\s*(add|sub|eq|gt|lt|and|or|not)\s*$`)
 	RE_PUSH_POP = regexp.MustCompile(`(?m)^\s*(push|pop)\s+(local|argument|this|that|constant|static|pointer|temp)\s+(\d+)\s*$`)
 	RE_IF_LABEL_GOTO = regexp.MustCompile(`(?m)^\s*(if|label|goto)\s+([A-Za-z_][A-Za-z0-9_]*)\s*$`)
 	RE_FUNCTION_CALL = regexp.MustCompile(`(?m)^\s*(function|call)\s+([A-Za-z_][A-Za-z0-9_]*)\s+(\d+)\s*$`)
-	RE_RETURN = regexp.MustCompile(`(?m)^\s*return\s*`)
+	RE_RETURN = regexp.MustCompile(`(?m)^\s*return\s*$`)
+    RE_REMOVE_COMMENTS = regexp.MustCompile(`(?m)(\/\/.*$)`)
 }
 
 type C_TYPE int
@@ -39,15 +41,16 @@ const (
 	C_CALL
 )
 
-
 type Command struct {
 	cmdType C_TYPE
 	arg1    string
 	arg2    string
 }
 
-
 func parseCommand(s string) (*Command, error) {
+
+    s = RE_REMOVE_COMMENTS.ReplaceAllLiteralString(s, "")
+
 	if cmd := RE_ARITHMETIC.FindStringSubmatch(s); cmd != nil {
 		return &Command{cmdType: C_ARITHMETIC, arg1: cmd[1], arg2: ""}, nil
 	}
@@ -84,13 +87,13 @@ func parseCommand(s string) (*Command, error) {
 }
 
 func ParseFile(file *os.File) (commands []*Command) {
-    CompileAllRegex()
+	CompileAllRegex()
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		line := scanner.Text()
 		command, err := parseCommand(line)
 		if err != nil {
-            // more error stuff??
+			// more error stuff??
 			continue
 		}
 		commands = append(commands, command)

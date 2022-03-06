@@ -32,6 +32,16 @@ func Test_parseCommand(t *testing.T) {
 			want:    nil,
 			wantErr: true,
 		},
+		{name: "return // poopybutt",
+			args:    args{s: "return // poopybutt"},
+			want:    &Command{cmdType: C_RETURN, arg1: "", arg2: ""},
+			wantErr: false,
+		},
+		{name: "// comment",
+			args:    args{s: "// comment"},
+			want:    nil,
+			wantErr: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
