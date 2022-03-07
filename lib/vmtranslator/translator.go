@@ -73,7 +73,7 @@ func vmArgumentAddressToAD(command *Command) (hack string) {
 	case "pointer":
 		hack = "@THIS\nD=A\n"
 	case "static":
-		return "@" + "filename" + "." + command.arg2 + "\nD=A\n"  //TODO fix filename situation
+		return "@" + command.arg2 + "\nD=A\n"
 	}
 
 	if arg2 := command.arg2; arg2 == "0" {
@@ -86,7 +86,15 @@ func vmArgumentAddressToAD(command *Command) (hack string) {
 	return hack
 }
 
-var jmpLabel int = 0
+func MakeCounter() func() int {
+	tot := 0
+	return func() int {
+		tot++
+		return tot
+	}
+}
+
+var jmpLabel func() int = MakeCounter()
 
 func arithmeticToHack(command *Command) (hack string) {
 
@@ -100,7 +108,7 @@ func arithmeticToHack(command *Command) (hack string) {
 	case "eq", "gt", "lt":
 		hack = popToD()
 		hack += "@SP\nA=M-1\n" // A points to top of stack (without moving SP)
-		hack += "M=M-D\n@-1\nD=A\n@JMP" + strconv.Itoa(jmpLabel) + "\n"
+		hack += "M=M-D\n@-1\nD=A\n@JMP" + strconv.Itoa(jmpLabel()) + "\n"
 		if arithmeticType == "eq" {
 			hack += "M;JEQ"
 		} else if arithmeticType == "gt" {
@@ -108,8 +116,8 @@ func arithmeticToHack(command *Command) (hack string) {
 		} else {
 			hack += "M;JLT\n"
 		}
-		hack += "@0\nD=A\n(JMP" + strconv.Itoa(jmpLabel) + ")\n" + pushFromD()
-		jmpLabel += 1
+		hack += "@0\nD=A\n(JMP" + strconv.Itoa(jmpLabel()) + ")\n" + pushFromD()
+		// jmpLabel += 1
 	case "and":
 		hack = popToD()
 		hack += "@SP\nA=M-1\nM=D&M\n"

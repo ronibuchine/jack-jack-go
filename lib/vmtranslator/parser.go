@@ -47,7 +47,7 @@ type Command struct {
 	arg2    string
 }
 
-func parseCommand(s string) (*Command, error) {
+func parseCommand(s string, translationUnit string) (*Command, error) {
 
     s = RE_REMOVE_COMMENTS.ReplaceAllLiteralString(s, "")
 
@@ -55,11 +55,15 @@ func parseCommand(s string) (*Command, error) {
 		return &Command{cmdType: C_ARITHMETIC, arg1: cmd[1], arg2: ""}, nil
 	}
 	if cmd := RE_PUSH_POP.FindStringSubmatch(s); cmd != nil {
+        arg2 := cmd[3]
+        if cmd[2] == "static" {
+            arg2 = translationUnit + "." + cmd[3]
+        }
 		switch cmd[1] {
 		case "push":
-			return &Command{cmdType: C_PUSH, arg1: cmd[2], arg2: cmd[3]}, nil
+			return &Command{cmdType: C_PUSH, arg1: cmd[2], arg2: arg2}, nil
 		case "pop":
-			return &Command{cmdType: C_POP, arg1: cmd[2], arg2: cmd[3]}, nil
+			return &Command{cmdType: C_POP, arg1: cmd[2], arg2: arg2}, nil
 		}
 	}
 	if cmd := RE_IF_LABEL_GOTO.FindStringSubmatch(s); cmd != nil {
@@ -86,12 +90,12 @@ func parseCommand(s string) (*Command, error) {
 	return nil, errors.New("command not recognized")
 }
 
-func ParseFile(file io.Reader) (commands []*Command) {
+func ParseFile(file io.Reader, translationUnit string) (commands []*Command) {
 	CompileAllRegex()
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		line := scanner.Text()
-		command, err := parseCommand(line)
+		command, err := parseCommand(line, translationUnit)
 		if err != nil {
 			// more error stuff??
 			continue

@@ -1,9 +1,13 @@
 package vmtranslator
 
 import (
+	"fmt"
+	"log"
+	"os"
 	"reflect"
 	"strings"
 	"testing"
+    "filepath"
 )
 
 func Test_parseCommand(t *testing.T) {
@@ -45,7 +49,7 @@ func Test_parseCommand(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := parseCommand(tt.args.s)
+			got, err := parseCommand(tt.args.s, "VMFILE")
 			if (err != nil) != tt.wantErr {
 				t.Errorf("parseCommand() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -69,14 +73,25 @@ func TestParseFile(t *testing.T) {
 		},
 		{name: "push, push, add",
 			arg:          "push constant 5//push 5\npop constant 9//push 9\nadd // now add them together\n",
-            wantCommands: []*Command{{cmdType: C_PUSH, arg1: "constant", arg2: "5"}, {cmdType: C_POP, arg1: "constant", arg2: "9"}, {cmdType: C_ARITHMETIC, arg1: "add", arg2: ""}},
+			wantCommands: []*Command{{cmdType: C_PUSH, arg1: "constant", arg2: "5"}, {cmdType: C_POP, arg1: "constant", arg2: "9"}, {cmdType: C_ARITHMETIC, arg1: "add", arg2: ""}},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if gotCommands := ParseFile(strings.NewReader(tt.arg)); !reflect.DeepEqual(gotCommands, tt.wantCommands) {
+			if gotCommands := ParseFile(strings.NewReader(tt.arg), "VMFILE"); !reflect.DeepEqual(gotCommands, tt.wantCommands) {
 				t.Errorf("ParseFile() = %v, want %v", gotCommands, tt.wantCommands)
 			}
 		})
 	}
+}
+
+func TestParseFile2(t *testing.T) {
+	input, err := os.Open("tets/input.vm")
+	if err != nil {
+		log.Fatal(err)
+	}
+    parsedCommands := ParseFile(input, strings.TrimSuffix(filepath.Base(input.Name()), ".vm"))
+    for _, c := range parsedCommands {
+        fmt.Println(c)
+    }
 }

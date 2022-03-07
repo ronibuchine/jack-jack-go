@@ -37,7 +37,7 @@ func Translate(path string) {
 
 		for _, file := range files {
 			if filepath.Ext(file.Name()) == ".vm" {
-				temp := strings.Join([]string{path, file.Name()}, "") // can this be just `path + file.name()` ?
+				temp := filepath.Join(path,file.Name())
 				Translate(temp)
 			}
 		}
@@ -49,9 +49,10 @@ func Translate(path string) {
 		}
 		defer input.Close()
 
-		parsedCommands := ParseFile(input)
+        translationUnit := fileBaseNameNoExt(input)
+		parsedCommands := ParseFile(input, translationUnit)
 
-        hack := "// Code Generated from " + input.Name() + "\nPowered by GO (TM)\n"
+        hack := "// Code Generated from " + translationUnit + ".vm\nPowered by GO (TM)\n"
 		for _, command := range parsedCommands {
 			hackCommand, err := TranslateCommand(command)
 			if err != nil {
@@ -61,5 +62,8 @@ func Translate(path string) {
 		}
         output.WriteString(hack)
 	}
+}
 
+func fileBaseNameNoExt(path *os.File) string {
+    return strings.TrimSuffix(filepath.Base(path.Name()), ".vm")
 }
