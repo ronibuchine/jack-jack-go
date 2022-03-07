@@ -6,19 +6,6 @@ import (
 	"strings"
 )
 
-type AC_TYPE int
-
-const (
-	AC_OP AC_TYPE = iota
-	AC_RELOP
-	AC_VAR
-	AC_JUMP
-)
-
-type AsmCommand_t struct{}
-
-type AsmCommand interface{}
-
 func TranslateCommand(cmd *Command) (string, error) {
 	log.Fatal("unimplemented")
 	switch cmdType := cmd.cmdType; cmdType {
@@ -43,14 +30,14 @@ func pushPopToHack(command *Command) (hack string) {
 		}
 
 		// Place D in M[SP++]
-		hack += pushFromD()
+		hack += pushFromD
 
 	} else if command.cmdType == C_POP {
 		// Place VM argument address in M[13] (temp)
 		hack += vmArgumentAddressToAD(command) + tempSaveD("R13")
 
 		// Place M[--SP] in D and store it in M[M[13]] (M[VM argument address])
-		hack += popToD() + tempToA("R13") + "\nM=D"
+		hack += popToD + tempToA("R13") + "\nM=D"
 
 	} else {
 	} //ERROR
@@ -73,7 +60,7 @@ func vmArgumentAddressToAD(command *Command) (hack string) {
 	case "pointer":
 		hack = "@THIS\nD=A\n"
 	case "static":
-		return "@" + "filename" + "." + command.arg2 + "\nD=A\n"  //TODO fix filename situation
+		return "@" + command.arg2 + "\nD=A\n" //TODO fix filename situation
 	}
 
 	if arg2 := command.arg2; arg2 == "0" {
@@ -92,13 +79,13 @@ func arithmeticToHack(command *Command) (hack string) {
 
 	switch arithmeticType := strings.ToLower(command.arg1); arithmeticType {
 	case "add":
-		hack = popToD() + "@SP\nA=M-1\nM=M+D\n"
+		hack = popToD + "@SP\nA=M-1\nM=M+D\n"
 	case "sub":
-		hack = popToD() + "@SP\nA=M-1\nM=M-D\n"
+		hack = popToD + "@SP\nA=M-1\nM=M-D\n"
 	case "neg":
 		hack = "@SP\nA=M-1\nM=-M\n"
 	case "eq", "gt", "lt":
-		hack = popToD()
+		hack = popToD
 		hack += "@SP\nA=M-1\n" // A points to top of stack (without moving SP)
 		hack += "M=M-D\n@-1\nD=A\n@JMP" + strconv.Itoa(jmpLabel) + "\n"
 		if arithmeticType == "eq" {
@@ -108,13 +95,13 @@ func arithmeticToHack(command *Command) (hack string) {
 		} else {
 			hack += "M;JLT\n"
 		}
-		hack += "@0\nD=A\n(JMP" + strconv.Itoa(jmpLabel) + ")\n" + pushFromD()
+		hack += "@0\nD=A\n(JMP" + strconv.Itoa(jmpLabel) + ")\n" + pushFromD
 		jmpLabel += 1
 	case "and":
-		hack = popToD()
+		hack = popToD
 		hack += "@SP\nA=M-1\nM=D&M\n"
 	case "or":
-		hack = popToD()
+		hack = popToD
 		hack += "@SP\nA=M-1\nM=D|M\n"
 	case "not":
 		hack = "@SP\nA=M-1\nM=!M\n"
@@ -124,14 +111,10 @@ func arithmeticToHack(command *Command) (hack string) {
 }
 
 // popToD Place M[--SP] in D
-func popToD() string {
-	return "@SP\nAM=M-1\nD=M\n"
-}
+const popToD = "@SP\nAM=M-1\nD=M\n"
 
 // pushFromD Place D in M[SP++]
-func pushFromD() string {
-	return "@SP\nM=M+1\nA=M-1\nM=D\n"
-}
+const pushFromD = "@SP\nM=M+1\nA=M-1\nM=D\n"
 
 func tempSaveD(register string) string {
 	return "@" + register + "\nM=D\n"
