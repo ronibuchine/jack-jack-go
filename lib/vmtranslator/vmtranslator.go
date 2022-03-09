@@ -61,7 +61,6 @@ func Translate(path string) {
 			hack += hackCommand
 		}
 
-		seeker, err = output.WriteAt([]byte(hack), int64(seeker))
 		if seeker, err = output.WriteAt([]byte(hack), int64(seeker)); err != nil {
 			log.Fatal("There was a fatal error building the asm file.")
 		}
