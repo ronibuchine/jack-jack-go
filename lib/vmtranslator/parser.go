@@ -8,83 +8,84 @@ import (
 )
 
 var (
-	RE_ARITHMETIC      *regexp.Regexp
-	RE_PUSH_POP        *regexp.Regexp
-	RE_IF_LABEL_GOTO   *regexp.Regexp
-	RE_FUNCTION_CALL   *regexp.Regexp
-	RE_RETURN          *regexp.Regexp
-	RE_REMOVE_COMMENTS *regexp.Regexp
+	ReArithmetic   *regexp.Regexp
+	RePushPop      *regexp.Regexp
+	ReIfLabelGoto  *regexp.Regexp
+	ReFunctionCall *regexp.Regexp
+	ReReturn       *regexp.Regexp
+	ReComment      *regexp.Regexp
 )
 
 func CompileAllRegex() {
 	// MustCompile takes care of lazy compilation of regex
-	RE_ARITHMETIC = regexp.MustCompile(`(?m)^\s*(add|sub|eq|gt|lt|and|or|not)\s*$`)
-	RE_PUSH_POP = regexp.MustCompile(`(?m)^\s*(push|pop)\s+(local|argument|this|that|constant|static|pointer|temp)\s+(\d+)\s*$`)
-	RE_IF_LABEL_GOTO = regexp.MustCompile(`(?m)^\s*(if|label|goto)\s+([A-Za-z_][A-Za-z0-9_]*)\s*$`)
-	RE_FUNCTION_CALL = regexp.MustCompile(`(?m)^\s*(function|call)\s+([A-Za-z_][A-Za-z0-9_]*)\s+(\d+)\s*$`)
-	RE_RETURN = regexp.MustCompile(`(?m)^\s*return\s*$`)
-	RE_REMOVE_COMMENTS = regexp.MustCompile(`(?m)(\/\/.*$)`)
+	ReArithmetic = regexp.MustCompile(`(?m)^\s*(add|sub|eq|gt|lt|and|or|not)\s*$`)
+	RePushPop = regexp.MustCompile(`(?m)^\s*(push|pop)\s+(local|argument|this|that|constant|static|pointer|temp)\s+(\d+)\s*$`)
+	ReIfLabelGoto = regexp.MustCompile(`(?m)^\s*(label|goto|if-goto)\s+([A-Za-z_][A-Za-z0-9_]*)\s*$`)
+	ReFunctionCall = regexp.MustCompile(`(?m)^\s*(function|call)\s+([A-Za-z_][A-Za-z0-9_]*)\s+(\d+)\s*$`)
+	ReReturn = regexp.MustCompile(`(?m)^\s*return\s*$`)
+	ReComment = regexp.MustCompile(`(?m)(\/\/.*$)`)
 }
 
-type C_TYPE int
+type CType int
 
 const (
-	C_ARITHMETIC C_TYPE = iota
-	C_PUSH
-	C_POP
-	C_LABEL
-	C_GOTO
-	C_IF
-	C_FUNCTION
-	C_RETURN
-	C_CALL
+	_ CType = iota
+	CArithmetic
+	CPush
+	CPop
+	CLabel
+	CGoto
+	CIf
+	CFunction
+	CReturn
+	CCall
 )
 
 type Command struct {
-	cmdType C_TYPE
+	cmdType CType
 	arg1    string
 	arg2    string
 }
 
 func parseCommand(s string, translationUnit string) (*Command, error) {
 
-	s = RE_REMOVE_COMMENTS.ReplaceAllLiteralString(s, "")
+	s = ReComment.ReplaceAllLiteralString(s, "")
 
-	if cmd := RE_ARITHMETIC.FindStringSubmatch(s); cmd != nil {
-		return &Command{cmdType: C_ARITHMETIC, arg1: cmd[1], arg2: ""}, nil
+	if cmd := ReArithmetic.FindStringSubmatch(s); cmd != nil {
+		return &Command{cmdType: CArithmetic, arg1: cmd[1], arg2: ""}, nil
 	}
-	if cmd := RE_PUSH_POP.FindStringSubmatch(s); cmd != nil {
+	if cmd := RePushPop.FindStringSubmatch(s); cmd != nil {
 		arg2 := cmd[3]
 		if cmd[2] == "static" {
 			arg2 = translationUnit + "." + cmd[3]
 		}
 		switch cmd[1] {
 		case "push":
-			return &Command{cmdType: C_PUSH, arg1: cmd[2], arg2: arg2}, nil
+			return &Command{cmdType: CPush, arg1: cmd[2], arg2: arg2}, nil
 		case "pop":
-			return &Command{cmdType: C_POP, arg1: cmd[2], arg2: arg2}, nil
+			return &Command{cmdType: CPop, arg1: cmd[2], arg2: arg2}, nil
 		}
 	}
-	if cmd := RE_IF_LABEL_GOTO.FindStringSubmatch(s); cmd != nil {
+	if cmd := ReIfLabelGoto.FindStringSubmatch(s); cmd != nil {
 		switch cmd[1] {
 		case "if-goto":
-			return &Command{cmdType: C_IF, arg1: cmd[2], arg2: ""}, nil
+			return &Command{cmdType: CIf, arg1: cmd[2], arg2: ""}, nil
 		case "goto":
-			return &Command{cmdType: C_GOTO, arg1: cmd[2], arg2: ""}, nil
+			return &Command{cmdType: CGoto, arg1: cmd[2], arg2: ""}, nil
 		case "label":
-			return &Command{cmdType: C_LABEL, arg1: cmd[2], arg2: ""}, nil
+			return &Command{cmdType: CLabel, arg1: cmd[2], arg2: ""}, nil
 		}
 	}
-	if cmd := RE_FUNCTION_CALL.FindStringSubmatch(s); cmd != nil {
+	if cmd := ReFunctionCall.FindStringSubmatch(s); cmd != nil {
 		switch cmd[1] {
 		case "function":
-			return &Command{cmdType: C_FUNCTION, arg1: cmd[2], arg2: cmd[3]}, nil
+			return &Command{cmdType: CFunction, arg1: cmd[2], arg2: cmd[3]}, nil
 		case "pop":
-			return &Command{cmdType: C_CALL, arg1: cmd[2], arg2: cmd[3]}, nil
+			return &Command{cmdType: CCall, arg1: cmd[2], arg2: cmd[3]}, nil
 		}
 	}
-	if cmd := RE_RETURN.FindStringSubmatch(s); cmd != nil {
-		return &Command{cmdType: C_RETURN, arg1: "", arg2: ""}, nil
+	if cmd := ReReturn.FindStringSubmatch(s); cmd != nil {
+		return &Command{cmdType: CReturn, arg1: "", arg2: ""}, nil
 	}
 	return nil, errors.New("command not recognized")
 }

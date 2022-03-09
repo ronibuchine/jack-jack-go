@@ -13,6 +13,8 @@ const popToD = "@SP\nAM=M-1\nD=M\n"
 // pushFromD Place D in M[SP++]
 const pushFromD = "@SP\nM=M+1\nA=M-1\nM=D\n"
 
+const infiniteLoop = "@ENDLOOP\n(ENDLOOP)\n0;JMP"
+
 func tempSaveD(register string) string {
 	return "@" + register + "\nM=D\n"
 }
@@ -20,12 +22,12 @@ func tempToA(register string) string {
 	return "@" + register + "\nA=M\n"
 }
 
-// Returns the hack string of code for a given command struct
+// TranslateCommand Returns the hack string of code for a given command struct
 func TranslateCommand(cmd *Command) (string, error) {
 	switch cmdType := cmd.cmdType; cmdType {
-	case C_PUSH, C_POP:
+	case CPush, CPop:
 		return pushPopToHack(cmd), nil
-	case C_ARITHMETIC:
+	case CArithmetic:
 		return arithmeticToHack(cmd), nil
 	default:
 		//ERROR
@@ -35,7 +37,7 @@ func TranslateCommand(cmd *Command) (string, error) {
 
 // Given a command struct, this will return a command in hack for a pus or a pop
 func pushPopToHack(command *Command) (hack string) {
-	if command.cmdType == C_PUSH {
+	if command.cmdType == CPush {
 
 		// Place VM argument data in D register
 		if strings.ToLower(command.arg1) == "constant" {
@@ -47,7 +49,7 @@ func pushPopToHack(command *Command) (hack string) {
 		// Place D in M[SP++]
 		hack += pushFromD
 
-	} else if command.cmdType == C_POP {
+	} else if command.cmdType == CPop {
 		// Place VM argument address in M[13] (temp)
 		hack += vmArgumentAddressToAD(command) + tempSaveD("R13")
 
@@ -89,7 +91,7 @@ func vmArgumentAddressToAD(command *Command) (hack string) {
 	return hack
 }
 
-var jmpLabel int = 0
+var jmpLabel = 0
 
 func arithmeticToHack(command *Command) (hack string) {
 

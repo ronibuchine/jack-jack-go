@@ -13,21 +13,21 @@ func Test_vmArgumentAddressToAD(t *testing.T) {
 	}{
 		{
 			name: "test local",
-			args: args{&Command{cmdType: C_POP,
+			args: args{&Command{cmdType: CPop,
 				arg1: "local",
 				arg2: "5"}},
 			wantHack: "@LCL\nAD=M\n@5\nAD=D+A\n",
 		},
 		{
 			name: "test argument",
-			args: args{&Command{cmdType: C_POP,
+			args: args{&Command{cmdType: CPop,
 				arg1: "argument",
 				arg2: "5"}},
 			wantHack: "@ARG\nAD=M\n@5\nAD=D+A\n",
 		},
 		{
 			name: "test squish",
-			args: args{&Command{cmdType: C_POP,
+			args: args{&Command{cmdType: CPop,
 				arg1: "temp",
 				arg2: "0"}},
 			wantHack: "@5\nD=A\n",

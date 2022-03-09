@@ -19,12 +19,12 @@ func Test_parseCommand(t *testing.T) {
 	}{
 		{name: "pop",
 			args:    args{s: "pop local 5"},
-			want:    &Command{cmdType: C_POP, arg1: "local", arg2: "5"},
+			want:    &Command{cmdType: CPop, arg1: "local", arg2: "5"},
 			wantErr: false,
 		},
 		{name: "add",
 			args:    args{s: "   add  \t"},
-			want:    &Command{cmdType: C_ARITHMETIC, arg1: "add", arg2: ""},
+			want:    &Command{cmdType: CArithmetic, arg1: "add", arg2: ""},
 			wantErr: false,
 		},
 		{name: "poopy butt",
@@ -34,7 +34,7 @@ func Test_parseCommand(t *testing.T) {
 		},
 		{name: "return // poopybutt",
 			args:    args{s: "return // poopybutt"},
-			want:    &Command{cmdType: C_RETURN, arg1: "", arg2: ""},
+			want:    &Command{cmdType: CReturn, arg1: "", arg2: ""},
 			wantErr: false,
 		},
 		{name: "// comment",
@@ -65,11 +65,11 @@ func TestParseFile(t *testing.T) {
 	}{
 		{name: "push and pop",
 			arg:          "push local 5\npop local 9",
-			wantCommands: []*Command{{cmdType: C_PUSH, arg1: "local", arg2: "5"}, {cmdType: C_POP, arg1: "local", arg2: "9"}},
+			wantCommands: []*Command{{cmdType: CPush, arg1: "local", arg2: "5"}, {cmdType: CPop, arg1: "local", arg2: "9"}},
 		},
 		{name: "push, push, add",
 			arg:          "push constant 5//push 5\npop constant 9//push 9\nadd // now add them together\n",
-			wantCommands: []*Command{{cmdType: C_PUSH, arg1: "constant", arg2: "5"}, {cmdType: C_POP, arg1: "constant", arg2: "9"}, {cmdType: C_ARITHMETIC, arg1: "add", arg2: ""}},
+			wantCommands: []*Command{{cmdType: CPush, arg1: "constant", arg2: "5"}, {cmdType: CPop, arg1: "constant", arg2: "9"}, {cmdType: CArithmetic, arg1: "add", arg2: ""}},
 		},
 	}
 	for _, tt := range tests {

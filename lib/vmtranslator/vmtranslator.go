@@ -8,17 +8,17 @@ import (
 	"strings"
 )
 
-var seeker int = 0
+var seeker = 0 // Keeps track of where Translator is up to in output file
 
 /*
 	This function will accept a path to a dir or file.
 	if it is a file then it will translate the file to an asm and output the file in the current dir
-	if it is a directory it will output an asm for each file in the dir
+	if it is a directory it will output the asm with the name of the directory
 */
 func Translate(path string) {
-	output_file_name := strings.Split(path, ".")[0] + ".asm"
+	outputFileName := strings.TrimSuffix(filepath.Base(path), ".vm") + ".asm"
 
-	output, err := os.Create(output_file_name)
+	output, err := os.Create(outputFileName)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -38,8 +38,7 @@ func Translate(path string) {
 
 		for _, file := range files {
 			if filepath.Ext(file.Name()) == ".vm" {
-				temp := filepath.Join(path, file.Name())
-				Translate(temp)
+				Translate(filepath.Join(path, file.Name()))
 			}
 		}
 
@@ -50,10 +49,9 @@ func Translate(path string) {
 		}
 		defer input.Close()
 
-		translationUnit := fileBaseNameNoExt(input)
-		parsedCommands := ParseFile(input, translationUnit)
+		parsedCommands := ParseFile(input, strings.TrimSuffix(filepath.Base(input.Name()), ".vm"))
 
-		hack := "// Code Generated from " + translationUnit + ".vm\nPowered by GO (TM)\n"
+		hack := "// Code Generated from " + input.Name() + ".vm\nPowered by GO (TM)\n"
 		for _, command := range parsedCommands {
 			hackCommand, err := TranslateCommand(command)
 			if err != nil {
@@ -62,13 +60,11 @@ func Translate(path string) {
 			hack += hackCommand
 		}
 
-		if seeker, err = output.WriteAt([]byte(hack), int64(seeker)); err != nil {
+		var bytes int
+		if bytes, err = output.WriteAt([]byte(hack), int64(seeker)); err != nil {
 			log.Fatal("There was a fatal error building the asm file.")
 		}
+		seeker += bytes
 
 	}
-}
-
-func fileBaseNameNoExt(path *os.File) string {
-	return strings.TrimSuffix(filepath.Base(path.Name()), ".vm")
 }

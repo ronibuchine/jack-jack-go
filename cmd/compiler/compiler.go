@@ -1,7 +1,7 @@
-package compiler
+package main
 
 import (
-	"cmd/lib/vmtranslator"
+	"jack-jack-go/lib/vmtranslator"
 	"os"
 )
 
