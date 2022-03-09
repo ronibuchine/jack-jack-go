@@ -8,6 +8,8 @@ import (
 	"strings"
 )
 
+var seeker int = 0
+
 /*
 	This function will accept a path to a dir or file.
 	if it is a file then it will translate the file to an asm and output the file in the current dir
@@ -15,7 +17,6 @@ import (
 */
 func Translate(path string) {
 	output_file_name := strings.Split(path, ".")[0] + ".asm"
-	seeker := 0
 
 	output, err := os.Create(output_file_name)
 	if err != nil {
