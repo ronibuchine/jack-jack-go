@@ -8,15 +8,13 @@ import (
 	"strings"
 )
 
-const output_file_name string = "out.asm"
-
 /*
 	This function will accept a path to a dir or file.
 	if it is a file then it will translate the file to an asm and output the file in the current dir
 	if it is a directory it will output an asm for each file in the dir
 */
 func Translate(path string) {
-
+	output_file_name := strings.Split(path, ".")[0] + ".asm"
 	output, err := os.Create(output_file_name)
 	if err != nil {
 		log.Fatal(err)
