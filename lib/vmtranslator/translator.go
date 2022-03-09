@@ -35,7 +35,7 @@ func TranslateCommand(cmd *Command) (string, error) {
 	}
 }
 
-// Given a command struct, this will return a command in hack for a pus or a pop
+// Given a command struct, this will return a command in hack for a push or a pop
 func pushPopToHack(command *Command) (hack string) {
 	if command.cmdType == CPush {
 
