@@ -13,7 +13,6 @@ var (
 	RE_IF_LABEL_GOTO   *regexp.Regexp
 	RE_FUNCTION_CALL   *regexp.Regexp
 	RE_RETURN          *regexp.Regexp
-	RE_CALL            *regexp.Regexp
 	RE_REMOVE_COMMENTS *regexp.Regexp
 )
 
