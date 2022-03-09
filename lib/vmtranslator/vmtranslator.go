@@ -59,6 +59,7 @@ func Translate(path string) {
 			}
 			hack += hackCommand
 		}
+		hack += infiniteLoop
 
 		var bytes int
 		if bytes, err = output.WriteAt([]byte(hack), int64(seeker)); err != nil {
