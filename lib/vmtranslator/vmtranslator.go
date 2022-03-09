@@ -51,7 +51,7 @@ func Translate(path string) {
 
 		parsedCommands := ParseFile(input, strings.TrimSuffix(filepath.Base(input.Name()), ".vm"))
 
-		hack := "// Code Generated from " + input.Name() + ".vm\nPowered by GO (TM)\n"
+		hack := "// Code Generated from " + input.Name() + ".vm\n//Powered by GO (TM)\n"
 		for _, command := range parsedCommands {
 			hackCommand, err := TranslateCommand(command)
 			if err != nil {
