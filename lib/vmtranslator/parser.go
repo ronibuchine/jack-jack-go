@@ -24,7 +24,7 @@ func CompileAllRegex() {
 	RE_IF_LABEL_GOTO = regexp.MustCompile(`(?m)^\s*(if|label|goto)\s+([A-Za-z_][A-Za-z0-9_]*)\s*$`)
 	RE_FUNCTION_CALL = regexp.MustCompile(`(?m)^\s*(function|call)\s+([A-Za-z_][A-Za-z0-9_]*)\s+(\d+)\s*$`)
 	RE_RETURN = regexp.MustCompile(`(?m)^\s*return\s*$`)
-    RE_REMOVE_COMMENTS = regexp.MustCompile(`(?m)(\/\/.*$)`)
+	RE_REMOVE_COMMENTS = regexp.MustCompile(`(?m)(\/\/.*$)`)
 }
 
 type C_TYPE int
@@ -49,16 +49,16 @@ type Command struct {
 
 func parseCommand(s string, translationUnit string) (*Command, error) {
 
-    s = RE_REMOVE_COMMENTS.ReplaceAllLiteralString(s, "")
+	s = RE_REMOVE_COMMENTS.ReplaceAllLiteralString(s, "")
 
 	if cmd := RE_ARITHMETIC.FindStringSubmatch(s); cmd != nil {
 		return &Command{cmdType: C_ARITHMETIC, arg1: cmd[1], arg2: ""}, nil
 	}
 	if cmd := RE_PUSH_POP.FindStringSubmatch(s); cmd != nil {
-        arg2 := cmd[3]
-        if cmd[2] == "static" {
-            arg2 = translationUnit + "." + cmd[3]
-        }
+		arg2 := cmd[3]
+		if cmd[2] == "static" {
+			arg2 = translationUnit + "." + cmd[3]
+		}
 		switch cmd[1] {
 		case "push":
 			return &Command{cmdType: C_PUSH, arg1: cmd[2], arg2: arg2}, nil
@@ -103,4 +103,8 @@ func ParseFile(file io.Reader, translationUnit string) (commands []*Command) {
 		commands = append(commands, command)
 	}
 	return
+}
+
+func (cmd Command) ToString() string {
+	return "\nCommand Type: " + string(rune(cmd.cmdType)) + "\narg1: " + cmd.arg1 + "\narg2: " + cmd.arg2
 }

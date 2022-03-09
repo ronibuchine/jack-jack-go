@@ -1,13 +1,27 @@
 package vmtranslator
 
 import (
+	"errors"
 	"log"
 	"strconv"
 	"strings"
 )
 
+// popToD Place M[--SP] in D
+const popToD = "@SP\nAM=M-1\nD=M\n"
+
+// pushFromD Place D in M[SP++]
+const pushFromD = "@SP\nM=M+1\nA=M-1\nM=D\n"
+
+func tempSaveD(register string) string {
+	return "@" + register + "\nM=D\n"
+}
+func tempToA(register string) string {
+	return "@" + register + "\nA=M\n"
+}
+
+// Returns the hack string of code for a given command struct
 func TranslateCommand(cmd *Command) (string, error) {
-	log.Fatal("unimplemented")
 	switch cmdType := cmd.cmdType; cmdType {
 	case C_PUSH, C_POP:
 		return pushPopToHack(cmd), nil
@@ -15,10 +29,11 @@ func TranslateCommand(cmd *Command) (string, error) {
 		return arithmeticToHack(cmd), nil
 	default:
 		//ERROR
-		return "", nil
+		return "", errors.New("ERROR, command that was given:\n" + cmd.ToString() + "\nThis command did not translate correctly.")
 	}
 }
 
+// Given a command struct, this will return a command in hack for a pus or a pop
 func pushPopToHack(command *Command) (hack string) {
 	if command.cmdType == C_PUSH {
 
@@ -40,7 +55,8 @@ func pushPopToHack(command *Command) (hack string) {
 		hack += popToD + tempToA("R13") + "\nM=D"
 
 	} else {
-	} //ERROR
+		log.Fatal("ERROR, command that was given:\n" + command.ToString() + "\nThis command does not contain valid members to perform a push/pop.")
+	}
 
 	return hack
 }
@@ -110,17 +126,4 @@ func arithmeticToHack(command *Command) (hack string) {
 	}
 
 	return hack
-}
-
-// popToD Place M[--SP] in D
-const popToD = "@SP\nAM=M-1\nD=M\n"
-
-// pushFromD Place D in M[SP++]
-const pushFromD = "@SP\nM=M+1\nA=M-1\nM=D\n"
-
-func tempSaveD(register string) string {
-	return "@" + register + "\nM=D\n"
-}
-func tempToA(register string) string {
-	return "@" + register + "\nA=M\n"
 }
