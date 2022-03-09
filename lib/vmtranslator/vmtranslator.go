@@ -15,6 +15,8 @@ import (
 */
 func Translate(path string) {
 	output_file_name := strings.Split(path, ".")[0] + ".asm"
+	seeker := 0
+
 	output, err := os.Create(output_file_name)
 	if err != nil {
 		log.Fatal(err)
@@ -58,7 +60,12 @@ func Translate(path string) {
 			}
 			hack += hackCommand
 		}
-		output.WriteString(hack)
+
+		seeker, err = output.WriteAt([]byte(hack), int64(seeker))
+		if seeker, err = output.WriteAt([]byte(hack), int64(seeker)); err != nil {
+			log.Fatal("There was a fatal error building the asm file.")
+		}
+
 	}
 }
 
