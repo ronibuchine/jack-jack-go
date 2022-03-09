@@ -54,7 +54,7 @@ func pushPopToHack(command *Command) (hack string) {
 		hack += vmArgumentAddressToAD(command) + tempSaveD("R13")
 
 		// Place M[--SP] in D and store it in M[M[13]] (M[VM argument address])
-		hack += popToD + tempToA("R13") + "\nM=D"
+		hack += popToD + tempToA("R13") + "M=D\n"
 
 	} else {
 		log.Fatal("ERROR, command that was given:\n" + command.ToString() + "\nThis command does not contain valid members to perform a push/pop.")
