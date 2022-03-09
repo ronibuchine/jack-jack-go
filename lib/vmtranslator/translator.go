@@ -1,8 +1,6 @@
 package vmtranslator
 
 import (
-	"errors"
-	"log"
 	"strconv"
 	"strings"
 )
@@ -23,16 +21,14 @@ func tempToA(register string) string {
 }
 
 // TranslateCommand Returns the hack string of code for a given command struct
-func TranslateCommand(cmd *Command) (string, error) {
-	switch cmdType := cmd.cmdType; cmdType {
+func TranslateCommand(cmd *Command) (hack string) {
+	switch cmd.cmdType {
 	case CPush, CPop:
-		return pushPopToHack(cmd), nil
+		hack = pushPopToHack(cmd)
 	case CArithmetic:
-		return arithmeticToHack(cmd), nil
-	default:
-		//ERROR
-		return "", errors.New("ERROR, command that was given:\n" + cmd.ToString() + "\nThis command did not translate correctly.")
+		hack = arithmeticToHack(cmd)
 	}
+	return
 }
 
 // Given a command struct, this will return a command in hack for a push or a pop
@@ -50,14 +46,13 @@ func pushPopToHack(command *Command) (hack string) {
 		hack += pushFromD
 
 	} else if command.cmdType == CPop {
+
 		// Place VM argument address in M[13] (temp)
 		hack += vmArgumentAddressToAD(command) + tempSaveD("R13")
 
 		// Place M[--SP] in D and store it in M[M[13]] (M[VM argument address])
 		hack += popToD + tempToA("R13") + "M=D\n"
 
-	} else {
-		log.Fatal("ERROR, command that was given:\n" + command.ToString() + "\nThis command does not contain valid members to perform a push/pop.")
 	}
 
 	return hack

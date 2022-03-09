@@ -52,11 +52,7 @@ func Translate(path string) {
 
 		hack := "// Code Generated from " + input.Name() + "\n// Powered by GO (TM)\n"
 		for _, command := range parsedCommands {
-			hackCommand, err := TranslateCommand(command)
-			if err != nil {
-				log.Fatal(err)
-			}
-			hack += hackCommand
+			hack += TranslateCommand(command)
 		}
 		hack += infiniteLoop
 

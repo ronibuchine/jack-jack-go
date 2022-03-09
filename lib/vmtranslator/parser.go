@@ -2,7 +2,6 @@ package vmtranslator
 
 import (
 	"bufio"
-	"errors"
 	"io"
 	"regexp"
 )
@@ -10,7 +9,7 @@ import (
 var (
 	ReArithmetic   *regexp.Regexp
 	RePushPop      *regexp.Regexp
-	ReIfLabelGoto  *regexp.Regexp
+	ReLabelGotoIf  *regexp.Regexp
 	ReFunctionCall *regexp.Regexp
 	ReReturn       *regexp.Regexp
 	ReComment      *regexp.Regexp
@@ -20,7 +19,7 @@ func CompileAllRegex() {
 	// MustCompile takes care of lazy compilation of regex
 	ReArithmetic = regexp.MustCompile(`(?m)^\s*(add|sub|neg|eq|gt|lt|and|or|not)\s*$`)
 	RePushPop = regexp.MustCompile(`(?m)^\s*(push|pop)\s+(local|argument|this|that|constant|static|pointer|temp)\s+(\d+)\s*$`)
-	ReIfLabelGoto = regexp.MustCompile(`(?m)^\s*(label|goto|if-goto)\s+([A-Za-z_][A-Za-z0-9_]*)\s*$`)
+	ReLabelGotoIf = regexp.MustCompile(`(?m)^\s*(label|goto|if-goto)\s+([A-Za-z_][A-Za-z0-9_]*)\s*$`)
 	ReFunctionCall = regexp.MustCompile(`(?m)^\s*(function|call)\s+([A-Za-z_][A-Za-z0-9_]*)\s+(\d+)\s*$`)
 	ReReturn = regexp.MustCompile(`(?m)^\s*return\s*$`)
 	ReComment = regexp.MustCompile(`(?m)(\/\/.*$)`)
@@ -35,10 +34,10 @@ const (
 	CPop
 	CLabel
 	CGoto
-	CIf
+	CIfGoto
 	CFunction
-	CReturn
 	CCall
+	CReturn
 )
 
 type Command struct {
@@ -47,12 +46,15 @@ type Command struct {
 	arg2    string
 }
 
-func parseCommand(s string, translationUnit string) (*Command, error) {
+func parseCommand(s string, translationUnit string) *Command {
 
 	s = ReComment.ReplaceAllLiteralString(s, "")
+	if s == "" {
+		return nil
+	}
 
 	if cmd := ReArithmetic.FindStringSubmatch(s); cmd != nil {
-		return &Command{cmdType: CArithmetic, arg1: cmd[1], arg2: ""}, nil
+		return &Command{cmdType: CArithmetic, arg1: cmd[1], arg2: ""}
 	}
 	if cmd := RePushPop.FindStringSubmatch(s); cmd != nil {
 		arg2 := cmd[3]
@@ -61,33 +63,33 @@ func parseCommand(s string, translationUnit string) (*Command, error) {
 		}
 		switch cmd[1] {
 		case "push":
-			return &Command{cmdType: CPush, arg1: cmd[2], arg2: arg2}, nil
+			return &Command{cmdType: CPush, arg1: cmd[2], arg2: arg2}
 		case "pop":
-			return &Command{cmdType: CPop, arg1: cmd[2], arg2: arg2}, nil
+			return &Command{cmdType: CPop, arg1: cmd[2], arg2: arg2}
 		}
 	}
-	if cmd := ReIfLabelGoto.FindStringSubmatch(s); cmd != nil {
+	if cmd := ReLabelGotoIf.FindStringSubmatch(s); cmd != nil {
 		switch cmd[1] {
-		case "if-goto":
-			return &Command{cmdType: CIf, arg1: cmd[2], arg2: ""}, nil
-		case "goto":
-			return &Command{cmdType: CGoto, arg1: cmd[2], arg2: ""}, nil
 		case "label":
-			return &Command{cmdType: CLabel, arg1: cmd[2], arg2: ""}, nil
+			return &Command{cmdType: CLabel, arg1: cmd[2], arg2: ""}
+		case "goto":
+			return &Command{cmdType: CGoto, arg1: cmd[2], arg2: ""}
+		case "if-goto":
+			return &Command{cmdType: CIfGoto, arg1: cmd[2], arg2: ""}
 		}
 	}
 	if cmd := ReFunctionCall.FindStringSubmatch(s); cmd != nil {
 		switch cmd[1] {
 		case "function":
-			return &Command{cmdType: CFunction, arg1: cmd[2], arg2: cmd[3]}, nil
-		case "pop":
-			return &Command{cmdType: CCall, arg1: cmd[2], arg2: cmd[3]}, nil
+			return &Command{cmdType: CFunction, arg1: cmd[2], arg2: cmd[3]}
+		case "call":
+			return &Command{cmdType: CCall, arg1: cmd[2], arg2: cmd[3]}
 		}
 	}
 	if cmd := ReReturn.FindStringSubmatch(s); cmd != nil {
-		return &Command{cmdType: CReturn, arg1: "", arg2: ""}, nil
+		return &Command{cmdType: CReturn, arg1: "", arg2: ""}
 	}
-	return nil, errors.New("command not recognized")
+	return nil
 }
 
 func ParseFile(file io.Reader, translationUnit string) (commands []*Command) {
@@ -95,12 +97,10 @@ func ParseFile(file io.Reader, translationUnit string) (commands []*Command) {
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		line := scanner.Text()
-		command, err := parseCommand(line, translationUnit)
-		if err != nil {
-			// more error stuff??
-			continue
+
+		if command := parseCommand(line, translationUnit); command != nil {
+			commands = append(commands, command)
 		}
-		commands = append(commands, command)
 	}
 	return
 }
