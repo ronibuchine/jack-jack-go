@@ -16,18 +16,17 @@ var seeker = 0 // Keeps track of where Translator is up to in output file
 	if it is a directory it will output the asm with the name of the directory
 */
 func Translate(path string) {
-	outputFileName := strings.TrimSuffix(filepath.Base(path), ".vm") + ".asm"
-
-	output, err := os.Create(outputFileName)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer output.Close()
 
 	fileInfo, err := os.Stat(path)
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	output, err := os.Create(strings.TrimSuffix(fileInfo.Name(), ".vm") + ".asm")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer output.Close()
 
 	// find all vm files within directory
 	if fileInfo.IsDir() {
@@ -51,7 +50,7 @@ func Translate(path string) {
 
 		parsedCommands := ParseFile(input, strings.TrimSuffix(filepath.Base(input.Name()), ".vm"))
 
-		hack := "// Code Generated from " + input.Name() + "\n//Powered by GO (TM)\n"
+		hack := "// Code Generated from " + input.Name() + "\n// Powered by GO (TM)\n"
 		for _, command := range parsedCommands {
 			hackCommand, err := TranslateCommand(command)
 			if err != nil {

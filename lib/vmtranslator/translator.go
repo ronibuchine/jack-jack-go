@@ -114,7 +114,7 @@ func arithmeticToHack(command *Command) (hack string) {
 			hack += "D;JLT\n"
 		}
 		hack += "@0\nD=A\n@END\n0;JMP\n"                                 // if false, D=0 and jump to END
-		hack += "(JMP" + strconv.Itoa(jmpLabel) + ")\n@-1\nD=A\n"        // if true, D=-1
+		hack += "(JMP" + strconv.Itoa(jmpLabel) + ")\n@0\nD=A-1\n"       // if true, D=-1
 		hack += "(END" + strconv.Itoa(jmpLabel) + ")\n@SP\nA=M-1\nM=D\n" // M[SP-1] = D
 		jmpLabel += 1
 	case "and":
