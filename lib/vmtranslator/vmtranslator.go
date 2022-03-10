@@ -62,7 +62,7 @@ func singleFileTranslate(file string) (hack string) {
 	}
 	defer input.Close()
 
-	hack += "// Code Generated from " + input.Name() + "\n// Powered by GO (TM)\n"
+	hack += "// Code Generated from " + filepath.Base(input.Name()) + "\n// Powered by GO (TM)\n"
 
 	translationUnit := strings.TrimSuffix(filepath.Base(input.Name()), ".vm")
 	scanner := bufio.NewScanner(input)
