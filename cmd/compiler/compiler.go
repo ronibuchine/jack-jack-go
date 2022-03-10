@@ -9,7 +9,14 @@ import (
 func main() {
 
 	args := os.Args[1:]
-	for _, arg := range args {
-		vmtranslator.Translate(arg)
+	if len(args) == 0 {
+		workingDirectory, err := os.Getwd()
+		if err == nil {
+			vmtranslator.Translate(workingDirectory)
+		}
+	} else {
+		for _, arg := range args {
+			vmtranslator.Translate(arg)
+		}
 	}
 }
