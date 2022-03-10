@@ -4,9 +4,11 @@
 *.dll
 *.so
 *.dylib
+*.zip
 
 *.asm
-
+.vscode
+.idea
 
 # Test binary, built with `go test -c`
 *.test
@@ -15,6 +17,7 @@
 *.out
 
 main
+jjg
 
 # Dependency directories (remove the comment below to include it)
 # vendor/

@@ -1,4 +1,4 @@
-package main
+package targil0
 
 import (
 	"bufio"
@@ -34,9 +34,9 @@ func main() {
 	}
 
 	vmfiles := getVMFiles(dir)
-    if len(vmfiles) == 0 {
+	if len(vmfiles) == 0 {
 		log.Fatal("No VM files found in given directory")
-    }
+	}
 
 	var buyAmount float64 = 0
 	var sellAmount float64 = 0
@@ -104,13 +104,13 @@ func getVMFiles(dir string) []fs.FileInfo {
 
 func buy(productName string, amount float64, price float64) (output string, totalAmount float64) {
 	totalAmount = price * amount
-	output = fmt.Sprintf("$$$ SELL $$$ %s\n%.2f", productName, totalAmount)
+	output = fmt.Sprintf("$$$ BUY $$$ %s\n%.2f", productName, totalAmount)
 	return
 
 }
 
 func sell(productName string, amount float64, price float64) (output string, totalAmount float64) {
 	totalAmount = price * amount
-	output = fmt.Sprintf("### BUY ### %s\n%.2f", productName, totalAmount)
+	output = fmt.Sprintf("### SELL ### %s\n%.2f", productName, totalAmount)
 	return
 }
