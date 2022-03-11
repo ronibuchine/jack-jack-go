@@ -100,7 +100,7 @@ func arithmeticToHack(command *Command) (hack string) {
 	case "eq", "gt", "lt":
 		hack = popToD
 		hack += "@SP\nA=M-1\n" // A points to top of stack (without moving SP)
-		hack += "D=M-D\n@JMP" + strconv.Itoa(jmpLabel) + "\n"
+		hack += "D=M-D\n@COMPJUMP" + strconv.Itoa(jmpLabel) + "\n"
 		if arithmeticType == "eq" {
 			hack += "D;JEQ\n"
 		} else if arithmeticType == "gt" {
@@ -108,9 +108,9 @@ func arithmeticToHack(command *Command) (hack string) {
 		} else {
 			hack += "D;JLT\n"
 		}
-		hack += "@0\nD=A\n@END" + strconv.Itoa(jmpLabel) + "\n0;JMP\n"   // if false, D=0 and jump to END
-		hack += "(JMP" + strconv.Itoa(jmpLabel) + ")\n@0\nD=A-1\n"       // if true, D=-1
-		hack += "(END" + strconv.Itoa(jmpLabel) + ")\n@SP\nA=M-1\nM=D\n" // M[SP-1] = D
+		hack += "@0\nD=A\n@COMPEND" + strconv.Itoa(jmpLabel) + "\n0;JMP\n"   // if false, D=0 and jump to END
+		hack += "(COMPJUMP" + strconv.Itoa(jmpLabel) + ")\n@0\nD=A-1\n"      // if true, D=-1
+		hack += "(COMPEND" + strconv.Itoa(jmpLabel) + ")\n@SP\nA=M-1\nM=D\n" // M[SP-1] = D
 		jmpLabel += 1
 	case "and":
 		hack = popToD

@@ -1,14 +1,13 @@
 package vmtranslator
 
 import (
+	"bufio"
 	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
 	"strings"
 )
-
-var seeker = 0 // Keeps track of where Translator is up to in output file
 
 /*
 	This function will accept a path to a dir or file.
@@ -28,6 +27,10 @@ func Translate(path string) {
 	}
 	defer output.Close()
 
+	CompileAllRegex()
+
+	var hack string
+
 	// find all vm files within directory
 	if fileInfo.IsDir() {
 		files, err := ioutil.ReadDir(path)
@@ -37,30 +40,38 @@ func Translate(path string) {
 
 		for _, file := range files {
 			if filepath.Ext(file.Name()) == ".vm" {
-				Translate(filepath.Join(path, file.Name()))
+				hack += singleFileTranslate(filepath.Join(path, file.Name()))
 			}
 		}
 
 	} else { //input is a singular vm file
-		input, err := os.Open(path)
-		if err != nil {
-			log.Fatal(err)
-		}
-		defer input.Close()
+		hack += singleFileTranslate(fileInfo.Name())
+	}
 
-		parsedCommands := ParseFile(input, strings.TrimSuffix(filepath.Base(input.Name()), ".vm"))
+	hack += infiniteLoop
 
-		hack := "// Code Generated from " + input.Name() + "\n// Powered by GO (TM)\n"
-		for _, command := range parsedCommands {
+	if _, err = output.WriteString(hack); err != nil {
+		log.Fatal("There was a fatal error building the asm file.")
+	}
+}
+
+func singleFileTranslate(file string) (hack string) {
+	input, err := os.Open(file)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer input.Close()
+
+	hack += "// Code Generated from " + filepath.Base(input.Name()) + "\n// Powered by GO (TM)\n"
+
+	translationUnit := strings.TrimSuffix(filepath.Base(input.Name()), ".vm")
+	scanner := bufio.NewScanner(input)
+	for scanner.Scan() {
+		line := scanner.Text()
+
+		if command := parseCommand(line, translationUnit); command != nil {
 			hack += TranslateCommand(command)
 		}
-		hack += infiniteLoop
-
-		var bytes int
-		if bytes, err = output.WriteAt([]byte(hack), int64(seeker)); err != nil {
-			log.Fatal("There was a fatal error building the asm file.")
-		}
-		seeker += bytes
-
 	}
+	return
 }

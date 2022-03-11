@@ -1,8 +1,6 @@
 package vmtranslator
 
 import (
-	"bufio"
-	"io"
 	"regexp"
 )
 
@@ -22,7 +20,7 @@ func CompileAllRegex() {
 	ReLabelGotoIf = regexp.MustCompile(`(?m)^\s*(label|goto|if-goto)\s+([A-Za-z_][A-Za-z0-9_]*)\s*$`)
 	ReFunctionCall = regexp.MustCompile(`(?m)^\s*(function|call)\s+([A-Za-z_][A-Za-z0-9_]*)\s+(\d+)\s*$`)
 	ReReturn = regexp.MustCompile(`(?m)^\s*return\s*$`)
-	ReComment = regexp.MustCompile(`(?m)(\/\/.*$)`)
+	ReComment = regexp.MustCompile(`(?m)(//.*$)`)
 }
 
 type CType int
@@ -90,19 +88,6 @@ func parseCommand(s string, translationUnit string) *Command {
 		return &Command{cmdType: CReturn, arg1: "", arg2: ""}
 	}
 	return nil
-}
-
-func ParseFile(file io.Reader, translationUnit string) (commands []*Command) {
-	CompileAllRegex()
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		line := scanner.Text()
-
-		if command := parseCommand(line, translationUnit); command != nil {
-			commands = append(commands, command)
-		}
-	}
-	return
 }
 
 func (cmd Command) ToString() string {
