@@ -35,7 +35,7 @@ def test_compiler():
 
 
 def main():
-    chapters = sys.argv[1:] if len(sys.argv) > 1 else ['7']
+    chapters = sys.argv[1:] if len(sys.argv) > 1 else ['7', '8']
     test_compiler()
     test_outputs(chapters)
 
