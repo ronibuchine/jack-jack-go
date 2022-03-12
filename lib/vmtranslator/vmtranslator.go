@@ -45,7 +45,7 @@ func Translate(path string) {
 		}
 
 	} else { //input is a singular vm file
-		hack += singleFileTranslate(fileInfo.Name())
+		hack += singleFileTranslate(path)
 	}
 
 	hack += infiniteLoop
