@@ -28,6 +28,12 @@ func TranslateCommand(cmd *Command) (hack string) {
 		hack = pushPopToHack(cmd)
 	case CArithmetic:
 		hack = arithmeticToHack(cmd)
+	case CGoto:
+		hack = gotoToHack(cmd)
+	case CIfGoto:
+		hack = ifGotoToHack(cmd)
+	case CLabel:
+		hack = labelToHack(cmd)
 	}
 	return
 }
