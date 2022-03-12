@@ -1,6 +1,7 @@
 package vmtranslator
 
 import (
+	"log"
 	"strconv"
 	"strings"
 )
@@ -123,4 +124,37 @@ func arithmeticToHack(command *Command) (hack string) {
 	}
 
 	return hack
+}
+
+// Takes a vm command of type goto and returns the hack code as a string
+func gotoToHack(cmd *Command) (hack string) {
+	if cmd.cmdType != CGoto {
+		log.Fatal("ERROR, expected command of type 'goto' and received:\n" + cmd.ToString())
+	}
+	// store the label in A and jump unconditionally
+	hack += "@" + cmd.arg1 + "\n0;JMP\n"
+	return
+
+}
+
+// Takes a vm command of type label and returns the hack code as a string
+func labelToHack(cmd *Command) (hack string) {
+	if cmd.cmdType != CLabel {
+		log.Fatal("ERROR, expected command of type 'label' and received:\n" + cmd.ToString())
+	}
+	// creates label of arg1 and wraps in parenthesis
+	hack += "(" + cmd.arg1 + ")\n"
+	return
+}
+
+// Takes a vm command of type if-goto and returns the hack code as a string
+func ifGotoToHack(cmd *Command) (hack string) {
+	if cmd.cmdType != CIfGoto {
+		log.Fatal("ERROR, expected command of type 'if-goto' and received:\n" + cmd.ToString())
+	}
+	// checks the value at the top of the stack and compares it to 0, if yes it jumps to the label
+	hack += popToD + "@" + cmd.arg1 + "\nD;JEQ\n"
+
+	return
+
 }
