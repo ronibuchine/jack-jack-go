@@ -7,3 +7,13 @@ Features will be added by the following workflow:
     2. Continue to work on all feature related items on that branch.
     3. Once completed, submit a PR and select a code reviewer to merge the feature.    
     4. After merged the branch can be deleted.
+
+
+## Test Script
+
+### usage: 
+`./tester.py` or `./tester.py <chapters youd like to test>`.
+
+Can also be run explicitly as a python program like `python tester.py 7`
+
+Currently only handles chapters 7 and 8
