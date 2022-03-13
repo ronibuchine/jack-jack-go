@@ -47,9 +47,6 @@ type Command struct {
 func parseCommand(s string, translationUnit string) *Command {
 
 	s = ReComment.ReplaceAllLiteralString(s, "")
-	if s == "" {
-		return nil
-	}
 
 	if cmd := ReArithmetic.FindStringSubmatch(s); cmd != nil {
 		return &Command{cmdType: CArithmetic, arg1: cmd[1], arg2: ""}
@@ -87,6 +84,8 @@ func parseCommand(s string, translationUnit string) *Command {
 	if cmd := ReReturn.FindStringSubmatch(s); cmd != nil {
 		return &Command{cmdType: CReturn, arg1: "", arg2: ""}
 	}
+
+    // if unrecognized return nil
 	return nil
 }
 
