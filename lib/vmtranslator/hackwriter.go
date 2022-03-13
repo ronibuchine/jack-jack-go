@@ -1,7 +1,6 @@
 package vmtranslator
 
 import (
-	"log"
 	"strconv"
 	"strings"
 )
@@ -34,8 +33,7 @@ func TranslateCommand(cmd *Command) (hack string) {
 		hack = ifGotoToHack(cmd)
 	case CLabel:
 		hack = labelToHack(cmd)
-	default:
-		log.Fatal("ERROR: there was a problem translating this command.\nCommand received: " + cmd.ToString())
+
 	}
 	return
 }
