@@ -6,6 +6,7 @@ import sys
 
 MAIN_FILE_PATH = os.path.join('.', 'cmd', 'compiler', 'compiler.go')
 
+
 EMULATOR = os.path.join('emulators', 'CPUEmulator' + '.sh' if os.name == 'posix' else '.bat')
 
 def test_outputs(chapters):
@@ -15,9 +16,9 @@ def test_outputs(chapters):
                 test_dir = os.path.join(chapter, category, test, '')
                 sp.run(['go', 'run', MAIN_FILE_PATH,  test_dir])
                 os.replace(test + '.asm', test_dir + test + '.asm')
-                out = sp.run(['./' + EMULATOR, test_dir + test + '.tst'], capture_output=True)
+                out = sp.run([EMULATOR, test_dir + test + '.tst'], capture_output=True)
                 print("")
-                if out.stdout == b'End of script - Comparison ended successfully\n':
+                if out.stdout.decode("utf-8").startswith("End of script - Comparison ended successfully"):
                     print(f"Test {test} ran correctly on the emulator")
                 else:
                     print(f"Test {test} had issues")
