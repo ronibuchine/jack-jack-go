@@ -10,7 +10,7 @@ MAIN_FILE_PATH = os.path.join('.', 'cmd', 'compiler', 'compiler.go')
 EMULATOR = os.path.join('emulators', 'CPUEmulator' + ('.sh' if os.name == 'posix' else '.bat'))
 
 def test_outputs(chapters):
-    for chapter in [os.path.join('tests', '0' + chap) for chap in chapters]:
+    for chapter in [os.path.join('tests', chap) for chap in chapters]:
         for category in os.listdir(chapter):
             for test in os.listdir(os.path.join(chapter, category)):
                 test_dir = os.path.join(chapter, category, test, '')
