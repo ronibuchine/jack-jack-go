@@ -17,3 +17,6 @@ Features will be added by the following workflow:
 Can also be run explicitly as a python program like `python tester.py 7`
 
 Currently only handles chapters 7 and 8
+
+Alternitavely one can use the Makefile to run tests or compile an executable with `make` or `make test` for Linux systems
+and `mingw32-make` and `mingw32-make test` for Windows. To run tests for specific files use `make test<test-#>` or `mingw32-make test<test-#>`
