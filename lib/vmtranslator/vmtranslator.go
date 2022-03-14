@@ -2,7 +2,6 @@ package vmtranslator
 
 import (
 	"bufio"
-	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -33,9 +32,16 @@ func Translate(path string) {
 
 	// find all vm files within directory
 	if fileInfo.IsDir() {
-		files, err := ioutil.ReadDir(path)
+		files, err := os.ReadDir(path)
 		if err != nil {
 			log.Fatal("Failed to read directory")
+		}
+
+		for _, file := range files {
+			if file.Name() == "Sys.vm" {
+				hack = bootstrap
+				break
+			}
 		}
 
 		for _, file := range files {
@@ -45,10 +51,8 @@ func Translate(path string) {
 		}
 
 	} else { //input is a singular vm file
-		hack += singleFileTranslate(path)
+		hack += singleFileTranslate(path) + infiniteLoop
 	}
-
-	hack += infiniteLoop
 
 	if _, err = output.WriteString(hack); err != nil {
 		log.Fatal("There was a fatal error building the asm file.")

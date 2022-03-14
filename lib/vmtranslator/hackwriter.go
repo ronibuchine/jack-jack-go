@@ -5,6 +5,8 @@ import (
 	"strings"
 )
 
+const bootstrap = "// Bootstrap\n@256\nD=A\n@SP\nM=D\n@5\nD=A\n@SP\nM=M+D\n@Sys.init\n0;JMP\n" // Sets SP to 256 and simulates call to Sys.init but without return value and address
+
 // popToD Place M[--SP] in D
 const popToD = "@SP\nAM=M-1\nD=M\n"
 
@@ -33,7 +35,12 @@ func TranslateCommand(cmd *Command) (hack string) {
 		hack = ifGotoToHack(cmd)
 	case CLabel:
 		hack = labelToHack(cmd)
-
+	case CFunction:
+		hack = functionToHack(cmd)
+	case CCall:
+		hack = callToHack(cmd)
+	case CReturn:
+		hack = returnToHack()
 	}
 	return
 }
@@ -144,7 +151,7 @@ func gotoToHack(cmd *Command) (hack string) {
 // Takes a vm command of type label and returns the hack code as a string
 func labelToHack(cmd *Command) (hack string) {
 
-	// creates label of arg1 and wraps in parenthesis
+	// creates label of arg1 and wraps in parentheses
 	hack += "(" + cmd.arg1 + ")\n"
 	return
 }
@@ -157,4 +164,48 @@ func ifGotoToHack(cmd *Command) (hack string) {
 
 	return
 
+}
+
+func functionToHack(cmd *Command) (hack string) {
+	hack = "(" + cmd.arg1 + ")\n" // Inserts function entry label
+	if cmd.arg2 == "0" {
+		return hack
+	}
+	hack += "@" + cmd.arg2 + "\nD=A\n@R13\nM=D\n"                                                              // Store number of local variables in R13
+	hack += "(" + cmd.arg1 + "$init)\n@0\nD=A\n" + pushFromD + "@R13\nMD=M-1\n@" + cmd.arg1 + "$init\nD;JNE\n" // Push 0 onto stack until R13 is 0
+	return hack
+}
+
+var funcCallCounter = 0
+
+func callToHack(cmd *Command) (hack string) {
+	if cmd.arg2 == "0" && cmd.arg1 != "Sys.init" {
+		cmd.arg2 = "1"
+		hack = "@SP\nM=M+1\n"
+	} // Ensures space for return value
+	hack += "@" + cmd.arg1 + "$ret." + strconv.Itoa(funcCallCounter) + "\nD=A\n" + pushFromD // Creates a return label and pushes it onto stack
+	hack += "@LCL\nD=M\n" + pushFromD                                                        // Pushes LCL onto stack
+	hack += "@ARG\nD=M\n" + pushFromD                                                        // Pushes ARG onto stack
+	hack += "@THIS\nD=M\n" + pushFromD                                                       // Pushes THIS onto stack
+	hack += "@THAT\nD=M\n" + pushFromD                                                       // Pushes THAT onto stack
+	hack += "@SP\nD=M\n@LCL\nM=D\n"                                                          // Sets new LCL segment to top of stack
+	hack += "@5\nD=D-A\n" + "@" + cmd.arg2 + "\nD=D-A\n@ARG\nM=D\n"                          // Sets new ARG segment to (top of stack) - 5 - (number of args)
+	hack += "@" + cmd.arg1 + "\n0;JMP\n"                                                     // Jump to function
+	hack += "(" + cmd.arg1 + "$ret." + strconv.Itoa(funcCallCounter) + ")\n"                 // Label for function to return to caller
+	funcCallCounter++                                                                        // Increment call counter
+
+	return hack
+}
+
+func returnToHack() (hack string) {
+	hack = "@LCL\nD=M\n@R13\nM=D\n"           // Stores top of virtual stack in R13
+	hack += popToD + "@ARG\nA=M\nM=D\n"       // Saves top of real stack to ARG[0] (returned value for the caller)
+	hack += "D=A+1\n@SP\nM=D\n"               // Sets SP to the value following the returned value (for the caller)
+	hack += "@R13\nAM=M-1\nD=M\n@THAT\nM=D\n" // Pushes top of virtual stack to THAT
+	hack += "@R13\nAM=M-1\nD=M\n@THIS\nM=D\n" // Pushes top of virtual stack to THIS
+	hack += "@R13\nAM=M-1\nD=M\n@ARG\nM=D\n"  // Pushes top of virtual stack to ARG
+	hack += "@R13\nAM=M-1\nD=M\n@LCL\nM=D\n"  // Pushes top of virtual stack to LCL
+	hack += "@R13\nA=M-1\nA=M\n0;JMP\n"       // Jumps to location at top of stack
+
+	return hack
 }
