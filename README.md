@@ -11,7 +11,7 @@ Features will be added by the following workflow:
 
 ## Test Script
 
-### usage: 
+### Usage 
 `./tester.py` or `./tester.py <chapters youd like to test>`.
 
 Can also be run explicitly as a python program like `python tester.py 7`
