@@ -1,5 +1,6 @@
 class Main {
-    function main() {
-        Output.println("Hello, world!");
+    function int Main() {
+        do Output.println("Hello, world!");  
+        return 0;      
     }
 }
