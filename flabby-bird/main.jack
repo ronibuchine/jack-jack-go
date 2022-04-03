@@ -1,6 +1,8 @@
 class Main {
-    function int Main() {
-        do Output.println("Hello, world!");  
-        return 0;      
-    }
+   function void main() {
+      /* Prints some text using the standard library. */
+      do Output.printString("Hello world!");
+      do Output.println();      // New line
+      return;
+   }
 }
