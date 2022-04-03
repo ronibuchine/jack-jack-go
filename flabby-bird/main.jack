@@ -1,8 +1,17 @@
 class Main {
    function void main() {
-      /* Prints some text using the standard library. */
-      do Output.printString("Hello world!");
-      do Output.println();      // New line
+      var int x;
+      var int y;
+      var int step;
+      let x = 100;
+      let y = 100;
+      let step = 40;
+      
+      while (true) {
+         do Screen.drawCircle(x, y, 30);
+         do Screen.clearScreen();
+         let x = x + step; 
+      }
       return;
    }
 }
