@@ -1,8 +1,7 @@
 class Bird {
 
-    var int xPos;
-    var int yPos;
-    var int radius;
+    field int xPos, yPos, radius;
+    
 
     constructor Bird new(int xPos, int yPos, int radius) {
         let this.xPos = xPos;
@@ -24,8 +23,13 @@ class Bird {
         return;
     }
 
+    method void dispose() {
+        do Memory.dealloc(this);
+        return;
+    }
+
     method void draw() {
-        Screen.drawCircle(xPos, yPos, radius);
+        do Screen.drawCircle(xPos, yPos, radius);
         return
     }
 

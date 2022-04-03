@@ -22,6 +22,7 @@ class Main {
 
       let step = 40;
       let bird = Bird.new(75, 100, 30);
+      let pipes = Array.new(6);
 
       
       
@@ -42,6 +43,8 @@ class Main {
          }
          
       }
+      do pipes.dispose();
+      do bird.dispose();
       return;
    }
 }
