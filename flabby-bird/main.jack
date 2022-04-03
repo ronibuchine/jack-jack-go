@@ -31,7 +31,7 @@ class Main {
          var int i;
          let i = 0;
          do bird.move();
-         while (~(i = pipes.size)) {
+         while (i < pipes.size) {
             do pipes[i].move();
             let i = i + 1;
          }
