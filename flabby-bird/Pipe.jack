@@ -1,0 +1,35 @@
+class Pipe {
+
+    // values describe the bottom pipe
+    var int xPos;
+    var int height;
+    var int width;
+    // speed of pipes movement
+    var int step;
+    // open space between bottom and top part of pipe
+    var int openSpace;
+
+    constructor Pipe new(int xPos, int height, int width, int step, int openSpace) {
+        let this.xPos = xPos;
+        let this.height = height;
+        let this.width = width;
+        let this.step = step;
+        let this.openSpace = openSpace;
+        return this;
+    }
+
+    method void move() {
+        let xPos = xPos - step;
+        return;
+    }
+
+
+    method void draw() {
+        Screen.drawRectangle(xPos, height, xPos + width, 255);
+        Screen.drawRectangle(xPos, 0, xPos + width, height - openSpace);
+        return;
+    }
+
+
+
+}

@@ -1,16 +1,46 @@
 class Main {
+
+   function void clear() {
+      Screen.clearScreen();
+      return;
+   }
+
+   function void move() {
+      // move all geos
+   }
+
+   function void checkCollisions() {
+      // if the bird collides with a pipe return true
+   }
+
+
    function void main() {
-      var int x;
-      var int y;
+      
+      var Array pipes;
+      var Bird bird;
       var int step;
-      let x = 100;
-      let y = 100;
+
       let step = 40;
+      let bird = Bird.new(75, 100, 30);
+
+      
       
       while (true) {
-         do Screen.drawCircle(x, y, 30);
-         do Screen.clearScreen();
-         let x = x + step; 
+         // TODO: write event loop for game
+         var int i;
+         let i = 0;
+         do bird.move();
+         while (~(i = pipes.size)) {
+            do pipes[i].move();
+            let i = i + 1;
+         }
+         // each frame move all elements on the screen and check for collisions
+         if (checkCollisions()) {
+            //game over
+            //display score
+            return;
+         }
+         
       }
       return;
    }
