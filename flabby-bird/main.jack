@@ -1,23 +1,21 @@
 class Main {  
 
-   function void clear() {
-      do Screen.clearScreen();
-      return;
-   }
-
    function void setup(Bird bird, Array pipes, int numPipes) {
-      // unimplemented
-      let step = 40;
+      
       let bird = Bird.new(75, 100, 30);
       let pipes = Array.new(numPipes);
       return;
    }
 
    function void pipeShift(Array pipes, int numPipes) {
-      if (pipes[0].getX() - Pipe.getStep() < 0) {
-         var int i;
-         var Pipe temp;
-         var Random rand;
+      var int i, next, pipeX, pipeStep;
+      var Pipe temp;
+      var Random rand;
+      let temp = pipes[0];
+      let pipeX = temp.getX();
+      let pipeStep = Pipe.getStep();
+      let next = pipeX - pipeStep;
+      if (next < 0) {
 
          let rand = Random.new();
          let i = 1;
@@ -37,23 +35,30 @@ class Main {
 
    function void move(Bird bird, Array pipes, int numPipes) {
       // move all geos
-      do bird.move()
+      var int i;
+      var Pipe temp;
+      let i = 0;
+      do bird.move();
       while (i < numPipes) {
-         do pipes[i].move();
+         let temp = pipes[i];
+         do temp.move();
          let i = i + 1;
       }
-      do pipeShift(pipes);
+      do Main.pipeShift(pipes, numPipes);
       return;
    }
 
    function void draw(Bird bird, Array pipes, int numPipes) {
       // draw all geos
-      do bird.draw()
+      var int i;
+      var Pipe temp;
+      let i = 0;
+      do bird.draw();
       while (i < numPipes) {
-         do pipes[i].draw();
+         let temp = pipes[i];
+         do temp.draw();
          let i = i + 1;
-      }
-      do pipeShift(pipes);
+      }      
       return;
    }
 
@@ -77,27 +82,28 @@ class Main {
       var int step, numPipes, score;
       var bool alive;
 
+      let step = 40;
       let alive = true;
       let numPipes = 6;
       let score = 0;
-      do setup(bird, pipes, numPipes);
+      do Main.setup(bird, pipes, numPipes);
       
       while (alive) {        
          
          // each frame move all elements on the screen and check for collisions
-         if (checkCollisions(bird, pipes)) {
+         if (Main.checkCollisions(bird, pipes)) {
             let alive = false;
          }
-         do draw(bird, pipes, numPipes);
+         do Main.draw(bird, pipes, numPipes);
 
 
 
 
-         if (checkPipeCleared(bird, pipes)) {
+         if (Main.checkPipeCleared(bird, pipes)) {
             let score = score + 1;
          }
-         do clear();
-         do move(bird, pipes, numPipes);
+         do Screen.clearScreen();
+         do Main.move(bird, pipes, numPipes);
       }
       do pipes.dispose();
       do bird.dispose();

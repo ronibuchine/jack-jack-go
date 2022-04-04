@@ -18,10 +18,11 @@ class Random {
 
     method int generate(int seed) {
         // generates random number based on seed. Uses num as static counter to make sure random numbers keep generating
-        var int xn;
+        var int xn, i;
         let xn = seed;
+        let i = 0;
         while (i < num) {
-            let xn = Random.mod(((xn*314159265) + 42), 256);
+            let xn = Random.mod(((xn*31415) + 42), 256);
             let i = i + 1;
         }
         return xn; 

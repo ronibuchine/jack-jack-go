@@ -11,13 +11,13 @@ class Pipe {
         // randomly get a new pipe height
         var Random rand;
         let rand = Random.new();
-        let this.xPos = xPos;
-        let this.height = rand.generate(42);
+        let xPos = xPos;
+        let height = rand.generate(42);
 
         // set static fields
-        let this.width = 40;
-        let this.step = 40;
-        let this.openSpace = 90;
+        let width = 40;
+        let step = 40;
+        let openSpace = 90;
         return this;
     }
 
