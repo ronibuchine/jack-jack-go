@@ -3,10 +3,10 @@ class Bird {
     field int xPos, yPos, radius;
     
 
-    constructor Bird new(int xPos, int yPos, int radius) {
-        let this.xPos = xPos;
-        let this.yPos = yPos;
-        let this.radius = radius;
+    constructor Bird new(int x, int y, int r) {
+        let xPos = x;
+        let yPos = y;
+        let radius = r;
         return this;
     }
 
@@ -15,10 +15,16 @@ class Bird {
         // need to implement gravity so this looks natural
         // maybe store last few frames and take an array of frames as arg?
         if (Keyboard.keyPressed() = String.upArrow()) {
-            let yPos = yPos - 40; 
+            if ((yPos - 40) > 0) {
+                let yPos = yPos - 40; 
+            } // don't allow bird to jump off screen
+            else {let yPos = 0;}
         }
         else {
-            let yPos = yPos + 40;
+            if ((yPos + 20) < 255) {
+                let yPos = yPos + 20;
+            } // don't allow bird to fall off screen 
+            else {let yPos = 255;}
         }
         return;
     }

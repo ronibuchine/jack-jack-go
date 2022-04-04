@@ -1,16 +1,55 @@
-class Main {
+class Main {  
 
    function void clear() {
-      Screen.clearScreen();
+      do Screen.clearScreen();
       return;
    }
 
-   function void move() {
-      // move all geos
+   function void setup(Bird bird, Array pipes, int numPipes) {
+      // unimplemented
+      let step = 40;
+      let bird = Bird.new(75, 100, 30);
+      let pipes = Array.new(numPipes);
+      return;
    }
 
-   function void checkCollisions() {
+   function void pipeShift(Array pipes, int numPipes) {
+      if (pipes[0].getX() - Pipe.getStep() < 0) {
+         var int i;
+         var Pipe temp;
+         var Random rand;
+
+         let rand = Random.new();
+         let i = 1;
+         let temp = pipes[0]; // store the first pipe to be disposed
+
+         while (i < numPipes) {
+            let pipes[i-1] = pipes[i];
+            let i = i + 1; 
+         }
+         // create new pipe off screen to the right
+         let pipes[numPipes-1] = Pipe.new(600, rand.generate(42));
+         do temp.dispose();
+         do rand.dispose();
+      }
+      return;
+   }
+
+   function void move(Bird bird, Array pipes) {
+      // move all geos
+      do bird.move()
+      while (i < pipes.size) {
+         do pipes[i].move();
+         let i = i + 1;
+      }
+      do pipeShift(pipes);
+      return;
+   }
+
+   function bool checkCollisions() {
       // if the bird collides with a pipe return true
+      // unimplemented
+      return true;
    }
 
 
@@ -18,29 +57,23 @@ class Main {
       
       var Array pipes;
       var Bird bird;
-      var int step;
+      var int step, numPipes;
+      var bool alive;
 
-      let step = 40;
-      let bird = Bird.new(75, 100, 30);
-      let pipes = Array.new(6);
-
+      do setup(bird, pipes, numPipes);
       
-      
-      while (true) {
-         // TODO: write event loop for game
+      while (alive) {
+         
          var int i;
          let i = 0;
-         do bird.move();
-         while (i < pipes.size) {
-            do pipes[i].move();
-            let i = i + 1;
-         }
+         
          // each frame move all elements on the screen and check for collisions
          if (checkCollisions()) {
-            //game over
-            //display score
-            return;
+            let alive = false;
          }
+
+         do clear();
+
          
       }
       do pipes.dispose();

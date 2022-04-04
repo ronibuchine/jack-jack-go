@@ -1,0 +1,34 @@
+class Random {
+
+    static int num;
+
+    constructor Random new() {
+        if (num > 0) {}
+        else {
+            let num = -1;
+        }
+        return this;
+    }
+
+    function int mod(int a, int b) {
+        var int answer;
+        let answer = a - ((a/b)*b);
+        return answer;
+    }
+
+    method int generate(int seed) {
+        // generates random number based on seed. Uses num as static counter to make sure random numbers keep generating
+        var int xn;
+        let xn = seed;
+        while (i < num) {
+            let xn = Random.mod(((xn*314159265) + 42), 256);
+            let i = i + 1;
+        }
+        return xn; 
+    }
+
+    method void dispose() {
+        do Memory.dealloc(this);
+        return;
+    }
+}

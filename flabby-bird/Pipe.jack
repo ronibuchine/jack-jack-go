@@ -5,10 +5,16 @@ class Pipe {
     
     static int width, step, openSpace;
        
+    
 
     constructor Pipe new(int xPos, int height) {
+        // randomly get a new pipe height
+        var Random rand;
+        let rand = Random.new();
         let this.xPos = xPos;
-        let this.height = height;
+        let this.height = rand.generate(42);
+
+        // set static fields
         let this.width = 40;
         let this.step = 40;
         let this.openSpace = 90;
@@ -16,14 +22,27 @@ class Pipe {
     }
 
     method void move() {
+        // moves pipe a step to the left on the screen
         let xPos = xPos - step;
         return;
     }
 
 
+    // getters
+    method int getX() {return xPos;}
+    method int getHeight() {return height;}
+    function int getWidth() {return width;}
+    function int getStep() {return step;}
+
+
     method void draw() {
-        do Screen.drawRectangle(xPos, height, xPos + width, 255);
-        do Screen.drawRectangle(xPos, 0, xPos + width, height - openSpace);
+        // only draw if the full object will appear on screen
+        if (xPos > 0) {
+            // bottom half
+            do Screen.drawRectangle(xPos, height, xPos + width, 255);
+            // top half
+            do Screen.drawRectangle(xPos, 0, xPos + width, height - openSpace);
+        }
         return;
     }
 
