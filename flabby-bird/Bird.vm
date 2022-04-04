@@ -10,7 +10,7 @@ push argument 2
 pop this 2
 push pointer 0
 return
-function Bird.move 0
+function Bird.moveBird 0
 push argument 0
 pop pointer 0
 call Keyboard.keyPressed 0
@@ -66,7 +66,7 @@ call Memory.deAlloc 1
 pop temp 0
 push constant 0
 return
-function Bird.draw 0
+function Bird.drawBird 0
 push argument 0
 pop pointer 0
 push this 0

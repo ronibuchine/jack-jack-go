@@ -12,13 +12,13 @@ call Random.generate 2
 pop argument 1
 push constant 40
 pop static 0
-push constant 40
+push constant 10
 pop static 1
 push constant 90
 pop static 2
 push pointer 0
 return
-function Pipe.move 0
+function Pipe.movePipe 0
 push argument 0
 pop pointer 0
 push this 0
@@ -43,7 +43,7 @@ return
 function Pipe.getStep 0
 push static 1
 return
-function Pipe.draw 0
+function Pipe.drawPipe 0
 push argument 0
 pop pointer 0
 push this 0

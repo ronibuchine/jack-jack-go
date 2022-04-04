@@ -25,6 +25,7 @@ class Random {
             let xn = Random.mod(((xn*31415) + 42), 256);
             let i = i + 1;
         }
+        let num = num + 1;
         return xn; 
     }
 

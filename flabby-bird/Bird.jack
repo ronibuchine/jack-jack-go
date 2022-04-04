@@ -10,8 +10,7 @@ class Bird {
         return this;
     }
 
-
-    method void move() {
+    method void moveBird() {
         // need to implement gravity so this looks natural
         // maybe store last few frames and take an array of frames as arg?
         if (Keyboard.keyPressed() = 131) {
@@ -34,9 +33,8 @@ class Bird {
         return;
     }
 
-    method void draw() {
+    method void drawBird() {
         do Screen.drawCircle(xPos, yPos, radius);
         return;
     }
-
 }

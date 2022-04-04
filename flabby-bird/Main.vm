@@ -1,14 +1,3 @@
-function Main.setup 0
-push constant 75
-push constant 100
-push constant 10
-call Bird.new 3
-pop argument 0
-push argument 2
-call Array.new 1
-pop argument 1
-push constant 0
-return
 function Main.pipeShift 6
 push constant 0
 push argument 0
@@ -94,7 +83,7 @@ function Main.move 2
 push constant 0
 pop local 0
 push argument 0
-call Bird.move 1
+call Bird.moveBird 1
 pop temp 0
 label WHILE_EXP0
 push local 0
@@ -109,7 +98,7 @@ pop pointer 1
 push that 0
 pop local 1
 push local 1
-call Pipe.move 1
+call Pipe.movePipe 1
 pop temp 0
 push local 0
 push constant 1
@@ -127,7 +116,7 @@ function Main.draw 2
 push constant 0
 pop local 0
 push argument 0
-call Bird.draw 1
+call Bird.drawBird 1
 pop temp 0
 label WHILE_EXP0
 push local 0
@@ -142,7 +131,7 @@ pop pointer 1
 push that 0
 pop local 1
 push local 1
-call Pipe.draw 1
+call Pipe.drawPipe 1
 pop temp 0
 push local 0
 push constant 1
@@ -154,31 +143,66 @@ push constant 0
 return
 function Main.checkCollisions 0
 push constant 0
-not
 return
 function Main.checkPipeCleared 0
 push constant 0
-not
 return
-function Main.main 6
-push constant 40
+function Main.main 12
+call Random.new 0
+pop local 11
+push constant 10
 pop local 2
+push constant 50
+pop local 5
 push constant 0
 not
-pop local 5
+pop local 6
 push constant 6
 pop local 3
 push constant 0
 pop local 4
-push local 1
-push local 0
+push constant 0
+pop local 7
+push constant 75
+push constant 100
+push constant 10
+call Bird.new 3
+pop local 1
 push local 3
-call Main.setup 3
-pop temp 0
+call Array.new 1
+pop local 0
 label WHILE_EXP0
-push local 5
+push local 7
+push local 3
+lt
 not
 if-goto WHILE_END0
+push constant 400
+push local 5
+push local 7
+call Math.multiply 2
+add
+pop local 9
+push local 11
+push constant 33
+call Random.generate 2
+pop local 10
+push local 7
+push local 0
+add
+push local 9
+push local 10
+call Pipe.new 2
+pop temp 0
+pop pointer 1
+push temp 0
+pop that 0
+goto WHILE_EXP0
+label WHILE_END0
+label WHILE_EXP1
+push local 6
+not
+if-goto WHILE_END1
 push local 1
 push local 0
 call Main.checkCollisions 2
@@ -186,7 +210,7 @@ if-goto IF_TRUE0
 goto IF_FALSE0
 label IF_TRUE0
 push constant 0
-pop local 5
+pop local 6
 label IF_FALSE0
 push local 1
 push local 0
@@ -204,20 +228,21 @@ push constant 1
 add
 pop local 4
 label IF_FALSE1
-call Screen.clearScreen 0
-pop temp 0
 push local 1
 push local 0
 push local 3
 call Main.move 3
 pop temp 0
-goto WHILE_EXP0
-label WHILE_END0
+goto WHILE_EXP1
+label WHILE_END1
 push local 0
 call Array.dispose 1
 pop temp 0
 push local 1
 call Bird.dispose 1
+pop temp 0
+push local 11
+call Random.dispose 1
 pop temp 0
 push constant 0
 return

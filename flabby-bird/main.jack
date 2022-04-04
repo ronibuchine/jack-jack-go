@@ -1,12 +1,6 @@
 class Main {  
 
-   function void setup(Bird bird, Array pipes, int numPipes) {
-      
-      let bird = Bird.new(75, 100, 10);
-      let pipes = Array.new(numPipes);
-      return;
-   }
-
+  
    function void pipeShift(Array pipes, int numPipes) {
       var int i, next, pipeX, pipeStep;
       var Pipe temp;
@@ -38,10 +32,10 @@ class Main {
       var int i;
       var Pipe temp;
       let i = 0;
-      do bird.move();
+      do bird.moveBird();
       while (i < numPipes) {
          let temp = pipes[i];
-         do temp.move();
+         do temp.movePipe();
          let i = i + 1;
       }
       do Main.pipeShift(pipes, numPipes);
@@ -50,14 +44,14 @@ class Main {
 
    function void draw(Bird bird, Array pipes, int numPipes) {
       // draw all geos
-      var int i;
+      var int j;
       var Pipe temp;
-      let i = 0;
-      do bird.draw();
-      while (i < numPipes) {
-         let temp = pipes[i];
-         do temp.draw();
-         let i = i + 1;
+      let j = 0;
+      do bird.drawBird();
+      while (j < numPipes) {
+         let temp = pipes[j];
+         do temp.drawPipe();
+         let j = j + 1;
       }      
       return;
    }
@@ -65,13 +59,13 @@ class Main {
    function bool checkCollisions(Bird bird, Array pipes) {
       // if the bird collides with a pipe return true
       // unimplemented
-      return true;
+      return false;
    }
 
    function bool checkPipeCleared(Bird bird, Array pipes) {
       // if the bird cleared a pipe return true
       // unimplemented
-      return true;
+      return false;
    }
 
 
@@ -79,14 +73,28 @@ class Main {
       
       var Array pipes;
       var Bird bird;
-      var int step, numPipes, score;
+      var int step, numPipes, score, pipeSpacing;
       var bool alive;
+      var int i;
+      var Pipe temp;
 
-      let step = 40;
+      var int xPos, height;
+      var Random rand;
+
+      let rand = Random.new();
+      let step = 10;
+      let pipeSpacing = 50;
       let alive = true;
       let numPipes = 6;
       let score = 0;
-      do Main.setup(bird, pipes, numPipes);
+      let i = 0;
+      let bird = Bird.new(75, 100, 10);
+      let pipes = Array.new(numPipes);
+      while (i < numPipes) {
+         let xPos = 400 + (pipeSpacing * i);
+         let height = rand.generate(33);
+         let pipes[i] = Pipe.new(xPos, height);         
+      }
       
       while (alive) {        
          
@@ -94,19 +102,19 @@ class Main {
          if (Main.checkCollisions(bird, pipes)) {
             let alive = false;
          }
+
          do Main.draw(bird, pipes, numPipes);
-
-
-
 
          if (Main.checkPipeCleared(bird, pipes)) {
             let score = score + 1;
          }
-         do Screen.clearScreen();
-         do Main.move(bird, pipes, numPipes);
+        
+         do Main.move(bird, pipes, numPipes);      
       }
+
       do pipes.dispose();
       do bird.dispose();
+      do rand.dispose();
       return;
    }
 }

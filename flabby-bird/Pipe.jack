@@ -4,8 +4,6 @@ class Pipe {
     field int xPos, height;
     
     static int width, step, openSpace;
-       
-    
 
     constructor Pipe new(int xPos, int height) {
         // randomly get a new pipe height
@@ -16,17 +14,16 @@ class Pipe {
 
         // set static fields
         let width = 40;
-        let step = 40;
+        let step = 10;
         let openSpace = 90;
         return this;
     }
 
-    method void move() {
+    method void movePipe() {
         // moves pipe a step to the left on the screen
         let xPos = xPos - step;
         return;
     }
-
 
     // getters
     method int getX() {return xPos;}
@@ -34,8 +31,7 @@ class Pipe {
     function int getWidth() {return width;}
     function int getStep() {return step;}
 
-
-    method void draw() {
+    method void drawPipe() {
         // only draw if the full object will appear on screen
         if (xPos > 0) {
             // bottom half
@@ -50,7 +46,4 @@ class Pipe {
         do Memory.deAlloc(this);
         return;
     }
-
-
-
 }

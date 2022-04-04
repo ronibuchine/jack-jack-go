@@ -54,6 +54,10 @@ add
 pop local 1
 goto WHILE_EXP0
 label WHILE_END0
+push static 0
+push constant 1
+add
+pop static 0
 push local 0
 return
 function Random.dispose 0
