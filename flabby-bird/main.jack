@@ -35,10 +35,10 @@ class Main {
       return;
    }
 
-   function void move(Bird bird, Array pipes) {
+   function void move(Bird bird, Array pipes, int numPipes) {
       // move all geos
       do bird.move()
-      while (i < pipes.size) {
+      while (i < numPipes) {
          do pipes[i].move();
          let i = i + 1;
       }
@@ -46,8 +46,25 @@ class Main {
       return;
    }
 
-   function bool checkCollisions() {
+   function void draw(Bird bird, Array pipes, int numPipes) {
+      // draw all geos
+      do bird.draw()
+      while (i < numPipes) {
+         do pipes[i].draw();
+         let i = i + 1;
+      }
+      do pipeShift(pipes);
+      return;
+   }
+
+   function bool checkCollisions(Bird bird, Array pipes) {
       // if the bird collides with a pipe return true
+      // unimplemented
+      return true;
+   }
+
+   function bool checkPipeCleared(Bird bird, Array pipes) {
+      // if the bird cleared a pipe return true
       // unimplemented
       return true;
    }
@@ -57,24 +74,30 @@ class Main {
       
       var Array pipes;
       var Bird bird;
-      var int step, numPipes;
+      var int step, numPipes, score;
       var bool alive;
 
+      let alive = true;
+      let numPipes = 6;
+      let score = 0;
       do setup(bird, pipes, numPipes);
       
-      while (alive) {
-         
-         var int i;
-         let i = 0;
+      while (alive) {        
          
          // each frame move all elements on the screen and check for collisions
-         if (checkCollisions()) {
+         if (checkCollisions(bird, pipes)) {
             let alive = false;
          }
+         do draw(bird, pipes, numPipes);
 
+
+
+
+         if (checkPipeCleared(bird, pipes)) {
+            let score = score + 1;
+         }
          do clear();
-
-         
+         do move(bird, pipes, numPipes);
       }
       do pipes.dispose();
       do bird.dispose();
