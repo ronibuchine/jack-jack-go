@@ -1,7 +1,7 @@
 function Main.setup 0
 push constant 75
 push constant 100
-push constant 30
+push constant 10
 call Bird.new 3
 pop argument 0
 push argument 2

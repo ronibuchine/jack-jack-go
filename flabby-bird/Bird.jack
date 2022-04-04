@@ -14,7 +14,7 @@ class Bird {
     method void move() {
         // need to implement gravity so this looks natural
         // maybe store last few frames and take an array of frames as arg?
-        if (Keyboard.keyPressed() = String.upArrow()) {
+        if (Keyboard.keyPressed() = 131) {
             if ((yPos - 40) > 0) {
                 let yPos = yPos - 40; 
             } // don't allow bird to jump off screen
@@ -30,7 +30,7 @@ class Bird {
     }
 
     method void dispose() {
-        do Memory.dealloc(this);
+        do Memory.deAlloc(this);
         return;
     }
 
