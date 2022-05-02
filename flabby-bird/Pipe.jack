@@ -5,11 +5,11 @@ class Pipe {
     
     static int width, step, openSpace;
 
-    constructor Pipe new(int xPos, int height) {
+    constructor Pipe new(int x, int height) {
         // randomly get a new pipe height
         var Random rand;
         let rand = Random.new();
-        let xPos = xPos;
+        let xPos = x;
         let height = rand.generate(42);
 
         // set static fields

@@ -5,7 +5,7 @@ pop pointer 0
 call Random.new 0
 pop local 0
 push argument 0
-pop argument 0
+pop this 0
 push local 0
 push constant 42
 call Random.generate 2

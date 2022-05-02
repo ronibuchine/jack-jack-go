@@ -197,6 +197,10 @@ pop temp 0
 pop pointer 1
 push temp 0
 pop that 0
+push local 7
+push constant 1
+add
+pop local 7
 goto WHILE_EXP0
 label WHILE_END0
 label WHILE_EXP1

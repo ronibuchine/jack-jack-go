@@ -93,7 +93,8 @@ class Main {
       while (i < numPipes) {
          let xPos = 400 + (pipeSpacing * i);
          let height = rand.generate(33);
-         let pipes[i] = Pipe.new(xPos, height);         
+         let pipes[i] = Pipe.new(xPos, height);
+         let i = i + 1;
       }
       
       while (alive) {        
