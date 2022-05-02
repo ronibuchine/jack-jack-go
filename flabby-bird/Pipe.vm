@@ -2,14 +2,10 @@ function Pipe.new 1
 push constant 2
 call Memory.alloc 1
 pop pointer 0
-call Random.new 0
-pop local 0
 push argument 0
 pop this 0
-push local 0
-push constant 42
-call Random.generate 2
-pop argument 1
+push argument 1
+pop this 1
 push constant 40
 pop static 0
 push constant 10
@@ -43,34 +39,72 @@ return
 function Pipe.getStep 0
 push static 1
 return
-function Pipe.drawPipe 0
+function Pipe.drawPipe 1
 push argument 0
 pop pointer 0
 push this 0
-push constant 0
+push constant 1
+neg
 gt
 if-goto IF_TRUE0
 goto IF_FALSE0
 label IF_TRUE0
+push constant 0
+not
+call Screen.setColor 1
+pop temp 0
 push this 0
-push this 1
-push this 0
-push static 0
-add
 push constant 255
-call Screen.drawRectangle 4
+push this 0
+push constant 255
+push this 1
+sub
+call Screen.drawLine 4
 pop temp 0
 push this 0
 push constant 0
 push this 0
-push static 0
-add
+push constant 255
 push this 1
+sub
 push static 2
 sub
-call Screen.drawRectangle 4
+call Screen.drawLine 4
 pop temp 0
 label IF_FALSE0
+push this 0
+push static 0
+add
+pop local 0
+push local 0
+push constant 1
+neg
+gt
+if-goto IF_TRUE1
+goto IF_FALSE1
+label IF_TRUE1
+push constant 0
+call Screen.setColor 1
+pop temp 0
+push local 0
+push constant 255
+push constant 255
+push local 0
+sub
+push this 1
+call Screen.drawLine 4
+pop temp 0
+push local 0
+push constant 0
+push local 0
+push constant 255
+push this 1
+sub
+push static 2
+sub
+call Screen.drawLine 4
+pop temp 0
+label IF_FALSE1
 push constant 0
 return
 function Pipe.dispose 0

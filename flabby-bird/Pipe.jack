@@ -5,12 +5,11 @@ class Pipe {
     
     static int width, step, openSpace;
 
-    constructor Pipe new(int x, int height) {
+    constructor Pipe new(int x, int h) {
         // randomly get a new pipe height
         var Random rand;
-        let rand = Random.new();
         let xPos = x;
-        let height = rand.generate(42);
+        let height = h;
 
         // set static fields
         let width = 40;
@@ -32,12 +31,30 @@ class Pipe {
     function int getStep() {return step;}
 
     method void drawPipe() {
+        var int rightEdge;
         // only draw if the full object will appear on screen
-        if (xPos > 0) {
+        if (xPos > -1) {
+            // Black
+            do Screen.setColor(true);
+
             // bottom half
-            do Screen.drawRectangle(xPos, height, xPos + width, 255);
+            //do Screen.drawRectangle(xPos, height, xPos + width, 255);
+            do Screen.drawLine(xPos, 255, xPos, 255 - height);
             // top half
-            do Screen.drawRectangle(xPos, 0, xPos + width, height - openSpace);
+            //do Screen.drawRectangle(xPos, 0, xPos + width, height - openSpace);
+            do Screen.drawLine(xPos, 0, xPos, 255 - height - openSpace);
+        }
+
+        // Cover over right edge of pipe
+        let rightEdge = xPos + width;
+        if (rightEdge > -1) {
+            // White
+            do Screen.setColor(false);
+
+            // bottom half
+            do Screen.drawLine(rightEdge, 255, 255 - rightEdge, height);
+            // top half
+            do Screen.drawLine(rightEdge, 0, rightEdge, 255 - height - openSpace);
         }
         return;
     }
