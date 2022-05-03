@@ -1,4 +1,4 @@
-function Main.pipeShift 6
+function Main.pipeShift 5
 push constant 0
 push argument 0
 add
@@ -8,28 +8,32 @@ pop local 4
 push local 4
 call Pipe.getX 1
 pop local 2
-call Pipe.getStep 0
-pop local 3
 push local 2
-push local 3
-sub
+call Pipe.getWidth 0
+add
 pop local 1
 push local 1
-push constant 0
+push constant 2
 lt
 if-goto IF_TRUE0
 goto IF_FALSE0
 label IF_TRUE0
-call Random.new 0
-pop local 5
+push argument 1
 push constant 1
-pop local 0
+sub
+push argument 0
+add
 push constant 0
 push argument 0
 add
 pop pointer 1
 push that 0
-pop local 4
+pop temp 0
+pop pointer 1
+push temp 0
+pop that 0
+push constant 1
+pop local 0
 label WHILE_EXP0
 push local 0
 push argument 1
@@ -61,20 +65,14 @@ push constant 1
 sub
 push argument 0
 add
-push constant 600
-push local 5
-push constant 42
-call Random.generate 2
-call Pipe.new 2
-pop temp 0
 pop pointer 1
-push temp 0
-pop that 0
+push that 0
+pop local 4
 push local 4
-call Pipe.dispose 1
-pop temp 0
-push local 5
-call Random.dispose 1
+push static 0
+call Pipe.getWidth 0
+add
+call Pipe.addSpace 2
 pop temp 0
 label IF_FALSE0
 push constant 0
@@ -82,8 +80,18 @@ return
 function Main.move 2
 push constant 0
 pop local 0
+push constant 0
+call Screen.setColor 1
+pop temp 0
+push argument 0
+call Bird.drawBird 1
+pop temp 0
 push argument 0
 call Bird.moveBird 1
+pop temp 0
+push argument 1
+push argument 2
+call Main.pipeShift 2
 pop temp 0
 label WHILE_EXP0
 push local 0
@@ -106,15 +114,15 @@ add
 pop local 0
 goto WHILE_EXP0
 label WHILE_END0
-push argument 1
-push argument 2
-call Main.pipeShift 2
-pop temp 0
 push constant 0
 return
 function Main.draw 2
 push constant 0
 pop local 0
+push constant 0
+not
+call Screen.setColor 1
+pop temp 0
 push argument 0
 call Bird.drawBird 1
 pop temp 0
@@ -147,22 +155,20 @@ return
 function Main.checkPipeCleared 0
 push constant 0
 return
-function Main.main 12
-call Random.new 0
-pop local 11
+function Main.main 10
 push constant 10
 pop local 2
-push constant 50
-pop local 5
+push constant 80
+pop static 0
 push constant 0
 not
-pop local 6
+pop local 5
 push constant 6
 pop local 3
 push constant 0
 pop local 4
 push constant 0
-pop local 7
+pop local 6
 push constant 75
 push constant 100
 push constant 10
@@ -171,40 +177,39 @@ pop local 1
 push local 3
 call Array.new 1
 pop local 0
+call Pipe.init 0
+pop temp 0
 label WHILE_EXP0
-push local 7
+push local 6
 push local 3
 lt
 not
 if-goto WHILE_END0
 push constant 400
-push local 5
-push local 7
+push static 0
+call Pipe.getWidth 0
+add
+push local 6
 call Math.multiply 2
 add
-pop local 9
-push local 11
-push constant 33
-call Random.generate 2
-pop local 10
-push local 7
+pop local 8
+push local 6
 push local 0
 add
-push local 9
-push local 10
-call Pipe.new 2
+push local 8
+call Pipe.new 1
 pop temp 0
 pop pointer 1
 push temp 0
 pop that 0
-push local 7
+push local 6
 push constant 1
 add
-pop local 7
+pop local 6
 goto WHILE_EXP0
 label WHILE_END0
 label WHILE_EXP1
-push local 6
+push local 5
 not
 if-goto WHILE_END1
 push local 1
@@ -214,7 +219,7 @@ if-goto IF_TRUE0
 goto IF_FALSE0
 label IF_TRUE0
 push constant 0
-pop local 6
+pop local 5
 label IF_FALSE0
 push local 1
 push local 0
@@ -244,9 +249,6 @@ call Array.dispose 1
 pop temp 0
 push local 1
 call Bird.dispose 1
-pop temp 0
-push local 11
-call Random.dispose 1
 pop temp 0
 push constant 0
 return

@@ -69,6 +69,21 @@ return
 function Bird.drawBird 0
 push argument 0
 pop pointer 0
+push this 1
+push this 2
+lt
+push this 1
+or
+push constant 255
+push this 2
+sub
+gt
+if-goto IF_TRUE0
+goto IF_FALSE0
+label IF_TRUE0
+push constant 0
+return
+label IF_FALSE0
 push this 0
 push this 1
 push this 2

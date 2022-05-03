@@ -34,6 +34,10 @@ class Bird {
     }
 
     method void drawBird() {
+        if (yPos < radius | yPos > (255 - radius)) {
+            // YOU LOSE (unimplemented)
+            return;
+        }
         do Screen.drawCircle(xPos, yPos, radius);
         return;
     }

@@ -30,8 +30,6 @@ return
 function Random.generate 2
 push argument 0
 pop pointer 0
-push argument 1
-pop local 0
 push constant 0
 pop local 1
 label WHILE_EXP0
@@ -40,14 +38,12 @@ push static 0
 lt
 not
 if-goto WHILE_END0
-push local 0
+push argument 1
 push constant 31415
 call Math.multiply 2
 push constant 42
 add
-push constant 256
-call Random.mod 2
-pop local 0
+pop argument 1
 push local 1
 push constant 1
 add
@@ -59,6 +55,7 @@ push constant 1
 add
 pop static 0
 push local 0
+call Math.abs 1
 return
 function Random.dispose 0
 push argument 0

@@ -4,17 +4,22 @@ class Pipe {
     field int xPos, height;
     
     static int width, step, openSpace;
+    static Random rand;
 
-    constructor Pipe new(int x, int h) {
-        // randomly get a new pipe height
-        var Random rand;
-        let xPos = x;
-        let height = h;
-
+    function void init() {
         // set static fields
-        let width = 40;
+        let width = 30;
         let step = 10;
         let openSpace = 90;
+        let rand = Random.new();
+        return;
+    }
+
+    constructor Pipe new(int x) {
+        let xPos = x;
+        // randomly get a new pipe height
+        let height = Random.mod(rand.generate(33), 256 - (2 * openSpace)) + openSpace;
+
         return this;
     }
 
@@ -26,6 +31,10 @@ class Pipe {
 
     // getters
     method int getX() {return xPos;}
+    method void addSpace(int pipeSpacing) {
+        let xPos = xPos + pipeSpacing;
+        return;
+    }
     method int getHeight() {return height;}
     function int getWidth() {return width;}
     function int getStep() {return step;}
@@ -33,28 +42,29 @@ class Pipe {
     method void drawPipe() {
         var int rightEdge;
         // only draw if the full object will appear on screen
-        if (xPos > -1) {
+        
+        if (xPos > 0 & xPos < 511) {
             // Black
             do Screen.setColor(true);
 
             // bottom half
             //do Screen.drawRectangle(xPos, height, xPos + width, 255);
-            do Screen.drawLine(xPos, 255, xPos, 255 - height);
+            do Screen.drawRectangle(Math.max(xPos, 0), 255 - height, Math.min(xPos + width, 511), 255);
             // top half
             //do Screen.drawRectangle(xPos, 0, xPos + width, height - openSpace);
-            do Screen.drawLine(xPos, 0, xPos, 255 - height - openSpace);
+            do Screen.drawRectangle(Math.max(xPos, 0), 0, Math.min(xPos + width, 511), 255 - height - openSpace);
         }
 
         // Cover over right edge of pipe
         let rightEdge = xPos + width;
-        if (rightEdge > -1) {
+        if (rightEdge < 511) {
             // White
             do Screen.setColor(false);
 
             // bottom half
-            do Screen.drawLine(rightEdge, 255, 255 - rightEdge, height);
+            do Screen.drawRectangle(Math.max(rightEdge, 0), 255 - height, Math.min(rightEdge + width, 511), 255);
             // top half
-            do Screen.drawLine(rightEdge, 0, rightEdge, 255 - height - openSpace);
+            do Screen.drawRectangle(Math.max(rightEdge, 0), 0, Math.min(rightEdge + width, 511), 255 - height - openSpace);
         }
         return;
     }

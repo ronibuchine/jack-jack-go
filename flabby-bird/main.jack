@@ -1,28 +1,30 @@
 class Main {  
 
+   static int pipeSpacing;
   
    function void pipeShift(Array pipes, int numPipes) {
       var int i, next, pipeX, pipeStep;
       var Pipe temp;
-      var Random rand;
+      //var Random rand;
       let temp = pipes[0];
       let pipeX = temp.getX();
-      let pipeStep = Pipe.getStep();
-      let next = pipeX - pipeStep;
-      if (next < 0) {
+      //let pipeStep = Pipe.getStep();
+      let next = pipeX + Pipe.getWidth();//pipeStep;
+      if (next < 2) {
 
-         let rand = Random.new();
+         //let rand = Random.new();
+         let pipes[numPipes - 1] = pipes[0];
          let i = 1;
-         let temp = pipes[0]; // store the first pipe to be disposed
 
          while (i < numPipes) {
             let pipes[i-1] = pipes[i];
             let i = i + 1; 
          }
          // create new pipe off screen to the right
-         let pipes[numPipes-1] = Pipe.new(600, rand.generate(42));
-         do temp.dispose();
-         do rand.dispose();
+         let temp = pipes[numPipes - 1];
+         do temp.addSpace(pipeSpacing + Pipe.getWidth());
+         //do temp.dispose();
+         //do rand.dispose();
       }
       return;
    }
@@ -32,13 +34,15 @@ class Main {
       var int i;
       var Pipe temp;
       let i = 0;
+      do Screen.setColor(false);
+      do bird.drawBird();
       do bird.moveBird();
+      do Main.pipeShift(pipes, numPipes);
       while (i < numPipes) {
          let temp = pipes[i];
          do temp.movePipe();
          let i = i + 1;
       }
-      do Main.pipeShift(pipes, numPipes);
       return;
    }
 
@@ -47,6 +51,7 @@ class Main {
       var int j;
       var Pipe temp;
       let j = 0;
+      do Screen.setColor(true);
       do bird.drawBird();
       while (j < numPipes) {
          let temp = pipes[j];
@@ -73,27 +78,28 @@ class Main {
       
       var Array pipes;
       var Bird bird;
-      var int step, numPipes, score, pipeSpacing;
+      var int step, numPipes, score;//, pipeSpacing;
       var bool alive;
       var int i;
       var Pipe temp;
 
       var int xPos, height;
-      var Random rand;
+      //var Random rand;
 
-      let rand = Random.new();
+      //let rand = Random.new();
       let step = 10;
-      let pipeSpacing = 50;
+      let pipeSpacing = 80;
       let alive = true;
       let numPipes = 6;
       let score = 0;
       let i = 0;
       let bird = Bird.new(75, 100, 10);
       let pipes = Array.new(numPipes);
+      do Pipe.init();
       while (i < numPipes) {
-         let xPos = 400 + (pipeSpacing * i);
-         let height = rand.generate(33);
-         let pipes[i] = Pipe.new(xPos, height);
+         let xPos = 400 + ((pipeSpacing + Pipe.getWidth()) * i);
+         //let height = rand.generate(33);
+         let pipes[i] = Pipe.new(xPos);
          let i = i + 1;
       }
       
@@ -115,7 +121,7 @@ class Main {
 
       do pipes.dispose();
       do bird.dispose();
-      do rand.dispose();
+      //do rand.dispose();
       return;
    }
 }
