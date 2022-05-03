@@ -1,19 +1,21 @@
 class Main {  
 
    static int pipeSpacing;
+   static int gameCounter;
   
    function void pipeShift(Array pipes, int numPipes) {
-      var int i, next, pipeX, pipeStep;
+      var int i, pipeX, pipeY, pipeStep;
       var Pipe temp;
       //var Random rand;
       let temp = pipes[0];
       let pipeX = temp.getX();
       //let pipeStep = Pipe.getStep();
-      let next = pipeX + Pipe.getWidth();//pipeStep;
-      if (next < 2) {
+      let pipeY = pipeX + Pipe.getWidth();//pipeStep;
+      
+      if (pipeY < 0) {
 
          //let rand = Random.new();
-         let pipes[numPipes - 1] = pipes[0];
+         let pipes[numPipes - 1] = temp;
          let i = 1;
 
          while (i < numPipes) {
@@ -21,8 +23,7 @@ class Main {
             let i = i + 1; 
          }
          // create new pipe off screen to the right
-         let temp = pipes[numPipes - 1];
-         do temp.addSpace(pipeSpacing + Pipe.getWidth());
+         do temp.reset(pipeX + ((pipeSpacing + Pipe.getWidth()) * numPipes));
          //do temp.dispose();
          //do rand.dispose();
       }
@@ -34,14 +35,17 @@ class Main {
       var int i;
       var Pipe temp;
       let i = 0;
-      do Screen.setColor(false);
-      do bird.drawBird();
       do bird.moveBird();
-      do Main.pipeShift(pipes, numPipes);
-      while (i < numPipes) {
-         let temp = pipes[i];
-         do temp.movePipe();
-         let i = i + 1;
+      do bird.drawBird();
+      if (gameCounter > 1) {
+         do Main.pipeShift(pipes, numPipes);
+         while (i < numPipes) {
+            let temp = pipes[i];
+            do temp.movePipe();
+            do temp.drawPipe();
+            let i = i + 1;
+         }
+         let gameCounter = 0;
       }
       return;
    }
@@ -51,7 +55,7 @@ class Main {
       var int j;
       var Pipe temp;
       let j = 0;
-      do Screen.setColor(true);
+      //do Screen.setColor(true);
       do bird.drawBird();
       while (j < numPipes) {
          let temp = pipes[j];
@@ -88,35 +92,38 @@ class Main {
 
       //let rand = Random.new();
       let step = 10;
-      let pipeSpacing = 80;
+      let pipeSpacing = 160;
       let alive = true;
-      let numPipes = 6;
+      let numPipes = 5;
       let score = 0;
       let i = 0;
       let bird = Bird.new(75, 100, 10);
       let pipes = Array.new(numPipes);
       do Pipe.init();
       while (i < numPipes) {
-         let xPos = 400 + ((pipeSpacing + Pipe.getWidth()) * i);
+         let xPos = 480 + ((pipeSpacing + Pipe.getWidth()) * i);
          //let height = rand.generate(33);
          let pipes[i] = Pipe.new(xPos);
          let i = i + 1;
       }
       
-      while (alive) {        
-         
+      while (alive) {
+
+         do Main.move(bird, pipes, numPipes);
+
          // each frame move all elements on the screen and check for collisions
          if (Main.checkCollisions(bird, pipes)) {
             let alive = false;
          }
 
-         do Main.draw(bird, pipes, numPipes);
+         //do Main.draw(bird, pipes, numPipes);
 
          if (Main.checkPipeCleared(bird, pipes)) {
             let score = score + 1;
          }
-        
-         do Main.move(bird, pipes, numPipes);      
+
+         let gameCounter = gameCounter + 1;
+         do Sys.wait(200);
       }
 
       do pipes.dispose();

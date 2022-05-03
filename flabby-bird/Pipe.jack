@@ -8,9 +8,9 @@ class Pipe {
 
     function void init() {
         // set static fields
-        let width = 30;
-        let step = 10;
-        let openSpace = 90;
+        let width = 16 * 5; //multiple of 16
+        let step = 16; //multiple of 16
+        let openSpace = 100;
         let rand = Random.new();
         return;
     }
@@ -31,8 +31,9 @@ class Pipe {
 
     // getters
     method int getX() {return xPos;}
-    method void addSpace(int pipeSpacing) {
-        let xPos = xPos + pipeSpacing;
+    method void reset(int x) {
+        let xPos = x;
+        let height = Random.mod(rand.generate(33), 256 - openSpace);
         return;
     }
     method int getHeight() {return height;}
@@ -40,31 +41,59 @@ class Pipe {
     function int getStep() {return step;}
 
     method void drawPipe() {
-        var int rightEdge;
-        // only draw if the full object will appear on screen
-        
-        if (xPos > 0 & xPos < 511) {
-            // Black
-            do Screen.setColor(true);
+        var int yPos;
 
-            // bottom half
-            //do Screen.drawRectangle(xPos, height, xPos + width, 255);
-            do Screen.drawRectangle(Math.max(xPos, 0), 255 - height, Math.min(xPos + width, 511), 255);
-            // top half
-            //do Screen.drawRectangle(xPos, 0, xPos + width, height - openSpace);
-            do Screen.drawRectangle(Math.max(xPos, 0), 0, Math.min(xPos + width, 511), 255 - height - openSpace);
+        var int memAddress, i, j, col;
+
+        if (xPos > 511) {return;}
+        let i = 0;
+        let memAddress = 16384 + (xPos / 16);
+        let col = 32 - Random.mod(memAddress, 32);
+
+        if (xPos < 0) {
+            let memAddress = memAddress + 5;
+            while (i < 256) {
+                do Memory.poke(memAddress, 0);
+                let memAddress = memAddress + 32;
+                let i = i + 1;
+            }
         }
-
-        // Cover over right edge of pipe
-        let rightEdge = xPos + width;
-        if (rightEdge < 511) {
-            // White
-            do Screen.setColor(false);
-
-            // bottom half
-            do Screen.drawRectangle(Math.max(rightEdge, 0), 255 - height, Math.min(rightEdge + width, 511), 255);
-            // top half
-            do Screen.drawRectangle(Math.max(rightEdge, 0), 0, Math.min(rightEdge + width, 511), 255 - height - openSpace);
+        else {
+            if (xPos < 432) {
+                while (i < height) {
+                    do Memory.poke(memAddress, -1);
+                    do Memory.poke(memAddress + 5, 0);
+                    let memAddress = memAddress + 32;
+                    let i = i + 1;
+                }
+                let memAddress = memAddress + 5;
+                while (i < (height + openSpace)) {
+                    do Memory.poke(memAddress, 0);
+                    let memAddress = memAddress + 32;
+                    let i = i + 1;
+                }
+                let memAddress = memAddress - 5;
+                while (i < 256) {
+                    do Memory.poke(memAddress, -1);
+                    do Memory.poke(memAddress + 5, 0);
+                    let memAddress = memAddress + 32;
+                    let i = i + 1;
+                }
+            }
+            else {
+                while (i < height) {
+                    do Memory.poke(memAddress, -1);
+                    let memAddress = memAddress + 32;
+                    let i = i + 1;
+                }
+                let memAddress = (32 * openSpace) + memAddress;
+                let i = i + openSpace;
+                while (i < 256) {
+                    do Memory.poke(memAddress, -1);
+                    let memAddress = memAddress + 32;
+                    let i = i + 1;
+                }
+            }
         }
         return;
     }

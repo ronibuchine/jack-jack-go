@@ -1,9 +1,11 @@
 function Pipe.init 0
-push constant 30
+push constant 16
+push constant 5
+call Math.multiply 2
 pop static 0
-push constant 10
+push constant 16
 pop static 1
-push constant 90
+push constant 100
 pop static 2
 call Random.new 0
 pop static 3
@@ -43,13 +45,19 @@ push argument 0
 pop pointer 0
 push this 0
 return
-function Pipe.addSpace 0
+function Pipe.reset 0
 push argument 0
 pop pointer 0
-push this 0
 push argument 1
-add
 pop this 0
+push static 3
+push constant 33
+call Random.generate 2
+push constant 256
+push static 2
+sub
+call Random.mod 2
+pop this 1
 push constant 0
 return
 function Pipe.getHeight 0
@@ -63,98 +71,210 @@ return
 function Pipe.getStep 0
 push static 1
 return
-function Pipe.drawPipe 1
+function Pipe.drawPipe 5
 push argument 0
 pop pointer 0
 push this 0
-push constant 0
-gt
-push this 0
-and
 push constant 511
-lt
+gt
 if-goto IF_TRUE0
 goto IF_FALSE0
 label IF_TRUE0
 push constant 0
-not
-call Screen.setColor 1
-pop temp 0
-push this 0
-push constant 0
-call Math.max 2
-push constant 255
-push this 1
-sub
-push this 0
-push static 0
-add
-push constant 511
-call Math.min 2
-push constant 255
-call Screen.drawRectangle 4
-pop temp 0
-push this 0
-push constant 0
-call Math.max 2
-push constant 0
-push this 0
-push static 0
-add
-push constant 511
-call Math.min 2
-push constant 255
-push this 1
-sub
-push static 2
-sub
-call Screen.drawRectangle 4
-pop temp 0
+return
 label IF_FALSE0
+push constant 0
+pop local 2
+push constant 16384
 push this 0
-push static 0
+push constant 16
+call Math.divide 2
 add
-pop local 0
-push local 0
-push constant 511
+pop local 1
+push constant 32
+push local 1
+push constant 32
+call Random.mod 2
+sub
+pop local 4
+push this 0
+push constant 0
 lt
 if-goto IF_TRUE1
 goto IF_FALSE1
 label IF_TRUE1
-push constant 0
-call Screen.setColor 1
-pop temp 0
-push local 0
-push constant 0
-call Math.max 2
-push constant 255
-push this 1
-sub
-push local 0
-push static 0
+push local 1
+push constant 5
 add
-push constant 511
-call Math.min 2
-push constant 255
-call Screen.drawRectangle 4
+pop local 1
+label WHILE_EXP0
+push local 2
+push constant 256
+lt
+not
+if-goto WHILE_END0
+push local 1
+push constant 0
+call Memory.poke 2
 pop temp 0
-push local 0
-push constant 0
-call Math.max 2
-push constant 0
-push local 0
-push static 0
+push local 1
+push constant 32
 add
-push constant 511
-call Math.min 2
-push constant 255
-push this 1
-sub
-push static 2
-sub
-call Screen.drawRectangle 4
-pop temp 0
+pop local 1
+push local 2
+push constant 1
+add
+pop local 2
+goto WHILE_EXP0
+label WHILE_END0
+goto IF_END1
 label IF_FALSE1
+push this 0
+push constant 432
+lt
+if-goto IF_TRUE2
+goto IF_FALSE2
+label IF_TRUE2
+label WHILE_EXP1
+push local 2
+push this 1
+lt
+not
+if-goto WHILE_END1
+push local 1
+push constant 1
+neg
+call Memory.poke 2
+pop temp 0
+push local 1
+push constant 5
+add
+push constant 0
+call Memory.poke 2
+pop temp 0
+push local 1
+push constant 32
+add
+pop local 1
+push local 2
+push constant 1
+add
+pop local 2
+goto WHILE_EXP1
+label WHILE_END1
+push local 1
+push constant 5
+add
+pop local 1
+label WHILE_EXP2
+push local 2
+push this 1
+push static 2
+add
+lt
+not
+if-goto WHILE_END2
+push local 1
+push constant 0
+call Memory.poke 2
+pop temp 0
+push local 1
+push constant 32
+add
+pop local 1
+push local 2
+push constant 1
+add
+pop local 2
+goto WHILE_EXP2
+label WHILE_END2
+push local 1
+push constant 5
+sub
+pop local 1
+label WHILE_EXP3
+push local 2
+push constant 256
+lt
+not
+if-goto WHILE_END3
+push local 1
+push constant 1
+neg
+call Memory.poke 2
+pop temp 0
+push local 1
+push constant 5
+add
+push constant 0
+call Memory.poke 2
+pop temp 0
+push local 1
+push constant 32
+add
+pop local 1
+push local 2
+push constant 1
+add
+pop local 2
+goto WHILE_EXP3
+label WHILE_END3
+goto IF_END2
+label IF_FALSE2
+label WHILE_EXP4
+push local 2
+push this 1
+lt
+not
+if-goto WHILE_END4
+push local 1
+push constant 1
+neg
+call Memory.poke 2
+pop temp 0
+push local 1
+push constant 32
+add
+pop local 1
+push local 2
+push constant 1
+add
+pop local 2
+goto WHILE_EXP4
+label WHILE_END4
+push constant 32
+push static 2
+call Math.multiply 2
+push local 1
+add
+pop local 1
+push local 2
+push static 2
+add
+pop local 2
+label WHILE_EXP5
+push local 2
+push constant 256
+lt
+not
+if-goto WHILE_END5
+push local 1
+push constant 1
+neg
+call Memory.poke 2
+pop temp 0
+push local 1
+push constant 32
+add
+pop local 1
+push local 2
+push constant 1
+add
+pop local 2
+goto WHILE_EXP5
+label WHILE_END5
+label IF_END2
+label IF_END1
 push constant 0
 return
 function Pipe.dispose 0

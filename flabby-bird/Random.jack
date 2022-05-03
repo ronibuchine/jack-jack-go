@@ -26,7 +26,7 @@ class Random {
             let i = i + 1;
         }
         let num = num + 1;
-        return Math.abs(xn); 
+        return Math.abs(seed); 
     }
 
     method void dispose() {

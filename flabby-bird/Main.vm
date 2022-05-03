@@ -7,13 +7,13 @@ push that 0
 pop local 4
 push local 4
 call Pipe.getX 1
-pop local 2
-push local 2
-call Pipe.getWidth 0
-add
 pop local 1
 push local 1
-push constant 2
+call Pipe.getWidth 0
+add
+pop local 2
+push local 2
+push constant 0
 lt
 if-goto IF_TRUE0
 goto IF_FALSE0
@@ -23,11 +23,7 @@ push constant 1
 sub
 push argument 0
 add
-push constant 0
-push argument 0
-add
-pop pointer 1
-push that 0
+push local 4
 pop temp 0
 pop pointer 1
 push temp 0
@@ -60,19 +56,15 @@ add
 pop local 0
 goto WHILE_EXP0
 label WHILE_END0
-push argument 1
-push constant 1
-sub
-push argument 0
-add
-pop pointer 1
-push that 0
-pop local 4
 push local 4
+push local 1
 push static 0
 call Pipe.getWidth 0
 add
-call Pipe.addSpace 2
+push argument 1
+call Math.multiply 2
+add
+call Pipe.reset 2
 pop temp 0
 label IF_FALSE0
 push constant 0
@@ -80,15 +72,18 @@ return
 function Main.move 2
 push constant 0
 pop local 0
-push constant 0
-call Screen.setColor 1
+push argument 0
+call Bird.moveBird 1
 pop temp 0
 push argument 0
 call Bird.drawBird 1
 pop temp 0
-push argument 0
-call Bird.moveBird 1
-pop temp 0
+push static 1
+push constant 1
+gt
+if-goto IF_TRUE0
+goto IF_FALSE0
+label IF_TRUE0
 push argument 1
 push argument 2
 call Main.pipeShift 2
@@ -108,6 +103,9 @@ pop local 1
 push local 1
 call Pipe.movePipe 1
 pop temp 0
+push local 1
+call Pipe.drawPipe 1
+pop temp 0
 push local 0
 push constant 1
 add
@@ -115,14 +113,13 @@ pop local 0
 goto WHILE_EXP0
 label WHILE_END0
 push constant 0
+pop static 1
+label IF_FALSE0
+push constant 0
 return
 function Main.draw 2
 push constant 0
 pop local 0
-push constant 0
-not
-call Screen.setColor 1
-pop temp 0
 push argument 0
 call Bird.drawBird 1
 pop temp 0
@@ -158,12 +155,12 @@ return
 function Main.main 10
 push constant 10
 pop local 2
-push constant 80
+push constant 160
 pop static 0
 push constant 0
 not
 pop local 5
-push constant 6
+push constant 5
 pop local 3
 push constant 0
 pop local 4
@@ -185,7 +182,7 @@ push local 3
 lt
 not
 if-goto WHILE_END0
-push constant 400
+push constant 480
 push static 0
 call Pipe.getWidth 0
 add
@@ -214,6 +211,11 @@ not
 if-goto WHILE_END1
 push local 1
 push local 0
+push local 3
+call Main.move 3
+pop temp 0
+push local 1
+push local 0
 call Main.checkCollisions 2
 if-goto IF_TRUE0
 goto IF_FALSE0
@@ -221,11 +223,6 @@ label IF_TRUE0
 push constant 0
 pop local 5
 label IF_FALSE0
-push local 1
-push local 0
-push local 3
-call Main.draw 3
-pop temp 0
 push local 1
 push local 0
 call Main.checkPipeCleared 2
@@ -237,10 +234,12 @@ push constant 1
 add
 pop local 4
 label IF_FALSE1
-push local 1
-push local 0
-push local 3
-call Main.move 3
+push static 1
+push constant 1
+add
+pop static 1
+push constant 200
+call Sys.wait 1
 pop temp 0
 goto WHILE_EXP1
 label WHILE_END1
