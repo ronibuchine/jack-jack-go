@@ -65,14 +65,26 @@ class Main {
       return;
    }
 
-   function bool checkCollisions(Bird bird, Array pipes) {
+   function bool checkCollisions(Bird bird, Pipe pipe) {
       // if the bird collides with a pipe return true
+      var int leftSide, rightSide, top, bottom;
+      let leftSide = pipe.getX();
+      let rightSide = (pipe.getX() + Pipe.getWidth());
+      let bottom = pipe.getHeight();
+      let top = (bottom + Pipe.getOpenSpace());
+      // bird collides with pipe if its between the walls and hits the bottom pipe or top pipe
+      if (((bird.getX() > leftSide) & (bird.getX() < rightSide)) & ((bird.getY() < bottom) | (bird.getY() > top))) {
+         return true;
+      }
       // unimplemented
       return false;
    }
 
-   function bool checkPipeCleared(Bird bird, Array pipes) {
+   function bool checkPipeCleared(Bird bird, Pipe pipe) {
       // if the bird cleared a pipe return true
+      if (~(Main.checkCollisions(bird, pipe)) & bird.getX() > ((pipe.getX() + Pipe.getWidth()) / 2)) {
+         return true;
+      }
       // unimplemented
       return false;
    }
@@ -112,7 +124,7 @@ class Main {
          do Main.move(bird, pipes, numPipes);
 
          // each frame move all elements on the screen and check for collisions
-         if (Main.checkCollisions(bird, pipes)) {
+         if (Main.checkCollisions(bird, pipes[0])) {
             let alive = false;
          }
 
@@ -125,6 +137,8 @@ class Main {
          let gameCounter = gameCounter + 1;
          do Sys.wait(200);
       }
+
+      // Print game over screen with score
 
       do pipes.dispose();
       do bird.dispose();

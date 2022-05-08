@@ -8,7 +8,7 @@ class Pipe {
 
     function void init() {
         // set static fields
-        let width = 16 * 5; //multiple of 16
+        let width = 16 * 4; //multiple of 16
         let step = 16; //multiple of 16
         let openSpace = 100;
         let rand = Random.new();
@@ -39,6 +39,7 @@ class Pipe {
     method int getHeight() {return height;}
     function int getWidth() {return width;}
     function int getStep() {return step;}
+    function int getOpenSpace() {return openSpace;}
 
     method void drawPipe() {
         var int yPos;

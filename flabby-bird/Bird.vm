@@ -12,6 +12,16 @@ push argument 1
 pop this 3
 push pointer 0
 return
+function Bird.getX 0
+push argument 0
+pop pointer 0
+push this 0
+return
+function Bird.getY 0
+push argument 0
+pop pointer 0
+push this 1
+return
 function Bird.moveBird 0
 push argument 0
 pop pointer 0
@@ -236,40 +246,6 @@ push constant 352
 add
 push constant 992
 call Memory.poke 2
-pop temp 0
-push constant 0
-return
-push constant 0
-call Screen.setColor 1
-pop temp 0
-push this 0
-push this 3
-push this 2
-call Screen.drawCircle 3
-pop temp 0
-push constant 0
-not
-call Screen.setColor 1
-pop temp 0
-push this 1
-push this 2
-lt
-push this 1
-or
-push constant 255
-push this 2
-sub
-gt
-if-goto IF_TRUE0
-goto IF_FALSE0
-label IF_TRUE0
-push constant 0
-return
-label IF_FALSE0
-push this 0
-push this 1
-push this 2
-call Screen.drawCircle 3
 pop temp 0
 push constant 0
 return

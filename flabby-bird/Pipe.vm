@@ -1,6 +1,6 @@
 function Pipe.init 0
 push constant 16
-push constant 5
+push constant 4
 call Math.multiply 2
 pop static 0
 push constant 16
@@ -70,6 +70,9 @@ push static 0
 return
 function Pipe.getStep 0
 push static 1
+return
+function Pipe.getOpenSpace 0
+push static 2
 return
 function Pipe.drawPipe 5
 push argument 0

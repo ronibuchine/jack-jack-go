@@ -146,10 +146,72 @@ goto WHILE_EXP0
 label WHILE_END0
 push constant 0
 return
-function Main.checkCollisions 0
+function Main.checkCollisions 4
+push argument 1
+call Pipe.getX 1
+pop local 0
+push argument 1
+call Pipe.getX 1
+call Pipe.getWidth 0
+add
+pop local 1
+push argument 1
+call Pipe.getHeight 1
+pop local 3
+push local 3
+call Pipe.getOpenSpace 0
+add
+pop local 2
+push argument 0
+call Bird.getX 1
+push local 0
+gt
+push argument 0
+call Bird.getX 1
+push local 1
+lt
+and
+push argument 0
+call Bird.getY 1
+push local 3
+lt
+push argument 0
+call Bird.getY 1
+push local 2
+gt
+or
+and
+if-goto IF_TRUE0
+goto IF_FALSE0
+label IF_TRUE0
+push constant 0
+not
+return
+label IF_FALSE0
 push constant 0
 return
 function Main.checkPipeCleared 0
+push argument 0
+push argument 1
+call Main.checkCollisions 2
+not
+push argument 0
+call Bird.getX 1
+and
+push argument 1
+call Pipe.getX 1
+call Pipe.getWidth 0
+add
+push constant 2
+call Math.divide 2
+gt
+if-goto IF_TRUE0
+goto IF_FALSE0
+label IF_TRUE0
+push constant 0
+not
+return
+label IF_FALSE0
 push constant 0
 return
 function Main.main 10
@@ -215,7 +277,11 @@ push local 3
 call Main.move 3
 pop temp 0
 push local 1
+push constant 0
 push local 0
+add
+pop pointer 1
+push that 0
 call Main.checkCollisions 2
 if-goto IF_TRUE0
 goto IF_FALSE0

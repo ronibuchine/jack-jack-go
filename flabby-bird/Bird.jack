@@ -11,6 +11,9 @@ class Bird {
         let lastY = y;
         return this;
     }
+    // getters
+    method int getX() {return xPos;}
+    method int getY() {return yPos;}
 
     method void moveBird() {
         // need to implement gravity so this looks natural
@@ -65,15 +68,6 @@ class Bird {
         do Memory.poke(memAddress+320, 31768);
         do Memory.poke(memAddress+352, 992);
 
-        return;
-        do Screen.setColor(false);
-        do Screen.drawCircle(xPos, lastY, radius);
-        do Screen.setColor(true);
-        if (yPos < radius | yPos > (255 - radius)) {
-            // YOU LOSE (unimplemented)
-            return;
-        }
-        do Screen.drawCircle(xPos, yPos, radius);
-        return;
+        return;       
     }
 }
