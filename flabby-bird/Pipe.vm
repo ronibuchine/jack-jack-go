@@ -12,7 +12,7 @@ pop static 3
 push constant 0
 return
 function Pipe.new 0
-push constant 2
+push constant 3
 call Memory.alloc 1
 pop pointer 0
 push argument 0
@@ -29,6 +29,8 @@ call Random.mod 2
 push static 2
 add
 pop this 1
+push constant 0
+pop this 2
 push pointer 0
 return
 function Pipe.movePipe 0
@@ -59,11 +61,18 @@ sub
 call Random.mod 2
 pop this 1
 push constant 0
+pop this 2
+push constant 0
 return
 function Pipe.getHeight 0
 push argument 0
 pop pointer 0
 push this 1
+return
+function Pipe.getCleared 0
+push argument 0
+pop pointer 0
+push this 2
 return
 function Pipe.getWidth 0
 push static 0
@@ -73,6 +82,13 @@ push static 1
 return
 function Pipe.getOpenSpace 0
 push static 2
+return
+function Pipe.setCleared 0
+push argument 0
+pop pointer 0
+push argument 1
+pop this 2
+push constant 0
 return
 function Pipe.drawPipe 5
 push argument 0

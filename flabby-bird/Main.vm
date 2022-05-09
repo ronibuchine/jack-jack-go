@@ -66,6 +66,9 @@ call Math.multiply 2
 add
 call Pipe.reset 2
 pop temp 0
+push argument 2
+call Main.drawScore 1
+pop temp 0
 label IF_FALSE0
 push constant 0
 return
@@ -86,7 +89,8 @@ goto IF_FALSE0
 label IF_TRUE0
 push argument 1
 push argument 2
-call Main.pipeShift 2
+push argument 3
+call Main.pipeShift 3
 pop temp 0
 label WHILE_EXP0
 push local 0
@@ -115,10 +119,77 @@ label WHILE_END0
 push constant 0
 pop static 1
 label IF_FALSE0
-push constant 1
 push constant 0
-call Output.moveCursor 2
+return
+function Main.checkCollisions 4
+push local 3
+call Pipe.getOpenSpace 0
+sub
+pop local 2
+push argument 1
+call Pipe.getX 1
+pop local 0
+push argument 1
+call Pipe.getX 1
+call Pipe.getOpenSpace 0
+add
+pop local 1
+push argument 1
+call Pipe.getHeight 1
+pop local 3
+push argument 0
+call Bird.getX 1
+push local 0
+gt
+push argument 0
+call Bird.getX 1
+and
+push local 1
+lt
+push argument 0
+call Bird.getY 1
+push local 3
+gt
+push argument 0
+call Bird.getY 1
+or
+push local 2
+lt
+and
+if-goto IF_TRUE0
+goto IF_FALSE0
+label IF_TRUE0
+push constant 0
+not
+return
+label IF_FALSE0
+push constant 0
+return
+function Main.checkPipeCleared 0
+push argument 0
+call Bird.getX 1
+push argument 1
+call Pipe.getX 1
+gt
+push argument 1
+call Pipe.getCleared 1
+not
+and
+if-goto IF_TRUE0
+goto IF_FALSE0
+label IF_TRUE0
+push argument 1
+push constant 0
+not
+call Pipe.setCleared 2
 pop temp 0
+push constant 0
+not
+return
+label IF_FALSE0
+push constant 0
+return
+function Main.drawScore 0
 push constant 7
 call String.new 1
 push constant 83
@@ -137,88 +208,16 @@ push constant 32
 call String.appendChar 2
 call Output.printString 1
 pop temp 0
-push argument 3
+push argument 0
 call Output.printInt 1
 pop temp 0
-push constant 1
+push constant 0
 push constant 0
 call Output.moveCursor 2
 pop temp 0
 push constant 0
 return
-function Main.checkCollisions 4
-push argument 1
-call Pipe.getX 1
-pop local 0
-push argument 1
-call Pipe.getX 1
-call Pipe.getWidth 0
-add
-pop local 1
-push argument 1
-call Pipe.getHeight 1
-pop local 3
-push local 3
-call Pipe.getOpenSpace 0
-add
-pop local 2
-push argument 0
-call Bird.getX 1
-push local 0
-push constant 1
-sub
-gt
-push argument 0
-call Bird.getX 1
-and
-push local 1
-push constant 1
-add
-lt
-push argument 0
-call Bird.getY 1
-push local 3
-lt
-push argument 0
-call Bird.getY 1
-or
-push local 2
-gt
-and
-if-goto IF_TRUE0
-goto IF_FALSE0
-label IF_TRUE0
-push constant 0
-not
-return
-label IF_FALSE0
-push constant 0
-return
-function Main.checkPipeCleared 0
-push argument 0
-push argument 1
-call Main.checkCollisions 2
-not
-push argument 0
-call Bird.getX 1
-and
-push argument 1
-call Pipe.getX 1
-call Pipe.getWidth 0
-add
-push constant 2
-call Math.divide 2
-gt
-if-goto IF_TRUE0
-goto IF_FALSE0
-label IF_TRUE0
-push constant 0
-not
-return
-label IF_FALSE0
-push constant 0
-return
-function Main.main 10
+function Main.main 11
 push constant 10
 pop local 2
 push constant 160
@@ -295,7 +294,11 @@ push constant 0
 pop local 5
 label IF_FALSE0
 push local 1
+push constant 0
 push local 0
+add
+pop pointer 1
+push that 0
 call Main.checkPipeCleared 2
 if-goto IF_TRUE1
 goto IF_FALSE1
@@ -304,6 +307,9 @@ push local 4
 push constant 1
 add
 pop local 4
+push local 4
+call Main.drawScore 1
+pop temp 0
 label IF_FALSE1
 push static 1
 push constant 1
@@ -320,6 +326,9 @@ push constant 100
 call Math.multiply 2
 add
 call GameOver.draw_title_gameover 1
+pop temp 0
+push local 4
+call Main.drawScore 1
 pop temp 0
 push local 0
 call Array.dispose 1

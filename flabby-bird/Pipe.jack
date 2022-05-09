@@ -2,6 +2,7 @@ class Pipe {
 
     // values describe the bottom pipe
     field int xPos, height;
+    field bool cleared;
     
     static int width, step, openSpace;
     static Random rand;
@@ -19,6 +20,7 @@ class Pipe {
         let xPos = x;
         // randomly get a new pipe height
         let height = Random.mod(rand.generate(33), 256 - (2 * openSpace)) + openSpace;
+        let cleared = false;
 
         return this;
     }
@@ -34,12 +36,19 @@ class Pipe {
     method void reset(int x) {
         let xPos = x;
         let height = Random.mod(rand.generate(33), 256 - openSpace);
+        let cleared = false;
         return;
     }
     method int getHeight() {return height;}
+    method bool getCleared() {return cleared;}
     function int getWidth() {return width;}
     function int getStep() {return step;}
     function int getOpenSpace() {return openSpace;}
+
+    method void setCleared(bool value) {
+        let cleared = value;
+        return; 
+    }
 
     method void drawPipe() {
         var int yPos;
