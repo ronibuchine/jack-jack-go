@@ -309,6 +309,13 @@ call Sys.wait 1
 pop temp 0
 goto WHILE_EXP1
 label WHILE_END1
+push constant 10
+push constant 32
+push constant 100
+call Math.multiply 2
+add
+call GameOver.draw_title_gameover 1
+pop temp 0
 push local 0
 call Array.dispose 1
 pop temp 0

@@ -139,6 +139,7 @@ class Main {
       }
 
       // Print game over screen with score
+      do GameOver.draw_title_gameover(10+(32*100));
 
       do pipes.dispose();
       do bird.dispose();
