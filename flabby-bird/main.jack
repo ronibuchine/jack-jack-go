@@ -30,7 +30,7 @@ class Main {
       return;
    }
 
-   function void move(Bird bird, Array pipes, int numPipes) {
+   function void move(Bird bird, Array pipes, int numPipes, int score) {
       // move all geos
       var int i;
       var Pipe temp;
@@ -47,23 +47,29 @@ class Main {
          }
          let gameCounter = 0;
       }
+      // draw score
+      do Output.moveCursor(1, 0);
+      do Output.printString("Score: ");
+      do Output.printInt(score);
+      do Output.moveCursor(1, 0);
+
       return;
    }
 
-   function void draw(Bird bird, Array pipes, int numPipes) {
-      // draw all geos
-      var int j;
-      var Pipe temp;
-      let j = 0;
-      //do Screen.setColor(true);
-      do bird.drawBird();
-      while (j < numPipes) {
-         let temp = pipes[j];
-         do temp.drawPipe();
-         let j = j + 1;
-      }      
-      return;
-   }
+   // function void draw(Bird bird, Array pipes, int numPipes) {
+   //    // draw all geos
+   //    var int j;
+   //    var Pipe temp;
+   //    let j = 0;
+   //    //do Screen.setColor(true);
+   //    do bird.drawBird();
+   //    while (j < numPipes) {
+   //       let temp = pipes[j];
+   //       do temp.drawPipe();
+   //       let j = j + 1;
+   //    }      
+   //    return;
+   // }
 
    function bool checkCollisions(Bird bird, Pipe pipe) {
       // if the bird collides with a pipe return true
@@ -73,10 +79,9 @@ class Main {
       let bottom = pipe.getHeight();
       let top = (bottom + Pipe.getOpenSpace());
       // bird collides with pipe if its between the walls and hits the bottom pipe or top pipe
-      if (((bird.getX() > leftSide) & (bird.getX() < rightSide)) & ((bird.getY() < bottom) | (bird.getY() > top))) {
+      if ((bird.getX() > (leftSide-1) & bird.getX() < (rightSide+1)) & (bird.getY() < bottom | bird.getY() > top)) {
          return true;
-      }
-      // unimplemented
+      }     
       return false;
    }
 
@@ -84,8 +89,7 @@ class Main {
       // if the bird cleared a pipe return true
       if (~(Main.checkCollisions(bird, pipe)) & bird.getX() > ((pipe.getX() + Pipe.getWidth()) / 2)) {
          return true;
-      }
-      // unimplemented
+      }     
       return false;
    }
 
@@ -121,7 +125,7 @@ class Main {
       
       while (alive) {
 
-         do Main.move(bird, pipes, numPipes);
+         do Main.move(bird, pipes, numPipes, score);
 
          // each frame move all elements on the screen and check for collisions
          if (Main.checkCollisions(bird, pipes[0])) {
