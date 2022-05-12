@@ -189,6 +189,10 @@ label IF_FALSE0
 push constant 0
 return
 function Main.drawScore 0
+push constant 0
+push constant 0
+call Output.moveCursor 2
+pop temp 0
 push constant 7
 call String.new 1
 push constant 83
@@ -209,10 +213,6 @@ call Output.printString 1
 pop temp 0
 push argument 0
 call Output.printInt 1
-pop temp 0
-push constant 0
-push constant 0
-call Output.moveCursor 2
 pop temp 0
 push constant 0
 return

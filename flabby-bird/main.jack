@@ -72,9 +72,9 @@ class Main {
 
    function void drawScore(int score) {
       // draw score     
+      do Output.moveCursor(0, 0);
       do Output.printString("Score: ");
       do Output.printInt(score);
-      do Output.moveCursor(0, 0);
       return;
    }
 
