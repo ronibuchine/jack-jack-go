@@ -1,0 +1,115 @@
+class Pipe {
+
+    // values describe the bottom pipe
+    field int xPos, height;
+    field bool cleared;
+    
+    static int width, step, openSpace;
+    static Random rand;
+
+    function void init() {
+        // set static fields
+        let width = 16 * 4; //multiple of 16
+        let step = 16; //multiple of 16
+        let openSpace = 100;
+        let rand = Random.new();
+        return;
+    }
+
+    constructor Pipe new(int x) {
+        let xPos = x;
+        // randomly get a new pipe height
+        let height = Random.mod(rand.generate(33), 256 - (2 * openSpace)) + openSpace;
+        let cleared = false;
+
+        return this;
+    }
+
+    method void movePipe() {
+        // moves pipe a step to the left on the screen
+        let xPos = xPos - step;
+        return;
+    }
+
+    // getters
+    method int getX() {return xPos;}
+    method void reset(int x) {
+        let xPos = x;
+        let height = Random.mod(rand.generate(33), 256 - openSpace);
+        let cleared = false;
+        return;
+    }
+    method int getHeight() {return height;}
+    method bool getCleared() {return cleared;}
+    function int getWidth() {return width;}
+    function int getStep() {return step;}
+    function int getOpenSpace() {return openSpace;}
+
+    method void setCleared(bool value) {
+        let cleared = value;
+        return; 
+    }
+
+    method void drawPipe() {
+        var int yPos;
+
+        var int memAddress, i, j, col;
+
+        if (xPos > 511) {return;}
+        let i = 0;
+        let memAddress = 16384 + (xPos / 16);
+        let col = 32 - Random.mod(memAddress, 32);
+
+        if (xPos < 0) {
+            let memAddress = memAddress + 5;
+            while (i < 256) {
+                do Memory.poke(memAddress, 0);
+                let memAddress = memAddress + 32;
+                let i = i + 1;
+            }
+        }
+        else {
+            if (xPos < 432) {
+                while (i < height) {
+                    do Memory.poke(memAddress, -1);
+                    do Memory.poke(memAddress + 5, 0);
+                    let memAddress = memAddress + 32;
+                    let i = i + 1;
+                }
+                let memAddress = memAddress + 5;
+                while (i < (height + openSpace)) {
+                    do Memory.poke(memAddress, 0);
+                    let memAddress = memAddress + 32;
+                    let i = i + 1;
+                }
+                let memAddress = memAddress - 5;
+                while (i < 256) {
+                    do Memory.poke(memAddress, -1);
+                    do Memory.poke(memAddress + 5, 0);
+                    let memAddress = memAddress + 32;
+                    let i = i + 1;
+                }
+            }
+            else {
+                while (i < height) {
+                    do Memory.poke(memAddress, -1);
+                    let memAddress = memAddress + 32;
+                    let i = i + 1;
+                }
+                let memAddress = (32 * openSpace) + memAddress;
+                let i = i + openSpace;
+                while (i < 256) {
+                    do Memory.poke(memAddress, -1);
+                    let memAddress = memAddress + 32;
+                    let i = i + 1;
+                }
+            }
+        }
+        return;
+    }
+
+    method void dispose() {
+        do Memory.deAlloc(this);
+        return;
+    }
+}

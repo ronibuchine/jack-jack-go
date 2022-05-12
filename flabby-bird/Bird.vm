@@ -1,0 +1,251 @@
+function Bird.new 0
+push constant 5
+call Memory.alloc 1
+pop pointer 0
+push argument 0
+pop this 0
+push argument 1
+pop this 1
+push argument 2
+pop this 2
+push argument 1
+pop this 3
+push pointer 0
+return
+function Bird.getX 0
+push argument 0
+pop pointer 0
+push this 0
+return
+function Bird.getY 0
+push argument 0
+pop pointer 0
+push this 1
+return
+function Bird.moveBird 0
+push argument 0
+pop pointer 0
+push this 1
+pop this 3
+call Keyboard.keyPressed 0
+push constant 131
+eq
+if-goto IF_TRUE0
+goto IF_FALSE0
+label IF_TRUE0
+push constant 0
+pop this 4
+push this 1
+push constant 40
+sub
+push constant 1
+neg
+gt
+if-goto IF_TRUE1
+goto IF_FALSE1
+label IF_TRUE1
+push this 1
+push constant 40
+sub
+pop this 1
+goto IF_END1
+label IF_FALSE1
+push constant 0
+pop this 1
+label IF_END1
+goto IF_END0
+label IF_FALSE0
+push this 4
+push constant 5
+add
+pop this 4
+push this 1
+push this 4
+add
+push constant 244
+call Math.min 2
+pop this 1
+label IF_END0
+push constant 0
+return
+function Bird.dispose 0
+push argument 0
+pop pointer 0
+push pointer 0
+call Memory.deAlloc 1
+pop temp 0
+push constant 0
+return
+function Bird.drawBird 1
+push argument 0
+pop pointer 0
+push constant 16384
+push this 3
+push constant 32
+call Math.multiply 2
+add
+push this 0
+push constant 16
+call Math.divide 2
+add
+pop local 0
+push local 0
+push constant 0
+add
+push constant 0
+call Memory.poke 2
+pop temp 0
+push local 0
+push constant 32
+add
+push constant 0
+call Memory.poke 2
+pop temp 0
+push local 0
+push constant 64
+add
+push constant 0
+call Memory.poke 2
+pop temp 0
+push local 0
+push constant 96
+add
+push constant 0
+call Memory.poke 2
+pop temp 0
+push local 0
+push constant 128
+add
+push constant 0
+call Memory.poke 2
+pop temp 0
+push local 0
+push constant 160
+add
+push constant 0
+call Memory.poke 2
+pop temp 0
+push local 0
+push constant 192
+add
+push constant 0
+call Memory.poke 2
+pop temp 0
+push local 0
+push constant 224
+add
+push constant 0
+call Memory.poke 2
+pop temp 0
+push local 0
+push constant 256
+add
+push constant 0
+call Memory.poke 2
+pop temp 0
+push local 0
+push constant 288
+add
+push constant 0
+call Memory.poke 2
+pop temp 0
+push local 0
+push constant 320
+add
+push constant 0
+call Memory.poke 2
+pop temp 0
+push local 0
+push constant 352
+add
+push constant 0
+call Memory.poke 2
+pop temp 0
+push constant 16384
+push this 1
+push constant 32
+call Math.multiply 2
+add
+push this 0
+push constant 16
+call Math.divide 2
+add
+pop local 0
+push local 0
+push constant 0
+add
+push constant 4032
+call Memory.poke 2
+pop temp 0
+push local 0
+push constant 32
+add
+push constant 4656
+call Memory.poke 2
+pop temp 0
+push local 0
+push constant 64
+add
+push constant 8456
+call Memory.poke 2
+pop temp 0
+push local 0
+push constant 96
+add
+push constant 20740
+call Memory.poke 2
+pop temp 0
+push local 0
+push constant 128
+add
+push constant 20740
+call Memory.poke 2
+pop temp 0
+push local 0
+push constant 160
+add
+push constant 16958
+call Memory.poke 2
+pop temp 0
+push local 0
+push constant 192
+add
+push constant 959
+neg
+call Memory.poke 2
+pop temp 0
+push local 0
+push constant 224
+add
+push constant 32191
+neg
+call Memory.poke 2
+pop temp 0
+push local 0
+push constant 256
+add
+push constant 706
+neg
+call Memory.poke 2
+pop temp 0
+push local 0
+push constant 288
+add
+push constant 32252
+neg
+call Memory.poke 2
+pop temp 0
+push local 0
+push constant 320
+add
+push constant 31768
+call Memory.poke 2
+pop temp 0
+push local 0
+push constant 352
+add
+push constant 992
+call Memory.poke 2
+pop temp 0
+push constant 0
+return

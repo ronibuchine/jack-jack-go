@@ -1,0 +1,36 @@
+class Random {
+
+    static int num;
+
+    constructor Random new() {
+        if (num > 0) {}
+        else {
+            let num = -1;
+        }
+        return this;
+    }
+
+    function int mod(int a, int b) {
+        var int answer;
+        let answer = a - ((a/b)*b);
+        return answer;
+    }
+
+    method int generate(int seed) {
+        // generates random number based on seed. Uses num as static counter to make sure random numbers keep generating
+        var int xn, i;
+        //let xn = seed;
+        let i = 0;
+        while (i < num) {
+            let seed = seed * 31415 + 42;
+            let i = i + 1;
+        }
+        let num = num + 1;
+        return Math.abs(seed); 
+    }
+
+    method void dispose() {
+        do Memory.deAlloc(this);
+        return;
+    }
+}

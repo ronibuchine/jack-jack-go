@@ -1,0 +1,135 @@
+class Main {  
+
+   static int pipeSpacing;
+   static int gameCounter;
+  
+   function void pipeShift(Array pipes, int numPipes, int score) {
+      var int i, pipeX, pipeY, pipeStep;
+      var Pipe temp;
+      let temp = pipes[0];
+      let pipeX = temp.getX();
+      let pipeY = pipeX + Pipe.getWidth();
+
+      // if the pipe is off screen to the left we move it to the back
+      if (pipeY < 0) {
+         let pipes[numPipes - 1] = temp;
+         let i = 1;
+
+         while (i < numPipes) {
+            let pipes[i-1] = pipes[i];
+            let i = i + 1; 
+         }
+         // create new pipe off screen to the right
+         do temp.reset(pipeX + ((pipeSpacing + Pipe.getWidth()) * numPipes));  
+         do Main.drawScore(score);      
+      }
+      return;
+   }
+
+   function void move(Bird bird, Array pipes, int numPipes, int score) {
+      // move all geos
+      var int i;
+      var Pipe temp;
+      let i = 0;
+      do bird.moveBird();
+      do bird.drawBird();
+      if (gameCounter > 1) {
+         do Main.pipeShift(pipes, numPipes, score);
+         while (i < numPipes) {
+            let temp = pipes[i];
+            do temp.movePipe();
+            do temp.drawPipe();
+            let i = i + 1;
+         }
+         let gameCounter = 0;
+      }      
+      return;
+   }  
+
+   function bool checkCollisions(Bird bird, Pipe pipe) {
+      // if the bird collides with a pipe return true
+      var int leftSide, rightSide, top, bottom;    
+      let top = pipe.getHeight();
+      let leftSide =  pipe.getX();
+      let rightSide = leftSide + Pipe.getOpenSpace();
+      let bottom = top + Pipe.getOpenSpace();
+      // bird collides with pipe if its between the walls and hits the bottom pipe or top pipe        
+      if (((bird.getX() > leftSide) & (bird.getX() < rightSide)) & ((bird.getY() > bottom) | (bird.getY() < top))) {
+         return true;
+      }
+      
+      return false;
+   }
+
+   function bool checkPipeCleared(Bird bird, Pipe pipe) {
+      // if the bird cleared a pipe return true
+      if (bird.getX() > pipe.getX() & ~(pipe.getCleared())) {
+         do pipe.setCleared(true);
+         return true;
+      }     
+      return false;
+   }
+
+   function void drawScore(int score) {
+      // draw score     
+      do Output.moveCursor(0, 0);
+      do Output.printString("Score: ");
+      do Output.printInt(score);
+      return;
+   }
+
+
+   function void main() {
+      
+      var Array pipes;
+      var Bird bird;
+      var int step, numPipes, score;
+      var bool alive;
+      var int i;
+      var Pipe temp;
+      var int xPos, height;
+      var bool cleared;
+      
+      let step = 10;
+      let pipeSpacing = 160;
+      let alive = true;
+      let numPipes = 5;
+      let score = 0;
+      let i = 0;
+      let bird = Bird.new(75, 100, 10);
+      let pipes = Array.new(numPipes);
+      // initialize static pipe variables
+      do Pipe.init();
+
+      while (i < numPipes) {
+         let xPos = 480 + ((pipeSpacing + Pipe.getWidth()) * i);
+         let pipes[i] = Pipe.new(xPos);
+         let i = i + 1;
+      }
+      
+      while (alive) {         
+         do Main.move(bird, pipes, numPipes, score);
+
+         // each frame move all elements on the screen and check for collisions
+         if (Main.checkCollisions(bird, pipes[0])) {
+            let alive = false;
+         } 
+         // check to see if it cleared the pipe
+         if (Main.checkPipeCleared(bird, pipes[0])) {
+            let score = score + 1;
+            do Main.drawScore(score);
+         }
+
+         let gameCounter = gameCounter + 1;
+         do Sys.wait(200);
+      }
+
+      // Print game over screen with score
+      do GameOver.draw_title_gameover(10+(32*100));
+      do Main.drawScore(score);
+
+      do pipes.dispose();
+      do bird.dispose();
+      return;
+   }
+}
