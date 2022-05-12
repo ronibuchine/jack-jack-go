@@ -8,7 +8,7 @@ class Main {
       var Pipe temp;
       let temp = pipes[0];
       let pipeX = temp.getX();
-      let pipeY = pipeX + Pipe.getWidth();//pipeStep;
+      let pipeY = pipeX + Pipe.getWidth();
 
       // if the pipe is off screen to the left we move it to the back
       if (pipeY < 0) {
@@ -42,25 +42,9 @@ class Main {
             let i = i + 1;
          }
          let gameCounter = 0;
-      }
-      
+      }      
       return;
-   }
-
-   // function void draw(Bird bird, Array pipes, int numPipes) {
-   //    // draw all geos
-   //    var int j;
-   //    var Pipe temp;
-   //    let j = 0;
-   //    //do Screen.setColor(true);
-   //    do bird.drawBird();
-   //    while (j < numPipes) {
-   //       let temp = pipes[j];
-   //       do temp.drawPipe();
-   //       let j = j + 1;
-   //    }      
-   //    return;
-   // }
+   }  
 
    function bool checkCollisions(Bird bird, Pipe pipe) {
       // if the bird collides with a pipe return true
@@ -99,7 +83,7 @@ class Main {
       
       var Array pipes;
       var Bird bird;
-      var int step, numPipes, score;//, pipeSpacing;
+      var int step, numPipes, score;
       var bool alive;
       var int i;
       var Pipe temp;
@@ -146,7 +130,6 @@ class Main {
 
       do pipes.dispose();
       do bird.dispose();
-      //do rand.dispose();
       return;
    }
 }
