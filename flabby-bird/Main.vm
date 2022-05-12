@@ -122,20 +122,19 @@ label IF_FALSE0
 push constant 0
 return
 function Main.checkCollisions 4
-push local 3
-call Pipe.getOpenSpace 0
-sub
+push argument 1
+call Pipe.getHeight 1
 pop local 2
 push argument 1
 call Pipe.getX 1
 pop local 0
-push argument 1
-call Pipe.getX 1
+push local 0
 call Pipe.getOpenSpace 0
 add
 pop local 1
-push argument 1
-call Pipe.getHeight 1
+push local 2
+call Pipe.getOpenSpace 0
+add
 pop local 3
 push argument 0
 call Bird.getX 1
@@ -143,18 +142,18 @@ push local 0
 gt
 push argument 0
 call Bird.getX 1
-and
 push local 1
 lt
+and
 push argument 0
 call Bird.getY 1
 push local 3
 gt
 push argument 0
 call Bird.getY 1
-or
 push local 2
 lt
+or
 and
 if-goto IF_TRUE0
 goto IF_FALSE0
