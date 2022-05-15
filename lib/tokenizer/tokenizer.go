@@ -62,10 +62,10 @@ var SYMBOL_LIST = map[byte]string{
 	'-': "-",
 	'*': "*",
 	'/': "/",
-	'&': "&amp",
+	'&': "&amp;",
 	'|': "|",
-	'<': "&lt",
-	'>': "&gt",
+	'<': "&lt;",
+	'>': "&gt;",
 	'=': "=",
 	'~': "~",
 }
@@ -106,6 +106,12 @@ func getSymbol(b byte) string {
 	return ""
 }
 
+func writeXMLHeader(output *os.File) error {
+	if _, err := output.WriteString(`<?xml version="1.0" encoding="UTF-8" ?>` + "\n"); err != nil {
+		return err
+	}
+	return nil
+}
 
 func tokenize(file string) {
 
@@ -115,7 +121,7 @@ func tokenize(file string) {
 	}
 	defer input.Close()
 
-	output, err := os.Create(strings.TrimSuffix(file, ".jack") + "T.xml")
+	output, err := os.Create(strings.TrimSuffix(file, ".jack") + "_tokenized.xml")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -129,8 +135,10 @@ func tokenize(file string) {
 	)
 
 	inComment := false
-
-    output.WriteString("<tokens>\n")
+	if err := writeXMLHeader(output); err != nil {
+		log.Fatal("Failed to write the XML header to the output file.\n")
+	}
+	output.WriteString("<tokens>\n")
 	for {
 		cur, err := reader.ReadByte()
 		if err != nil {
@@ -174,8 +182,8 @@ func tokenize(file string) {
 			continue
 		}
 
-        // now figure out what the next token is
-        tokenType = "UNKOWN"
+		// now figure out what the next token is
+		tokenType = "UNKNOWN"
 
 		// strings
 		if cur == '"' {
@@ -235,6 +243,5 @@ func tokenize(file string) {
 		tokenXml := fmt.Sprint("\t<" + tokenType + "> " + tokenContents + " </" + tokenType + ">\n")
 		output.WriteString(tokenXml)
 	}
-    output.WriteString("</tokens>\n")
+	output.WriteString("</tokens>\n")
 }
-
