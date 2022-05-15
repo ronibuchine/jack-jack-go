@@ -130,6 +130,7 @@ func tokenize(file string) {
 
 	inComment := false
 
+    output.WriteString("<tokens>\n")
 	for {
 		cur, err := reader.ReadByte()
 		if err != nil {
@@ -231,8 +232,9 @@ func tokenize(file string) {
 		}
 
 		// write token to xml
-		tokenXml := fmt.Sprint("<" + tokenType + "> " + tokenContents + " </" + tokenType + ">\n")
+		tokenXml := fmt.Sprint("\t<" + tokenType + "> " + tokenContents + " </" + tokenType + ">\n")
 		output.WriteString(tokenXml)
 	}
+    output.WriteString("</tokens>\n")
 }
 
