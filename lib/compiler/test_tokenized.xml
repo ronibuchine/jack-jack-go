@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<tokens>
+	<token type=keyword>if</token>
+	<token type=symbol>(</token>
+	<token type=identifier>x</token>
+	<token type=UNKNOWN>x</token>
+	<token type=symbol>&lt;</token>
+	<token type=UNKNOWN>&lt;</token>
+	<token type=integerConstant>034</token>
+	<token type=identifier>th</token>
+	<token type=symbol>)</token>
+	<token type=symbol>{</token>
+	<token type=UNKNOWN>{</token>
+	<token type=keyword>let</token>
+	<token type=identifier>quit</token>
+	<token type=symbol>=</token>
+	<token type=stringConstant>yes</token>
+	<token type=UNKNOWN>yes</token>
+	<token type=integerConstant>123</token>
+	<token type=symbol>{</token>
+	<token type=symbol>}</token>
+	<token type=symbol>{</token>
+	<token type=symbol>}</token>
+	<token type=symbol>(</token>
+	<token type=symbol>)</token>
+	<token type=UNKNOWN>)</token>
+	<token type=symbol>}</token>
+	<token type=UNKNOWN>}</token>
+	<token type=UNKNOWN>}</token>
+	<token type=UNKNOWN>}</token>
+	<token type=UNKNOWN>}</token>
+</tokens>

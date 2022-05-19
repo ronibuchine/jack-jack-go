@@ -1,4 +1,4 @@
-package tokenizer
+package compiler
 
 import (
 	"bufio"
@@ -240,7 +240,7 @@ func tokenize(file string) {
 		}
 
 		// write token to xml
-		tokenXml := fmt.Sprint("\t<" + tokenType + "> " + tokenContents + " </" + tokenType + ">\n")
+		tokenXml := fmt.Sprint("\t<token type=" + tokenType + ">" + tokenContents + "</token>\n")
 		output.WriteString(tokenXml)
 	}
 	output.WriteString("</tokens>\n")
