@@ -11,13 +11,13 @@ import (
 // aliasing structs for xml objects
 type Tokens struct {
 	XMLName xml.Name `xml:"tokens"`
-	Tokens  []Token  `xml:"tokens"`
+	Tokens  []Token  `xml:"token"`
 }
 
 type Token struct {
 	XMLName xml.Name `xml:"token"`
 	Type    string   `xml:"type,attr"`
-	Token   string   `xml:"token"`
+	Value   string   `xml:",chardata"`
 }
 
 // Node struct for parsing and recursive descent
@@ -38,7 +38,7 @@ func BuildXML(tokenStream map[string]string) *os.File {
 	return output
 }
 
-// Reads in the token stream form the XML file, returns as a list of tokens
+// Reads in the token stream from the XML file, returns as a list of tokens
 func ReadStream(tokenStream string) [][]string {
 	input, err := os.Open(tokenStream)
 	if err != nil {
@@ -55,6 +55,7 @@ func ReadStream(tokenStream string) [][]string {
 	xml.Unmarshal(byteValue, &tokens)
 	for _, token := range tokens.Tokens {
 		fmt.Println("Type: " + token.Type)
+		fmt.Println("Value: " + token.Value)
 		fmt.Println("XMLName: " + token.XMLName.Local)
 	}
 	return getTokenStrings(tokens.Tokens)
@@ -64,8 +65,13 @@ func ReadStream(tokenStream string) [][]string {
 func getTokenStrings(tokens []Token) [][]string {
 	var tokenStrings [][]string
 	for i := 0; i < len(tokens); i++ {
-		tokenStrings[i][0] = tokens[i].Token
-		tokenStrings[i][1] = tokens[i].Type
+		var t []string
+
+		t = append(t, tokens[i].Value)
+		t = append(t, tokens[i].Type)
+		tokenStrings = append(tokenStrings, t)
+		// tokenStrings[i][0] = tokens[i].Value
+		// tokenStrings[i][1] = tokens[i].Type
 	}
 	return tokenStrings
 }
@@ -77,9 +83,10 @@ func match(tokens []Token, token string) Node {
 	if current >= len(tokens) {
 		log.Fatal("end of token stream")
 	}
-	if token == tokens[current].XMLName.Local {
-		return Node{token, []Node{}}
-	} else {
-		return Node{"", []Node{}}
-	}
+	// if token == tokens[current].XMLName.Local {
+	// 	return Node{token, []Node{}}
+	// } else {
+	// 	return Node{"", []Node{}}
+	// }
+	return Node{"", []Node{}}
 }

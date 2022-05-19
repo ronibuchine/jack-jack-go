@@ -19,9 +19,9 @@ const (
 	STRING
 )
 
-const (
+/* const (
 	NOT_A_KEYWORD = iota
-)
+) */
 
 // that can't be const for... reasons
 var KEYWORDS_LIST []string = []string{
