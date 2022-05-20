@@ -87,7 +87,7 @@ func isWordStart(b byte) bool {
 }
 
 func isWhitespace(b byte) bool {
-	return b == ' ' || b == '\n' || b == '\t'
+	return b == ' ' || b == '\t'
 }
 
 func isKeyword(word string) bool {
@@ -113,7 +113,7 @@ func writeXMLHeader(output *os.File) error {
 	return nil
 }
 
-func tokenize(file string) {
+func Tokenize(file string) {
 
 	input, err := os.Open(file)
 	if err != nil {
@@ -139,6 +139,8 @@ func tokenize(file string) {
 		log.Fatal("Failed to write the XML header to the output file.\n")
 	}
 	output.WriteString("<tokens>\n")
+
+	lineNumber := 1
 	for {
 		cur, err := reader.ReadByte()
 		if err != nil {
@@ -146,6 +148,11 @@ func tokenize(file string) {
 		}
 
 		if isWhitespace(cur) {
+			continue
+		}
+
+		if cur == '\n' {
+			lineNumber += 1
 			continue
 		}
 
@@ -169,6 +176,7 @@ func tokenize(file string) {
 
 		if cur == '/' && next == '/' {
 			_, err := reader.ReadSlice('\n')
+			lineNumber += 1
 			if err != nil {
 				log.Fatal("Unclosed line comment")
 			}
@@ -188,6 +196,8 @@ func tokenize(file string) {
 		// strings
 		if cur == '"' {
 			str, err := reader.ReadSlice('"')
+			newLineCount := strings.Count(string(str), "\n")
+			lineNumber += newLineCount
 			if err != nil {
 				log.Fatal("Unclosed string")
 			}
@@ -240,7 +250,7 @@ func tokenize(file string) {
 		}
 
 		// write token to xml
-		tokenXml := fmt.Sprint("\t<token type=" + tokenType + ">" + tokenContents + "</token>\n")
+		tokenXml := fmt.Sprintf("\t<token type=\"%s\" line=\"%d\">%s</token>\n", tokenType, lineNumber, tokenContents)
 		output.WriteString(tokenXml)
 	}
 	output.WriteString("</tokens>\n")
