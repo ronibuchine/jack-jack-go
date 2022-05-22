@@ -23,6 +23,6 @@ and `mingw32-make` and `mingw32-make test` for Windows. To run tests for specifi
 
 ## Flabby Bird
 
-To play you can open up the VMEmulator program and open the flabby-bird directory as a program. 
+To play you can open up the VMEmulator program, press load program and select the flabby-bird directory. 
 
 Enjoy!
