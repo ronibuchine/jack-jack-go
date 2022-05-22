@@ -77,21 +77,21 @@ func getTokenStrings(tokens []Token) {
 }
 
 // global variable used for token parsing and matching
-func match(token string) Node {
+func match(token string) *Node {
 	if current >= len(NormalizedTokenStream) {
 		log.Fatal("end of token stream")
 	}
 	if token == NormalizedTokenStream[current][0] {
 		current++
-		return Node{token, []Node{}}
+		return &Node{token, []Node{}}
 	} else {
 		// TODO: add error handling. We might just panic and die here
-		return Node{"ERROR", []Node{}}
+		return &Node{"ERROR", []Node{}}
 	}
 }
 
-func (parent Node) addChild(child Node) {
-	parent.children = append(parent.children, child)
+func (parent *Node) addChild(child *Node) {
+	parent.children = append(parent.children, *child)
 }
 
 // functions for grammar
