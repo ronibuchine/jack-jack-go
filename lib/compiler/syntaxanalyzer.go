@@ -23,15 +23,9 @@ type TokenXml struct {
 
 // Node struct for parsing and recursive descent
 type Node struct {
-	/* name     string
-	contents string // will be the same as name for non-terminals */
 	token    Token
 	children []*Node
 }
-
-// cant be const for some reason
-var operators []string = []string{"+", "-", "*", "/", "&", "|", "<", ">", "="}
-var keywordConst []string = []string{"true", "false", "null", "this"}
 
 func createNodeFromToken(token Token) *Node {
 	return &Node{token, []*Node{}}
@@ -45,10 +39,6 @@ func (parent *Node) addChild(child *Node) {
 	parent.children = append(parent.children, child)
 }
 
-func (n *Node) name() string {
-	return n.token.Kind
-}
-
 // globals for matching
 var (
 	TokenStream  []Token
@@ -58,6 +48,13 @@ var (
 func curTok() Token {
 	return TokenStream[tokenCounter]
 }
+
+// cant be const for some reason
+var binaryOperators []string = []string{"+", "-", "*", "/", "&", "|", "<", ">", "="}
+var unaryOperators []string = []string{"~", "-"}
+var keywordConst []string = []string{"true", "false", "null", "this"}
+var functionDecs []string = []string{"function", "constructor", "method"}
+var classVars []string = []string{"static", "field"}
 
 // peek helper for LL(1) lookahead
 func peekNextToken() (Token, error) {
@@ -138,13 +135,11 @@ func class() *Node {
 	result.addChild(match(IDENT))
 	result.addChild(match("{"))
 	curr := curTok()
-	for curr.Kind == KEYWORD &&
-		(curr.Contents == "static" || curr.Contents == "field") {
+	for _contains(classVars, curr.Contents) {
 		result.addChild(classVarDec())
 		curr = curTok()
 	}
-	for curr.Kind == KEYWORD &&
-		(curr.Contents == "constructor" || curr.Contents == "function" || curr.Contents == "method") {
+	for _contains(functionDecs, curr.Contents) {
 		result.addChild(subroutineDec())
 		curr = curTok()
 	}
@@ -154,7 +149,7 @@ func class() *Node {
 
 func classVarDec() *Node {
 	result := createNodeFromString("classVarDec")
-	result.addChild(match([]string{"static", "field"}))
+	result.addChild(match(classVars))
 	result.addChild(typeName())
 	result.addChild(match(IDENT))
 	for curTok().Contents == "," {
@@ -172,7 +167,7 @@ func typeName() *Node {
 
 func subroutineDec() *Node {
 	result := createNodeFromString("subroutineDec")
-	result.addChild(match([]string{"constructor", "function", "method"}))
+	result.addChild(match(functionDecs))
 	if curTok().Contents == "void" {
 		result.addChild(match("void"))
 	} else {
@@ -307,6 +302,7 @@ func subroutineCall() *Node {
 	result.addChild(match(IDENT))
 	if curTok().Contents == "." {
 		result.addChild(match("."))
+        result.addChild(match(IDENT))
 	}
 	result.addChild(match("("))
 	result.addChild(match(expressionList()))
@@ -354,7 +350,7 @@ func expression() *Node {
 	result.addChild(match(term()))
 	// will continue checking the next op if it is an operator
 	curr := curTok()
-	for _contains(operators, curr.Contents) {
+	for _contains(binaryOperators, curr.Contents) {
 		result.addChild(match(curr.Contents))
 		result.addChild(match(term()))
 	}
@@ -366,7 +362,7 @@ func term() *Node {
 	curr := curTok()
 
 	switch {
-	case _contains(operators, curr.Contents):
+	case _contains(binaryOperators, curr.Contents):
 		result.addChild(match(curr.Contents))
 		result.addChild(term())
 	case _contains(keywordConst, curr.Contents):
@@ -398,18 +394,14 @@ func term() *Node {
 	return result
 }
 
-func constant() *Node {
-	return match(INT)
-}
-
 func op() *Node {
-	return match([]string{"+", "-", "*", "/", "&", "|", "<", ">", "="})
+	return match(binaryOperators)
 }
 
 func unaryOp() *Node {
-	return match([]string{"~", "-"})
+	return match(unaryOperators)
 }
 
 func keywordConstant() *Node {
-	return match([]string{"true", "false", "null", "this"})
+	return match(keywordConst)
 }
