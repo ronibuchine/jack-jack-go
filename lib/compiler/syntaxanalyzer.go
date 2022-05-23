@@ -10,12 +10,12 @@ import (
 )
 
 // aliasing structs for xml objects
-type TokensXml struct {
+type TokensXML struct {
 	XMLName xml.Name   `xml:"tokens"`
-	Tokens  []TokenXml `xml:"token"`
+	Tokens  []TokenXML `xml:"token"`
 }
 
-type TokenXml struct {
+type TokenXML struct {
 	XMLName xml.Name `xml:"token"`
 	Type    string   `xml:"type,attr"`
 	Value   string   `xml:",chardata"`
@@ -68,15 +68,21 @@ func peekNextToken() (Token, error) {
 }
 
 // Takes an ordered token stream which is a map[string]string and parses it and returns the XML tree
-func BuildXML(tokenStream map[string]string) *os.File {
+func BuildXML() {
 	output, err := os.Create("output.xml")
 	if err != nil {
 		log.Fatal("Failed to create an ouput file.")
 	}
 	defer output.Close()
-	// TODO: implement
-
-	return output
+	if TokenStream[0].Contents != "class" {
+		log.Fatal("Jack file must be contained in a class object")
+	}
+	rootNode := class()
+	bytes, err := xml.MarshalIndent(rootNode, "", "    ")
+	if err != nil {
+		log.Fatal("Failed to build the XML fromt the root class Node")
+	}
+	output.Write(bytes)
 }
 
 func GetTokens(jackFile string) {
