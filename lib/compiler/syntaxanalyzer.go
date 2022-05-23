@@ -329,7 +329,7 @@ func _contains[T string | int](collection []T, item T) (T, error) {
 			return value, nil
 		}
 	}
-	return _, nil
+	return item, errors.New("The collection does not contain the given item")
 }
 
 func expression() *Node {
