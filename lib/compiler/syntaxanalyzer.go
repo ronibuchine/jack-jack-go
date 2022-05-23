@@ -2,20 +2,21 @@ package compiler
 
 import (
 	"encoding/xml"
+	"errors"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"strconv"
+	"strings"
 )
 
 // aliasing structs for xml objects
-type Tokens struct {
-	XMLName xml.Name `xml:"tokens"`
-	Tokens  []Token  `xml:"token"`
+type TokensXml struct {
+	XMLName xml.Name   `xml:"tokens"`
+	Tokens  []TokenXml `xml:"token"`
 }
 
-type Token struct {
+type TokenXml struct {
 	XMLName xml.Name `xml:"token"`
 	Type    string   `xml:"type,attr"`
 	Value   string   `xml:",chardata"`
@@ -23,13 +24,37 @@ type Token struct {
 
 // Node struct for parsing and recursive descent
 type Node struct {
-	name     string
-	children []Node
+	/* name     string
+	contents string // will be the same as name for non-terminals */
+	token    Token
+	children []*Node
+}
+
+func createNodeFromToken(token Token) *Node {
+	return &Node{token, []*Node{}}
+}
+
+func createNodeFromString(name string) *Node {
+	return &Node{Token{Kind: name}, []*Node{}}
+}
+
+func (parent *Node) addChild(child *Node) {
+	parent.children = append(parent.children, child)
+}
+
+func (n *Node) name() string {
+	return n.token.Kind
 }
 
 // globals for matching
-var NormalizedTokenStream [][]string
-var current int = 0
+var (
+	TokenStream  []Token
+	tokenCounter int
+)
+
+func curTok() Token {
+	return TokenStream[tokenCounter]
+}
 
 // Takes an ordered token stream which is a map[string]string and parses it and returns the XML tree
 func BuildXML(tokenStream map[string]string) *os.File {
@@ -43,151 +68,211 @@ func BuildXML(tokenStream map[string]string) *os.File {
 	return output
 }
 
-// Reads in the token stream form the XML file, returns as a list of tokens to the global token stream
-func ReadStream(tokenStream string) {
-	input, err := os.Open(tokenStream)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer input.Close()
-
-	byteValue, err := ioutil.ReadAll(input)
-	if err != nil {
-		log.Fatal("Error reading the bytes of the XML file.")
-	}
-
-	var tokens Tokens
-	xml.Unmarshal(byteValue, &tokens)
-	for _, token := range tokens.Tokens {
-		fmt.Println("Type: " + token.Type)
-		fmt.Println("Value: " + token.Value)
-		fmt.Println("XMLName: " + token.XMLName.Local)
-	}
-	getTokenStrings(tokens.Tokens)
+func GetTokens(jackFile string) {
+	TokenStream = Tokenize(jackFile)
+	tokenCounter = 0
 }
 
-// returns an array of tuples, first value in the tuple is the token, second value is the token type
-func getTokenStrings(tokens []Token) {
-	for i := 0; i < len(tokens); i++ {
-		var t []string
-		t = append(t, tokens[i].Value)
-		t = append(t, tokens[i].Type)
-		NormalizedTokenStream = append(NormalizedTokenStream, t)
+func _matchSingle(token string) (*Node, error) {
+	// if we match a ident, int or string, we DONT care about the contents
+	// if we match a symbol or keyword, we DO care about contents
+	curr := curTok()
+	if ((token == IDENT || token == INT || token == STRING) && (token == curr.Kind)) ||
+		((token == curr.Contents) && (curr.Kind == KEYWORD || curr.Kind == SYMBOL)) {
+		res := createNodeFromToken(curr)
+		tokenCounter++
+		return res, nil
 	}
+	// TODO: add error handling. We might just panic and die here
+	// error(fmt.Sprint("Expected token %s before ", token))
+	return createNodeFromString("ERROR"), errors.New(fmt.Sprint("Failed to match %s", token))
 }
 
-// global variable used for token parsing and matching
-func match(token string) *Node {
-	if current >= len(NormalizedTokenStream) {
+// global function used for token parsing and matching
+// can either pass in a string or []string. If no matches, then an error will
+// occur, if at least one matches then the first match will be returned
+func match(token interface{}) (result *Node) {
+	if tokenCounter >= len(TokenStream) {
 		log.Fatal("end of token stream")
 	}
-	if token == NormalizedTokenStream[current][0] {
-		current++
-		return &Node{token, []Node{}}
-	} else {
-		// TODO: add error handling. We might just panic and die here
-		return &Node{"ERROR", []Node{}}
+
+	if t, ok := token.(string); ok {
+		if res, err := _matchSingle(t); err == nil {
+			result = res
+		} else {
+			parseError(t)
+			result = createNodeFromString("ERROR")
+		}
+	} else if tokens, ok := token.([]string); ok {
+		for _, t := range tokens {
+			if res, err := _matchSingle(t); err == nil {
+				result = res
+			}
+		}
+		parseError(strings.Join(tokens, ", "))
+		result = createNodeFromString("ERROR")
 	}
+	return result
 }
 
-func (parent *Node) addChild(child *Node) {
-	parent.children = append(parent.children, *child)
+func parseError(expected string) {
+	curr := curTok()
+	fmt.Sprint(fmt.Sprint("ERROR line %d: Expected token(s) `%s` before %s %s\n", curr.LineNumber, expected, curr.Kind, curr.Contents))
 }
 
 // functions for grammar
-func letStatement() {
-
+func class() *Node {
+	result := createNodeFromString("class")
+	result.addChild(match("class"))
+	result.addChild(match(IDENT))
+	result.addChild(match("{"))
+	curr := curTok()
+	for curr.Kind == KEYWORD &&
+		(curr.Contents == "static" || curr.Contents == "field") {
+		result.addChild(classVarDec())
+		curr = curTok()
+	}
+	for curr.Kind == KEYWORD &&
+		(curr.Contents == "constructor" || curr.Contents == "function" || curr.Contents == "method") {
+		result.addChild(subroutineDec())
+		curr = curTok()
+	}
+	result.addChild(match("}"))
+	return result
 }
 
-func whileStatement() {
-
+func classVarDec() *Node {
+	result := createNodeFromString("classVarDec")
+	result.addChild(match([]string{"static", "field"}))
+	result.addChild(typeName())
+	result.addChild(match(IDENT))
+	for curTok().Contents == "," {
+		result.addChild(match(","))
+		result.addChild(match(IDENT))
+	}
+	result.addChild(match(";"))
+	return result
 }
 
-func ifStatement() {
-
+func typeName() *Node {
+	result := match([]string{"int", "char", "boolean", IDENT})
+	return result
 }
 
-func doStatement() {
-
-}
-
-func statement() {
-
-}
-
-func statements() {
-
-}
-
-func expression() {
-
-}
-
-func term() {
-
-}
-
-func varName() {
-
-}
-
-func constant() Node {
-	result := Node{"constant", []Node{}}
-	value, _ := strconv.Atoi(NormalizedTokenStream[current][0])
-	if value >= 0 || value < 32000 {
-		result.addChild(match(NormalizedTokenStream[current][0]))
+func subroutineDec() *Node {
+	result := createNodeFromString("subroutineDec")
+	result.addChild(match([]string{"constructor", "function", "method"}))
+	if curTok().Contents == "void" {
+		result.addChild(match("void"))
 	} else {
-		// TODO: error
+		result.addChild(typeName())
+	}
+	result.addChild(match(IDENT))
+	result.addChild(match("("))
+	result.addChild(parameterList())
+	result.addChild(match(")"))
+	result.addChild(subroutineBody())
+	return result
+}
+
+func parameterList() *Node {
+	result := createNodeFromString("parameterList")
+	if curTok().Contents == ")" {
+		return result
+	}
+	result.addChild(typeName())
+	result.addChild(match(IDENT))
+	for curTok().Contents == "," {
+		result.addChild(match(","))
+		result.addChild(typeName())
+		result.addChild(match(IDENT))
 	}
 	return result
 }
 
-func op() Node {
-	result := Node{"op", []Node{}}
-	if NormalizedTokenStream[current][0] == "+" {
-		result.addChild(match("+"))
-	} else if NormalizedTokenStream[current][0] == "-" {
-		result.addChild(match("-"))
-	} else if NormalizedTokenStream[current][0] == "=" {
-		result.addChild(match("="))
-	} else {
-		// TODO:  error logging
+func subroutineBody() *Node {
+	result := createNodeFromString("subroutineBody")
+	result.addChild(match("{"))
+	for curTok().Contents == "var" {
+		result.addChild(varDec())
+	}
+	result.addChild(statements())
+	result.addChild(match("}"))
+	return result
+}
+
+func varDec() *Node {
+	result := createNodeFromString("varDec")
+	result.addChild(match("var"))
+	result.addChild(typeName())
+	result.addChild(match(IDENT))
+	for curTok().Contents == "," {
+		result.addChild(match(","))
+		result.addChild(match(IDENT))
+	}
+	result.addChild(match(";"))
+	return result
+}
+
+func statements() *Node {
+	result := createNodeFromString("statements")
+	switch curTok().Contents {
+	case "let":
+		result.addChild(letStatement())
+	case "if":
+		result.addChild(ifStatement())
+	case "while":
+		result.addChild(whileStatement())
+	case "do":
+		result.addChild(doStatement())
+	case "return":
+		result.addChild(returnStatement())
 	}
 	return result
 }
 
-func relop() {
-	if NormalizedTokenStream[current][0] == "<" {
+func letStatement() *Node {
 
-	} else if NormalizedTokenStream[current][0] == ">" {
-
-	} else {
-		// TODO: error logging
-	}
 }
 
-func boolOp() {
-	if NormalizedTokenStream[current][0] == "&" {
+func whileStatement() *Node {
 
-	} else if NormalizedTokenStream[current][0] == "|" {
-
-	} else {
-		// TODO: error logging
-	}
 }
 
-func unaryOp() {
-	if NormalizedTokenStream[current][0] == "-" {
+func ifStatement() *Node {
 
-	} else {
-		// TODO: error logging
-	}
 }
 
-func boolUnaryOp() {
-	if NormalizedTokenStream[current][0] == "~" {
+func doStatement() *Node {
 
-	} else {
-		// TODO: error logging
-	}
 }
+
+func returnStatement() *Node {
+
+}
+
+func expression() *Node {
+
+}
+
+func term() *Node {
+
+}
+
+func constant() *Node {
+	result := match(INT)
+	return result
+}
+
+func op() *Node {
+    return match([]string{"+", "-", "*", "/", "&", "|", "<", ">", "="})
+}
+
+func unaryOp() *Node {
+    return match([]string{"~", "-"})
+}
+
+func keywordConstant() *Node {
+    return match([]string{"true", "false", "null", "this"})
+}
+

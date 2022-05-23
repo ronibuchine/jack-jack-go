@@ -9,21 +9,6 @@ import (
 	"strings"
 )
 
-type TokenType int64
-
-const (
-	KEYWORD TokenType = iota
-	SYMBOL
-	IDENT
-	INT
-	STRING
-)
-
-/* const (
-	NOT_A_KEYWORD = iota
-) */
-
-// that can't be const for... reasons
 var KEYWORDS_LIST []string = []string{
 	"class",
 	"constructor",
@@ -106,14 +91,14 @@ func getSymbol(b byte) string {
 	return ""
 }
 
-func writeXMLHeader(output *os.File) error {
+func writeXMLHeader(output *os.File) parseError {
 	if _, err := output.WriteString(`<?xml version="1.0" encoding="UTF-8" ?>` + "\n"); err != nil {
 		return err
 	}
 	return nil
 }
 
-func Tokenize(file string) {
+func Tokenize(file string) []Token {
 
 	input, err := os.Open(file)
 	if err != nil {
@@ -129,16 +114,15 @@ func Tokenize(file string) {
 
 	reader := bufio.NewReader(input)
 
-	var (
-		tokenContents string
-		tokenType     string
-	)
+	var curToken Token
 
 	inComment := false
 	if err := writeXMLHeader(output); err != nil {
 		log.Fatal("Failed to write the XML header to the output file.\n")
 	}
 	output.WriteString("<tokens>\n")
+
+	var tokenStream []Token
 
 	lineNumber := 1
 	for {
@@ -191,7 +175,8 @@ func Tokenize(file string) {
 		}
 
 		// now figure out what the next token is
-		tokenType = "UNKNOWN"
+		curToken.Kind = UNKNOWN
+		curToken.Contents = string(cur)
 
 		// strings
 		if cur == '"' {
@@ -201,8 +186,8 @@ func Tokenize(file string) {
 			if err != nil {
 				log.Fatal("Unclosed string")
 			}
-			tokenContents = strings.TrimSuffix(string(str), "\"")
-			tokenType = "stringConstant"
+			curToken.Contents = strings.TrimSuffix(string(str), "\"")
+			curToken.Kind = STRING
 		}
 
 		// digits
@@ -220,8 +205,8 @@ func Tokenize(file string) {
 			if err != nil || value < 0 || value > 32767 {
 				log.Fatal("Number is invalid")
 			}
-			tokenContents = integer
-			tokenType = "integerConstant"
+			curToken.Contents = integer
+			curToken.Kind = INT
 		}
 
 		// idents and keywords
@@ -235,23 +220,28 @@ func Tokenize(file string) {
 			}
 			reader.UnreadByte()
 
-			tokenContents = word
+			curToken.Contents = word
 			if isKeyword(word) {
-				tokenType = "keyword"
+				curToken.Kind = KEYWORD
 			} else {
-				tokenType = "identifier"
+				curToken.Kind = IDENT
 			}
 		}
 
 		// symbols
 		if validSymbol := getSymbol(cur); validSymbol != "" {
-			tokenContents = validSymbol
-			tokenType = "symbol"
+			curToken.Contents = validSymbol
+			curToken.Kind = SYMBOL
 		}
 
 		// write token to xml
-		tokenXml := fmt.Sprintf("\t<token type=\"%s\" line=\"%d\">%s</token>\n", tokenType, lineNumber, tokenContents)
+		tokenXml := fmt.Sprintf("<%s> %s </%s>\n", curToken.Kind, curToken.Contents, curToken.Kind)
 		output.WriteString(tokenXml)
+
+		curToken.LineNumber = lineNumber
+		tokenStream = append(tokenStream, curToken)
 	}
+
 	output.WriteString("</tokens>\n")
+	return tokenStream
 }
