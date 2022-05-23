@@ -226,7 +226,11 @@ func varDec() *Node {
 }
 
 func statements() *Node {
-	panic("unimplemented")
+	result := createNodeFromString("statements")
+	for _contains([]string{"let", "do", "if", "while", "return"}, curTok().Contents) {
+		result.addChild(statement())
+	}
+	return result
 }
 
 func statement() *Node {
@@ -311,7 +315,16 @@ func subroutineCall() *Node {
 }
 
 func expressionList() *Node {
-	panic("unimplemented")
+	result := createNodeFromString("expressionList")
+	if curTok().Contents == ")" {
+		return result
+	}
+	result.addChild(match(expression()))
+	for curTok().Contents == "," {
+		result.addChild(match(","))
+		result.addChild(match(expression()))
+	}
+	return result
 }
 
 func returnStatement() *Node {
@@ -369,7 +382,7 @@ func term() *Node {
 	case curr.Kind == IDENT:
 		next, err := peekNextToken()
 		if err != nil {
-            panic(err)
+			panic(err)
 		}
 		if next.Contents == "[" {
 			result.addChild(match(IDENT))
