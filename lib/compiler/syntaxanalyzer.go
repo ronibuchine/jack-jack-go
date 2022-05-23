@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"strconv"
 	"strings"
 )
 
@@ -29,6 +28,9 @@ type Node struct {
 	token    Token
 	children []*Node
 }
+
+// cant be const for some reason
+var operators []string = []string{"+", "-", "*", "/", "&", "|", "<", ">", "="}
 
 func createNodeFromToken(token Token) *Node {
 	return &Node{token, []*Node{}}
@@ -54,6 +56,11 @@ var (
 
 func curTok() Token {
 	return TokenStream[tokenCounter]
+}
+
+// peek helper for LL(1) lookahead
+func peekNextToken() Token {
+	return TokenStream[tokenCounter+1]
 }
 
 // Takes an ordered token stream which is a map[string]string and parses it and returns the XML tree
@@ -215,7 +222,11 @@ func varDec() *Node {
 }
 
 func statements() *Node {
-	result := createNodeFromString("statements")
+	panic("unimplemented")
+}
+
+func statement() *Node {
+	result := createNodeFromString("statement")
 	switch curTok().Contents {
 	case "let":
 		result.addChild(letStatement())
@@ -232,47 +243,124 @@ func statements() *Node {
 }
 
 func letStatement() *Node {
-
-}
-
-func whileStatement() *Node {
-
-}
-
-func ifStatement() *Node {
-
-}
-
-func doStatement() *Node {
-
-}
-
-func returnStatement() *Node {
-
-}
-
-func expression() *Node {
-
-}
-
-func term() *Node {
-
-}
-
-func constant() *Node {
-	result := match(INT)
+	result := createNodeFromString("letStatement")
+	result.addChild(match("let"))
+	result.addChild(match(IDENT))
+	if curTok().Contents == "[" {
+		result.addChild(match("["))
+		result.addChild(match(expression()))
+		result.addChild(match("]"))
+	}
+	result.addChild(match("="))
+	result.addChild(match(expression()))
+	result.addChild(match(";"))
 	return result
 }
 
+func whileStatement() *Node {
+	result := createNodeFromString()
+	result.addChild(match("whileStatement"))
+	result.addChild(match("("))
+	result.addChild(match(expression()))
+	result.addChild(match(")"))
+	result.addChild(match("{"))
+	result.addChild(match(statements()))
+	result.addChild(match("}"))
+}
+
+func ifStatement() *Node {
+	result := createNodeFromString("ifStatement")
+	result.addChild(match("if"))
+	result.addChild(match("("))
+	result.addChild(match(expression()))
+	result.addChild(match(")"))
+	result.addChild(match("{"))
+	result.addChild(match(statements()))
+	result.addChild(match("}"))
+	if curTok().Contents == "else" {
+		result.addChild(match("else"))
+		result.addChild(match("{"))
+		result.addChild(match(statements()))
+		result.addChild(match("}"))
+	}
+	return result
+}
+
+func doStatement() *Node {
+	result := createNodeFromString("doStatement")
+	result.addChild(match("do"))
+	result.addChild(match(subroutineCall()))
+	result.addChild(match(";"))
+	return result
+}
+
+func subroutineCall() *Node {
+	result := createNodeFromString("subroutineCall")
+	result.addChild(match(IDENT))
+	if curTok().Contents == "." {
+		result.addChild(match("."))
+	}
+	result.addChild(match("("))
+	result.addChild(match(expressionList()))
+	result.addChild(match(")"))
+	return result
+}
+
+func expressionList() *Node {
+	panic("unimplemented")
+}
+
+func returnStatement() *Node {
+	result := createNodeFromString("returnStatement")
+	result.addChild(match("return"))
+	if curTok().Contents != "}" {
+		result.addChild(match(expression()))
+	}
+	result.addChild(match(";"))
+	return result
+}
+
+// helper function to check existence in a collection, for some reason this doesnt exist in the go stdlib...
+// if you want to use for other types just add to the generic parameter list
+// doesn't return a bool, returns the item itself otherwise returns nil
+func _contains[T string | int](collection []T, item T) (T, error) {
+	for _, value := range collection {
+		if item == value {
+			return value, nil
+		}
+	}
+	return _, nil
+}
+
+func expression() *Node {
+	result := createNodeFromString("expression")
+	result.addChild(match(term()))
+	// will continue checking the next op if it is an operator
+	for op, err := _contains(operators, curTok().Contents); err != nil; {
+		result.addChild(match(op))
+		result.addChild(match(term()))
+	}
+	return result
+}
+
+func term() *Node {
+	result := createNodeFromString("term")
+	// finish implementation
+	return result
+}
+
+func constant() *Node {
+	return match(INT)
+}
+
 func op() *Node {
-    return match([]string{"+", "-", "*", "/", "&", "|", "<", ">", "="})
+	return match([]string{"+", "-", "*", "/", "&", "|", "<", ">", "="})
 }
 
 func unaryOp() *Node {
-    return match([]string{"~", "-"})
+	return match([]string{"~", "-"})
 }
 
 func keywordConstant() *Node {
-    return match([]string{"true", "false", "null", "this"})
+	return match([]string{"true", "false", "null", "this"})
 }
-
