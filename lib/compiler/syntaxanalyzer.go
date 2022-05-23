@@ -31,6 +31,7 @@ type Node struct {
 
 // cant be const for some reason
 var operators []string = []string{"+", "-", "*", "/", "&", "|", "<", ">", "="}
+var keywordConst []string = []string{"true", "false", "null", "this"}
 
 func createNodeFromToken(token Token) *Node {
 	return &Node{token, []*Node{}}
@@ -59,8 +60,11 @@ func curTok() Token {
 }
 
 // peek helper for LL(1) lookahead
-func peekNextToken() Token {
-	return TokenStream[tokenCounter+1]
+func peekNextToken() (Token, error) {
+	if tokenCounter+1 >= len(TokenStream) {
+		return Token{}, errors.New("Cannot lookahead passed the end of token stream")
+	}
+	return TokenStream[tokenCounter+1], nil
 }
 
 // Takes an ordered token stream which is a map[string]string and parses it and returns the XML tree
@@ -258,14 +262,14 @@ func letStatement() *Node {
 }
 
 func whileStatement() *Node {
-	result := createNodeFromString()
-	result.addChild(match("whileStatement"))
+	result := createNodeFromString("whileStatement")
 	result.addChild(match("("))
 	result.addChild(match(expression()))
 	result.addChild(match(")"))
 	result.addChild(match("{"))
 	result.addChild(match(statements()))
 	result.addChild(match("}"))
+	return result
 }
 
 func ifStatement() *Node {
@@ -323,21 +327,22 @@ func returnStatement() *Node {
 // helper function to check existence in a collection, for some reason this doesnt exist in the go stdlib...
 // if you want to use for other types just add to the generic parameter list
 // doesn't return a bool, returns the item itself otherwise returns nil
-func _contains[T string | int](collection []T, item T) (T, error) {
+func _contains[T string | int](collection []T, item T) bool {
 	for _, value := range collection {
 		if item == value {
-			return value, nil
+			return true
 		}
 	}
-	return item, errors.New("The collection does not contain the given item")
+	return false
 }
 
 func expression() *Node {
 	result := createNodeFromString("expression")
 	result.addChild(match(term()))
 	// will continue checking the next op if it is an operator
-	for op, err := _contains(operators, curTok().Contents); err != nil; {
-		result.addChild(match(op))
+	curr := curTok()
+	for _contains(operators, curr.Contents) {
+		result.addChild(match(curr.Contents))
 		result.addChild(match(term()))
 	}
 	return result
@@ -345,7 +350,38 @@ func expression() *Node {
 
 func term() *Node {
 	result := createNodeFromString("term")
-	// finish implementation
+	curr := curTok()
+
+	switch {
+	case _contains(operators, curr.Contents):
+		result.addChild(match(curr.Contents))
+		result.addChild(term())
+	case _contains(keywordConst, curr.Contents):
+		result.addChild(match(curr.Contents))
+	case curr.Contents == "(":
+		result.addChild(match("("))
+		result.addChild(expression())
+		result.addChild(match(")"))
+	case curr.Kind == INT:
+		result.addChild(match(INT))
+	case curr.Kind == STRING:
+		result.addChild(match(STRING))
+	case curr.Kind == IDENT:
+		next, err := peekNextToken()
+		if err != nil {
+            panic(err)
+		}
+		if next.Contents == "[" {
+			result.addChild(match(IDENT))
+			result.addChild(match("["))
+			result.addChild(expression())
+			result.addChild(match("]"))
+		} else if next.Contents == "(" || next.Contents == "." {
+			result.addChild(subroutineCall())
+		} else {
+			result.addChild(match(IDENT))
+		}
+	}
 	return result
 }
 
