@@ -1,11 +1,10 @@
 package compiler
 
 import (
-	"reflect"
 	"testing"
 )
 
-func TestReadStream(t *testing.T) {
+/* func TestReadStream(t *testing.T) {
 	type args struct {
 		tokenStream string
 	}
@@ -28,4 +27,8 @@ func TestReadStream(t *testing.T) {
 			}
 		})
 	}
+} */
+
+func TestParse(t *testing.T) {
+    Parse("test.jack")
 }

@@ -1,6 +1,5 @@
 package compiler
 
-
 const (
 	KEYWORD = "keyword"
 	SYMBOL = "symbol"

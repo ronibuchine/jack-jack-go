@@ -9,22 +9,23 @@ import (
 	"strings"
 )
 
-// aliasing structs for xml objects
-type TokensXML struct {
-	XMLName xml.Name   `xml:"tokens"`
-	Tokens  []TokenXML `xml:"token"`
-}
-
-type TokenXML struct {
-	XMLName xml.Name `xml:"token"`
-	Type    string   `xml:"type,attr"`
-	Value   string   `xml:",chardata"`
-}
-
 // Node struct for parsing and recursive descent
 type Node struct {
 	token    Token
 	children []*Node
+}
+
+func (n Node) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
+	e.EncodeToken(xml.StartElement{Name: xml.Name{Space: "", Local: n.token.Kind}})
+	if n.token.Kind == KEYWORD || n.token.Kind == SYMBOL ||
+		n.token.Kind == IDENT || n.token.Kind == INT || n.token.Kind == STRING {
+		// <n.token.Kind> n.token.Contents </n.Token.Kind>
+		paddedContents := " " + n.token.Contents + " "
+		e.EncodeToken(xml.CharData([]byte(paddedContents)))
+	} else {
+		e.Encode(n.children)
+	}
+	return e.EncodeToken(xml.EndElement{Name: xml.Name{Space: "", Local: n.token.Kind}})
 }
 
 func createNodeFromToken(token Token) *Node {
@@ -49,8 +50,7 @@ func curTok() Token {
 	return TokenStream[tokenCounter]
 }
 
-// cant be const for some reason
-var binaryOperators []string = []string{"+", "-", "*", "/", "&", "|", "<", ">", "="}
+var binaryOperators []string = []string{"+", "-", "*", "/", "&amp", "|", "&lt", "&gt", "="}
 var unaryOperators []string = []string{"~", "-"}
 var keywordConst []string = []string{"true", "false", "null", "this"}
 var functionDecs []string = []string{"function", "constructor", "method"}
@@ -64,22 +64,29 @@ func peekNextToken() (Token, error) {
 	return TokenStream[tokenCounter+1], nil
 }
 
-// Takes an ordered token stream which is a map[string]string and parses it and returns the XML tree
-func BuildXML() {
+// Build xml and write to disk from root node
+func BuildXML(root *Node) {
 	output, err := os.Create("output.xml")
 	if err != nil {
 		log.Fatal("Failed to create an ouput file.")
 	}
 	defer output.Close()
-	if TokenStream[0].Contents != "class" {
-		log.Fatal("Jack file must be contained in a class object")
-	}
-	rootNode := class()
-	bytes, err := xml.MarshalIndent(rootNode, "", "    ")
+
+	bytes, err := xml.MarshalIndent(root, "", "    ")
 	if err != nil {
 		log.Fatal("Failed to build the XML fromt the root class Node")
 	}
 	output.Write(bytes)
+}
+
+func Parse(jackFile string) *Node {
+	GetTokens(jackFile)
+	if TokenStream[0].Contents != "class" {
+		log.Fatal("Jack file must be contained in a class object")
+	}
+	rootNode := class()
+	BuildXML(rootNode)
+	return rootNode
 }
 
 func GetTokens(jackFile string) {
@@ -97,9 +104,7 @@ func _matchSingle(token string) (*Node, error) {
 		tokenCounter++
 		return res, nil
 	}
-	// TODO: add error handling. We might just panic and die here
-	// error(fmt.Sprint("Expected token %s before ", token))
-	return createNodeFromString("ERROR"), errors.New(fmt.Sprint("Failed to match %s", token))
+	return createNodeFromString("ERROR"), errors.New(fmt.Sprint("Failed to match ", token))
 }
 
 // global function used for token parsing and matching
@@ -112,26 +117,25 @@ func match(token interface{}) (result *Node) {
 
 	if t, ok := token.(string); ok {
 		if res, err := _matchSingle(t); err == nil {
-			result = res
+			return res
 		} else {
 			parseError(t)
-			result = createNodeFromString("ERROR")
+			return createNodeFromString("ERROR")
 		}
 	} else if tokens, ok := token.([]string); ok {
 		for _, t := range tokens {
 			if res, err := _matchSingle(t); err == nil {
-				result = res
+				return res
 			}
 		}
 		parseError(strings.Join(tokens, ", "))
-		result = createNodeFromString("ERROR")
 	}
-	return result
+	return createNodeFromString("ERROR")
 }
 
 func parseError(expected string) {
 	curr := curTok()
-	fmt.Sprint(fmt.Sprint("ERROR line %d: Expected token(s) `%s` before %s %s\n", curr.LineNumber, expected, curr.Kind, curr.Contents))
+	fmt.Print(fmt.Sprintf("ERROR line %d: Expected token(s) `%s` before %s %s\n", curr.LineNumber, expected, curr.Kind, curr.Contents))
 }
 
 // functions for grammar
@@ -257,11 +261,11 @@ func letStatement() *Node {
 	result.addChild(match(IDENT))
 	if curTok().Contents == "[" {
 		result.addChild(match("["))
-		result.addChild(match(expression()))
+		result.addChild(expression())
 		result.addChild(match("]"))
 	}
 	result.addChild(match("="))
-	result.addChild(match(expression()))
+	result.addChild(expression())
 	result.addChild(match(";"))
 	return result
 }
@@ -269,10 +273,10 @@ func letStatement() *Node {
 func whileStatement() *Node {
 	result := createNodeFromString("whileStatement")
 	result.addChild(match("("))
-	result.addChild(match(expression()))
+	result.addChild(expression())
 	result.addChild(match(")"))
 	result.addChild(match("{"))
-	result.addChild(match(statements()))
+	result.addChild(statements())
 	result.addChild(match("}"))
 	return result
 }
@@ -281,15 +285,15 @@ func ifStatement() *Node {
 	result := createNodeFromString("ifStatement")
 	result.addChild(match("if"))
 	result.addChild(match("("))
-	result.addChild(match(expression()))
+	result.addChild(expression())
 	result.addChild(match(")"))
 	result.addChild(match("{"))
-	result.addChild(match(statements()))
+	result.addChild(statements())
 	result.addChild(match("}"))
 	if curTok().Contents == "else" {
 		result.addChild(match("else"))
 		result.addChild(match("{"))
-		result.addChild(match(statements()))
+		result.addChild(statements())
 		result.addChild(match("}"))
 	}
 	return result
@@ -298,7 +302,7 @@ func ifStatement() *Node {
 func doStatement() *Node {
 	result := createNodeFromString("doStatement")
 	result.addChild(match("do"))
-	result.addChild(match(subroutineCall()))
+	result.addChild(subroutineCall())
 	result.addChild(match(";"))
 	return result
 }
@@ -308,10 +312,10 @@ func subroutineCall() *Node {
 	result.addChild(match(IDENT))
 	if curTok().Contents == "." {
 		result.addChild(match("."))
-        result.addChild(match(IDENT))
+		result.addChild(match(IDENT))
 	}
 	result.addChild(match("("))
-	result.addChild(match(expressionList()))
+	result.addChild(expressionList())
 	result.addChild(match(")"))
 	return result
 }
@@ -321,10 +325,10 @@ func expressionList() *Node {
 	if curTok().Contents == ")" {
 		return result
 	}
-	result.addChild(match(expression()))
+	result.addChild(expression())
 	for curTok().Contents == "," {
 		result.addChild(match(","))
-		result.addChild(match(expression()))
+		result.addChild(expression())
 	}
 	return result
 }
@@ -333,7 +337,7 @@ func returnStatement() *Node {
 	result := createNodeFromString("returnStatement")
 	result.addChild(match("return"))
 	if curTok().Contents != "}" {
-		result.addChild(match(expression()))
+		result.addChild(expression())
 	}
 	result.addChild(match(";"))
 	return result
@@ -353,12 +357,11 @@ func _contains[T string | int](collection []T, item T) bool {
 
 func expression() *Node {
 	result := createNodeFromString("expression")
-	result.addChild(match(term()))
+	result.addChild(term())
 	// will continue checking the next op if it is an operator
-	curr := curTok()
-	for _contains(binaryOperators, curr.Contents) {
+	for curr := curTok(); _contains(binaryOperators, curr.Contents); curr = curTok() {
 		result.addChild(match(curr.Contents))
-		result.addChild(match(term()))
+		result.addChild(term())
 	}
 	return result
 }

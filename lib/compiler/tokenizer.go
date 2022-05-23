@@ -47,10 +47,10 @@ var SYMBOL_LIST = map[byte]string{
 	'-': "-",
 	'*': "*",
 	'/': "/",
-	'&': "&amp;",
+	'&': "&amp",
 	'|': "|",
-	'<': "&lt;",
-	'>': "&gt;",
+	'<': "&lt",
+	'>': "&gt",
 	'=': "=",
 	'~': "~",
 }
@@ -91,7 +91,7 @@ func getSymbol(b byte) string {
 	return ""
 }
 
-func writeXMLHeader(output *os.File) parseError {
+func writeXMLHeader(output *os.File) error {
 	if _, err := output.WriteString(`<?xml version="1.0" encoding="UTF-8" ?>` + "\n"); err != nil {
 		return err
 	}
