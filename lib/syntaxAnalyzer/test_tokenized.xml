@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<tokens>
+<keyword> class </keyword>
+<identifier> foo </identifier>
+<symbol> { </symbol>
+<keyword> field </keyword>
+<keyword> int </keyword>
+<identifier> x </identifier>
+<symbol> ; </symbol>
+<keyword> constructor </keyword>
+<identifier> foo </identifier>
+<identifier> new </identifier>
+<symbol> ( </symbol>
+<keyword> int </keyword>
+<identifier> x </identifier>
+<symbol> ) </symbol>
+<symbol> { </symbol>
+<keyword> let </keyword>
+<identifier> x </identifier>
+<symbol> = </symbol>
+<integerConstant> 2 </integerConstant>
+<symbol> * </symbol>
+<identifier> x </identifier>
+<symbol> ; </symbol>
+<keyword> return </keyword>
+<keyword> this </keyword>
+<symbol> ; </symbol>
+<symbol> } </symbol>
+<keyword> method </keyword>
+<keyword> int </keyword>
+<identifier> getX </identifier>
+<symbol> ( </symbol>
+<symbol> ) </symbol>
+<symbol> { </symbol>
+<keyword> return </keyword>
+<identifier> x </identifier>
+<symbol> ; </symbol>
+<symbol> } </symbol>
+<symbol> } </symbol>
+</tokens>
