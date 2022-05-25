@@ -4,9 +4,9 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
+	"io"
 	"log"
 	"strings"
-    "io"
 )
 
 /*
@@ -62,12 +62,12 @@ func Parse(tokens []Token) *Node {
 // Build xml and write to disk from root node
 func BuildXML(root *Node, w io.Writer) error {
 	bytes, err := xml.MarshalIndent(root, "", "    ")
-    bytes = []byte(xml.Header + string(bytes))
+	bytes = []byte(xml.Header + string(bytes))
 	if err != nil {
-        return err
+		return err
 	}
 	w.Write(bytes)
-    return nil
+	return nil
 }
 
 // globals for matching
@@ -140,8 +140,8 @@ func match(token interface{}) (result *Node) {
 		}
 		parseError(strings.Join(tokens, ", "))
 	} else {
-        panic("match() should only be passed a string or a list of strings")
-    }
+		panic("match() should only be passed a string or a list of strings")
+	}
 
 	return createNodeFromString("ERROR")
 }
