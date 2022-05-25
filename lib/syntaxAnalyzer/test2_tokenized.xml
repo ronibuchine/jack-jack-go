@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<tokens>
+<keyword> class </keyword>
+<identifier> test </identifier>
+<symbol> { </symbol>
+<keyword> function </keyword>
+<identifier> construtor </identifier>
+<identifier> hello </identifier>
+<symbol> ( </symbol>
+<symbol> ) </symbol>
+<symbol> { </symbol>
+<keyword> do </keyword>
+<integerConstant> 1 </integerConstant>
+<symbol> ; </symbol>
+<symbol> } </symbol>
+<symbol> } </symbol>
+</tokens>
