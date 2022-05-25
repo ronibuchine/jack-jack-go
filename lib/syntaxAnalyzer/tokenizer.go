@@ -101,8 +101,10 @@ func TokenToXML(tokens []Token, w io.Writer) error {
 	return nil
 }
 
+
 func Tokenize(reader *bufio.Reader) []Token {
 
+    // move this to some top level function in the compiler
 	/* input, err := os.Open(file)
 	if err != nil {
 		log.Fatal(err)
@@ -137,7 +139,7 @@ func Tokenize(reader *bufio.Reader) []Token {
 			continue
 		}
 
-		if cur == '\n' {
+		if cur == '\n' || cur == '\r' {
 			lineNumber += 1
 			continue
 		}
