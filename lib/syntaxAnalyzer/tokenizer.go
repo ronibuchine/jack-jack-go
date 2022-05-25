@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"encoding/xml"
 	"io"
+	"jack-jack-go/lib/util"
 	"log"
 	"strconv"
 	"strings"
@@ -33,26 +34,26 @@ var KEYWORDS_LIST []string = []string{
 	"return",
 }
 
-var SYMBOL_LIST = map[byte]string{
-	'{': "{",
-	'}': "}",
-	'(': "(",
-	')': ")",
-	'[': "[",
-	']': "]",
-	'.': ".",
-	',': ",",
-	';': ";",
-	'+': "+",
-	'-': "-",
-	'*': "*",
-	'/': "/",
-	'&': "&",
-	'|': "|",
-	'<': "<",
-	'>': ">",
-	'=': "=",
-	'~': "~",
+var SYMBOL_LIST = []byte{
+	'{',
+	'}',
+	'(',
+	')',
+	'[',
+	']',
+	'.',
+	',',
+	';',
+	'+',
+	'-',
+	'*',
+	'/',
+	'&',
+	'|',
+	'<',
+	'>',
+	'=',
+	'~',
 }
 
 func peekByte(r *bufio.Reader) byte {
@@ -72,23 +73,7 @@ func isWordStart(b byte) bool {
 }
 
 func isWhitespace(b byte) bool {
-	return b == ' ' || b == '\t' || b == '\r' 
-}
-
-func isKeyword(word string) bool {
-	for _, k := range KEYWORDS_LIST {
-		if k == word {
-			return true
-		}
-	}
-	return false
-}
-
-func getSymbol(b byte) string {
-	if symbol, ok := SYMBOL_LIST[b]; ok {
-		return symbol
-	}
-	return ""
+	return b == ' ' || b == '\t' || b == '\r'
 }
 
 func TokenToXML(tokens []Token, w io.Writer) error {
@@ -101,28 +86,7 @@ func TokenToXML(tokens []Token, w io.Writer) error {
 	return nil
 }
 
-
 func Tokenize(reader *bufio.Reader) []Token {
-
-    // move this to some top level function in the compiler
-	/* input, err := os.Open(file)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer input.Close()
-
-	output, err := os.Create(strings.TrimSuffix(file, ".jack") + "_tokenized.xml")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer output.Close()
-
-	reader := bufio.NewReader(input) */
-
-	/* if err := writeXMLHeader(output); err != nil {
-		log.Fatal("Failed to write the XML header to the output file.\n")
-	}
-	output.WriteString("<tokens>\n") */
 
 	inComment := false
 	var curToken Token
@@ -225,7 +189,7 @@ func Tokenize(reader *bufio.Reader) []Token {
 			reader.UnreadByte()
 
 			curToken.Contents = word
-			if isKeyword(word) {
+			if util.Contains(KEYWORDS_LIST, word) {
 				curToken.Kind = KEYWORD
 			} else {
 				curToken.Kind = IDENT
@@ -233,8 +197,8 @@ func Tokenize(reader *bufio.Reader) []Token {
 		}
 
 		// symbols
-		if validSymbol := getSymbol(cur); validSymbol != "" {
-			curToken.Contents = validSymbol
+		if util.Contains(SYMBOL_LIST, cur) {
+			curToken.Contents = string(cur)
 			curToken.Kind = SYMBOL
 		}
 

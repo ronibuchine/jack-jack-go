@@ -7,6 +7,8 @@ import (
 	"io"
 	"log"
 	"strings"
+    "jack-jack-go/lib/util"
+
 )
 
 /*
@@ -85,6 +87,7 @@ var unaryOperators []string = []string{"~", "-"}
 var keywordConst []string = []string{"true", "false", "null", "this"}
 var functionDecs []string = []string{"function", "constructor", "method"}
 var classVars []string = []string{"static", "field"}
+var statementKeywords []string = []string{"let", "do", "if", "while", "return"}
 
 // peek helper for LL(1) lookahead
 func peekNextToken() (Token, error) {
@@ -92,17 +95,6 @@ func peekNextToken() (Token, error) {
 		return Token{}, errors.New("Cannot lookahead passed the end of token stream")
 	}
 	return TokenStream[tokenCounter+1], nil
-}
-
-// helper function to check existence in a collection, for some reason this doesnt exist in the go stdlib...
-// if you want to use for other types just add to the generic parameter list
-func _contains[T string | int](collection []T, item T) bool {
-	for _, value := range collection {
-		if item == value {
-			return true
-		}
-	}
-	return false
 }
 
 func _matchSingle(token string) (*Node, error) {
@@ -159,11 +151,11 @@ func class() *Node {
 	result.addChild(match(IDENT))
 	result.addChild(match("{"))
 	curr := curTok()
-	for _contains(classVars, curr.Contents) {
+	for util.Contains(classVars, curr.Contents) {
 		result.addChild(classVarDec())
 		curr = curTok()
 	}
-	for _contains(functionDecs, curr.Contents) {
+	for util.Contains(functionDecs, curr.Contents) {
 		result.addChild(subroutineDec())
 		curr = curTok()
 	}
@@ -246,7 +238,7 @@ func varDec() *Node {
 
 func statements() *Node {
 	result := createNodeFromString("statements")
-	for cur := curTok(); _contains([]string{"let", "do", "if", "while", "return"}, cur.Contents); cur = curTok() {
+	for cur := curTok(); util.Contains(statementKeywords, cur.Contents); cur = curTok() {
 		switch cur.Contents {
 		case "let":
 			result.addChild(letStatement())
@@ -384,7 +376,7 @@ func expression() *Node {
 	result := createNodeFromString("expression")
 	result.addChild(term())
 	// will continue checking the next op if it is an operator
-	for curr := curTok(); _contains(binaryOperators, curr.Contents); curr = curTok() {
+	for curr := curTok(); util.Contains(binaryOperators, curr.Contents); curr = curTok() {
 		result.addChild(match(curr.Contents))
 		result.addChild(term())
 	}
@@ -396,10 +388,10 @@ func term() *Node {
 	curr := curTok()
 
 	switch {
-	case _contains(unaryOperators, curr.Contents):
+	case util.Contains(unaryOperators, curr.Contents, ):
 		result.addChild(match(curr.Contents))
 		result.addChild(term())
-	case _contains(keywordConst, curr.Contents):
+	case util.Contains(keywordConst, curr.Contents, ):
 		result.addChild(match(curr.Contents))
 	case curr.Contents == "(":
 		result.addChild(match("("))
