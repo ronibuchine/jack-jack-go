@@ -10,7 +10,7 @@ import (
 
 func TestParse(t *testing.T) {
 	var b bytes.Buffer
-	jack, _ := os.Open("test.jack")
+	jack, _ := os.Open("../../tests/10/Square/Square.jack")
 	reader := bufio.NewReader(jack)
 	NodeToXML(Parse(Tokenize(reader)), &b)
 	fmt.Print(b.String())

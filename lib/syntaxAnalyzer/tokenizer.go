@@ -47,10 +47,10 @@ var SYMBOL_LIST = map[byte]string{
 	'-': "-",
 	'*': "*",
 	'/': "/",
-	'&': "&amp",
+	'&': "&",
 	'|': "|",
-	'<': "&lt",
-	'>': "&gt",
+	'<': "<",
+	'>': ">",
 	'=': "=",
 	'~': "~",
 }
@@ -92,11 +92,11 @@ func getSymbol(b byte) string {
 }
 
 func TokenToXML(tokens []Token, w io.Writer) error {
-	bytes, err := xml.MarshalIndent(TokensXML{tokens}, "", "    ")
+	bytes, err := xml.MarshalIndent(TokensXML{tokens}, "", "  ")
 	if err != nil {
 		return err
 	}
-	bytes = []byte(xml.Header + string(bytes))
+	// bytes = []byte(xml.Header + string(bytes))
 	w.Write(bytes)
 	return nil
 }

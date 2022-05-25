@@ -30,9 +30,9 @@ func (n Node) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 		n.token.Kind == IDENT || n.token.Kind == INT || n.token.Kind == STRING {
 		return e.Encode(n.token)
 	} else {
-        e.EncodeToken(xml.StartElement{Name: xml.Name{Space: "", Local: n.token.Kind}})
+		e.EncodeToken(xml.StartElement{Name: xml.Name{Space: "", Local: n.token.Kind}})
 		e.Encode(n.children)
-        return e.EncodeToken(xml.EndElement{Name: xml.Name{Space: "", Local: n.token.Kind}})
+		return e.EncodeToken(xml.EndElement{Name: xml.Name{Space: "", Local: n.token.Kind}})
 	}
 }
 
@@ -61,8 +61,8 @@ func Parse(tokens []Token) *Node {
 
 // Build xml and write to disk from root node
 func NodeToXML(root *Node, w io.Writer) error {
-	bytes, err := xml.MarshalIndent(root, "", "    ")
-	bytes = []byte(xml.Header + string(bytes))
+	bytes, err := xml.MarshalIndent(root, "", "  ")
+	// bytes = []byte(xml.Header + string(bytes))
 	if err != nil {
 		return err
 	}
@@ -80,7 +80,7 @@ func curTok() Token {
 	return TokenStream[tokenCounter]
 }
 
-var binaryOperators []string = []string{"+", "-", "*", "/", "&amp", "|", "&lt", "&gt", "="}
+var binaryOperators []string = []string{"+", "-", "*", "/", "&", "|", "<", ">", "="}
 var unaryOperators []string = []string{"~", "-"}
 var keywordConst []string = []string{"true", "false", "null", "this"}
 var functionDecs []string = []string{"function", "constructor", "method"}
@@ -246,8 +246,19 @@ func varDec() *Node {
 
 func statements() *Node {
 	result := createNodeFromString("statements")
-	for _contains([]string{"let", "do", "if", "while", "return"}, curTok().Contents) {
-		result.addChild(statement())
+	for cur := curTok(); _contains([]string{"let", "do", "if", "while", "return"}, cur.Contents); cur = curTok() {
+		switch cur.Contents {
+		case "let":
+			result.addChild(letStatement())
+		case "if":
+			result.addChild(ifStatement())
+		case "while":
+			result.addChild(whileStatement())
+		case "do":
+			result.addChild(doStatement())
+		case "return":
+			result.addChild(returnStatement())
+		}
 	}
 	return result
 }
@@ -286,6 +297,7 @@ func letStatement() *Node {
 
 func whileStatement() *Node {
 	result := createNodeFromString("whileStatement")
+	result.addChild(match("while"))
 	result.addChild(match("("))
 	result.addChild(expression())
 	result.addChild(match(")"))
@@ -316,13 +328,19 @@ func ifStatement() *Node {
 func doStatement() *Node {
 	result := createNodeFromString("doStatement")
 	result.addChild(match("do"))
-	result.addChild(subroutineCall())
+	result.addChild(match(IDENT))
+	if curTok().Contents == "." {
+		result.addChild(match("."))
+		result.addChild(match(IDENT))
+	}
+	result.addChild(match("("))
+	result.addChild(expressionList())
+	result.addChild(match(")"))
 	result.addChild(match(";"))
 	return result
 }
 
-func subroutineCall() *Node {
-	result := createNodeFromString("subroutineCall")
+func _subroutineCall(result *Node) *Node {
 	result.addChild(match(IDENT))
 	if curTok().Contents == "." {
 		result.addChild(match("."))
@@ -332,6 +350,11 @@ func subroutineCall() *Node {
 	result.addChild(expressionList())
 	result.addChild(match(")"))
 	return result
+}
+func subroutineCall() *Node {
+	result := createNodeFromString("subroutineCall")
+    result = _subroutineCall(result)
+    return result
 }
 
 func expressionList() *Node {
@@ -350,7 +373,7 @@ func expressionList() *Node {
 func returnStatement() *Node {
 	result := createNodeFromString("returnStatement")
 	result.addChild(match("return"))
-	if curTok().Contents != "}" {
+	if curTok().Contents != ";" {
 		result.addChild(expression())
 	}
 	result.addChild(match(";"))
@@ -373,7 +396,7 @@ func term() *Node {
 	curr := curTok()
 
 	switch {
-	case _contains(binaryOperators, curr.Contents):
+	case _contains(unaryOperators, curr.Contents):
 		result.addChild(match(curr.Contents))
 		result.addChild(term())
 	case _contains(keywordConst, curr.Contents):
@@ -397,7 +420,7 @@ func term() *Node {
 			result.addChild(expression())
 			result.addChild(match("]"))
 		} else if next.Contents == "(" || next.Contents == "." {
-			result.addChild(subroutineCall())
+			result = _subroutineCall(result)
 		} else {
 			result.addChild(match(IDENT))
 		}
