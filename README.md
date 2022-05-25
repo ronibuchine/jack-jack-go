@@ -11,7 +11,21 @@ Features will be added by the following workflow:
 
 ## Test Script
 
+### Compiling
+Compile with  `make` on linux. On windows??
+
 ### Usage 
+
+`jjg [-tokens] [-ast] [files]`
+
+`-tokens` will output the xml of the tokenized jack file
+
+`-ast` will output the xml of the ast
+
+`files` can be any number of jack files that are in your current working directory. If no files are present, all jack files in the cwd will be compiled
+
+### Testing
+
 `./tester.py` or `./tester.py <chapters youd like to test>`.
 
 Can also be run explicitly as a python program like `python tester.py 7`
