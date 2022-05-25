@@ -3,10 +3,8 @@ package syntaxAnalyzer
 import (
 	"bufio"
 	"encoding/xml"
-	"fmt"
 	"io"
 	"log"
-	"os"
 	"strconv"
 	"strings"
 )
@@ -74,7 +72,7 @@ func isWordStart(b byte) bool {
 }
 
 func isWhitespace(b byte) bool {
-	return b == ' ' || b == '\t'
+	return b == ' ' || b == '\t' || b == '\r' 
 }
 
 func isKeyword(word string) bool {
@@ -93,13 +91,6 @@ func getSymbol(b byte) string {
 	return ""
 }
 
-func writeXMLHeader(output *os.File) error {
-	if _, err := output.WriteString(`<?xml version="1.0" encoding="UTF-8" ?>` + "\n"); err != nil {
-		return err
-	}
-	return nil
-}
-
 func TokenToXML(tokens []Token, w io.Writer) error {
 	bytes, err := xml.MarshalIndent(TokensXML{tokens}, "", "    ")
 	bytes = []byte(xml.Header + string(bytes))
@@ -110,9 +101,11 @@ func TokenToXML(tokens []Token, w io.Writer) error {
 	return nil
 }
 
-func Tokenize(file string) []Token {
 
-	input, err := os.Open(file)
+func Tokenize(reader *bufio.Reader) []Token {
+
+    // move this to some top level function in the compiler
+	/* input, err := os.Open(file)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -124,16 +117,15 @@ func Tokenize(file string) []Token {
 	}
 	defer output.Close()
 
-	reader := bufio.NewReader(input)
+	reader := bufio.NewReader(input) */
 
-	var curToken Token
-
-	inComment := false
-	if err := writeXMLHeader(output); err != nil {
+	/* if err := writeXMLHeader(output); err != nil {
 		log.Fatal("Failed to write the XML header to the output file.\n")
 	}
-	output.WriteString("<tokens>\n")
+	output.WriteString("<tokens>\n") */
 
+	inComment := false
+	var curToken Token
 	var tokenStream []Token
 
 	lineNumber := 1
@@ -147,7 +139,7 @@ func Tokenize(file string) []Token {
 			continue
 		}
 
-		if cur == '\n' || cur == '\r' {
+		if cur == '\n' {
 			lineNumber += 1
 			continue
 		}
@@ -246,14 +238,9 @@ func Tokenize(file string) []Token {
 			curToken.Kind = SYMBOL
 		}
 
-		// write token to xml
-		tokenXml := fmt.Sprintf("<%s> %s </%s>\n", curToken.Kind, curToken.Contents, curToken.Kind)
-		output.WriteString(tokenXml)
-
 		curToken.LineNumber = lineNumber
 		tokenStream = append(tokenStream, curToken)
 	}
 
-	output.WriteString("</tokens>\n")
 	return tokenStream
 }
