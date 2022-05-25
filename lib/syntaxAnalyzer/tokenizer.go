@@ -2,13 +2,13 @@ package syntaxAnalyzer
 
 import (
 	"bufio"
+	"encoding/xml"
 	"fmt"
 	"io"
 	"log"
 	"os"
 	"strconv"
 	"strings"
-    "encoding/xml"
 )
 
 var KEYWORDS_LIST []string = []string{
@@ -102,12 +102,12 @@ func writeXMLHeader(output *os.File) error {
 
 func TokenToXML(tokens []Token, w io.Writer) error {
 	bytes, err := xml.MarshalIndent(TokensXML{tokens}, "", "    ")
-    bytes = []byte(xml.Header + string(bytes))
+	bytes = []byte(xml.Header + string(bytes))
 	if err != nil {
-        return err
+		return err
 	}
 	w.Write(bytes)
-    return nil
+	return nil
 }
 
 func Tokenize(file string) []Token {
@@ -147,7 +147,7 @@ func Tokenize(file string) []Token {
 			continue
 		}
 
-		if cur == '\n' {
+		if cur == '\n' || cur == '\r' {
 			lineNumber += 1
 			continue
 		}
