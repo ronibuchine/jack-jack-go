@@ -72,7 +72,7 @@ func isWordStart(b byte) bool {
 }
 
 func isWhitespace(b byte) bool {
-	return b == ' ' || b == '\t'
+	return b == ' ' || b == '\t' || b == '\r' 
 }
 
 func isKeyword(word string) bool {
@@ -139,7 +139,7 @@ func Tokenize(reader *bufio.Reader) []Token {
 			continue
 		}
 
-		if cur == '\n' || cur == '\r' {
+		if cur == '\n' {
 			lineNumber += 1
 			continue
 		}
