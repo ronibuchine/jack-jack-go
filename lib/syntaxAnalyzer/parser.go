@@ -26,14 +26,14 @@ type Node struct {
 }
 
 func (n Node) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
-	e.EncodeToken(xml.StartElement{Name: xml.Name{Space: "", Local: n.token.Kind}})
 	if n.token.Kind == KEYWORD || n.token.Kind == SYMBOL ||
 		n.token.Kind == IDENT || n.token.Kind == INT || n.token.Kind == STRING {
-		e.Encode(n.token)
+		return e.Encode(n.token)
 	} else {
+        e.EncodeToken(xml.StartElement{Name: xml.Name{Space: "", Local: n.token.Kind}})
 		e.Encode(n.children)
+        return e.EncodeToken(xml.EndElement{Name: xml.Name{Space: "", Local: n.token.Kind}})
 	}
-	return e.EncodeToken(xml.EndElement{Name: xml.Name{Space: "", Local: n.token.Kind}})
 }
 
 func createNodeFromToken(token Token) *Node {

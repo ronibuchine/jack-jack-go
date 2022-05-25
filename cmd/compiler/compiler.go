@@ -20,10 +20,13 @@ func main() {
 	flag.Parse()
 
 	args := flag.Args()
-	err := os.Mkdir("build", os.ModePerm)
-	if err != nil {
-		log.Fatal("Could not create build/ folder")
-	}
+    if _, err := os.Stat("build"); !os.IsNotExist(err) {
+        os.RemoveAll("build")
+    }
+    err := os.Mkdir("build", os.ModePerm)
+    if err != nil {
+        log.Fatal("Could not create build/ folder")
+    }
 
 	var jackFiles []string
 	if len(args) == 0 {
