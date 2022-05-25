@@ -1,0 +1,8 @@
+class test() {
+    
+    function void hello() {
+        do 1;
+        let ()
+    }
+    // this should output error nodes
+}
