@@ -95,9 +95,10 @@ func main() {
 
     //  multi threading in GO is luvly
     var wg sync.WaitGroup // primitive used for waiting on threads
-    for i := 0; i < len(jackFiles); i++ {
+    for _, jackFile := range jackFiles {
         wg.Add(1) // tell it how many go routines we are waiting on
-        go tokenizeAndParse(jackFiles[i], &wg)
+        jackFile := jackFile // redeclare before passing to go routine
+        go tokenizeAndParse(jackFile, &wg)
 	}
     wg.Wait()
 }
