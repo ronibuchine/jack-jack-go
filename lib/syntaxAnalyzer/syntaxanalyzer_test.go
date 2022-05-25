@@ -11,3 +11,9 @@ func TestParse(t *testing.T) {
 	BuildXML(Parse(Tokenize("test.jack")), &b)
 	fmt.Print(b.String())
 }
+
+func TestTokenize(t *testing.T) {
+	var b bytes.Buffer
+	TokenToXML(Tokenize("test.jack"), &b)
+	fmt.Print(b.String())
+}

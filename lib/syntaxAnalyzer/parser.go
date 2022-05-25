@@ -29,8 +29,7 @@ func (n Node) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 	e.EncodeToken(xml.StartElement{Name: xml.Name{Space: "", Local: n.token.Kind}})
 	if n.token.Kind == KEYWORD || n.token.Kind == SYMBOL ||
 		n.token.Kind == IDENT || n.token.Kind == INT || n.token.Kind == STRING {
-		// <n.token.Kind> n.token.Contents </n.Token.Kind>
-		e.EncodeToken(xml.CharData([]byte(" " + n.token.Contents + " ")))
+		e.Encode(n.token)
 	} else {
 		e.Encode(n.children)
 	}
@@ -62,8 +61,8 @@ func Parse(tokens []Token) *Node {
 
 // Build xml and write to disk from root node
 func BuildXML(root *Node, w io.Writer) error {
-
 	bytes, err := xml.MarshalIndent(root, "", "    ")
+    bytes = []byte(xml.Header + string(bytes))
 	if err != nil {
         return err
 	}
@@ -94,7 +93,6 @@ func peekNextToken() (Token, error) {
 	}
 	return TokenStream[tokenCounter+1], nil
 }
-
 
 // helper function to check existence in a collection, for some reason this doesnt exist in the go stdlib...
 // if you want to use for other types just add to the generic parameter list

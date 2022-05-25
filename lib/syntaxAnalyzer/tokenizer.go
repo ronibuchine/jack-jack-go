@@ -3,10 +3,12 @@ package syntaxAnalyzer
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"strconv"
 	"strings"
+    "encoding/xml"
 )
 
 var KEYWORDS_LIST []string = []string{
@@ -96,6 +98,16 @@ func writeXMLHeader(output *os.File) error {
 		return err
 	}
 	return nil
+}
+
+func TokenToXML(tokens []Token, w io.Writer) error {
+	bytes, err := xml.MarshalIndent(TokensXML{tokens}, "", "    ")
+    bytes = []byte(xml.Header + string(bytes))
+	if err != nil {
+        return err
+	}
+	w.Write(bytes)
+    return nil
 }
 
 func Tokenize(file string) []Token {
