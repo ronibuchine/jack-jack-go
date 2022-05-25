@@ -60,7 +60,7 @@ func Parse(tokens []Token) *Node {
 }
 
 // Build xml and write to disk from root node
-func BuildXML(root *Node, w io.Writer) error {
+func NodeToXML(root *Node, w io.Writer) error {
 	bytes, err := xml.MarshalIndent(root, "", "    ")
 	bytes = []byte(xml.Header + string(bytes))
 	if err != nil {

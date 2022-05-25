@@ -93,10 +93,10 @@ func getSymbol(b byte) string {
 
 func TokenToXML(tokens []Token, w io.Writer) error {
 	bytes, err := xml.MarshalIndent(TokensXML{tokens}, "", "    ")
-	bytes = []byte(xml.Header + string(bytes))
 	if err != nil {
 		return err
 	}
+	bytes = []byte(xml.Header + string(bytes))
 	w.Write(bytes)
 	return nil
 }

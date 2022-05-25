@@ -19,5 +19,8 @@
 main
 jjg
 
+__debug_bin
+build
+
 # Dependency directories (remove the comment below to include it)
 # vendor/
