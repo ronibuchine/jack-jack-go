@@ -14,11 +14,6 @@ const (
 	UNKNOWN = "UNKNOWN"
 )
 
-// this struct is just a hack for xml writing
-type TokensXML struct {
-	tokens []Token
-}
-
 type Token struct {
 	Kind       string
 	Contents   string
@@ -30,6 +25,11 @@ type TS struct {
 	Tokens  []Token
 	counter int
 	File    string
+}
+
+// this struct is just a hack for xml writing
+type TokensXML struct {
+	tokens []Token
 }
 
 func (ts TS) curTok() Token {
