@@ -206,5 +206,5 @@ func Tokenize(reader *bufio.Reader) []Token {
 		tokenStream = append(tokenStream, curToken)
 	}
 
-	return tokenStream
+    return tokenStream
 }

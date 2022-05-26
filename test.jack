@@ -20,8 +20,8 @@
 class foo {
     field int x;
     constructor foo new(int x) {
-        let x = 2 * x;
-        return this;
+        let x = 2 * x
+        return this
     }
     method int getX() {
         return x;

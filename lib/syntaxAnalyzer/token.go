@@ -2,6 +2,7 @@ package syntaxAnalyzer
 
 import (
 	"encoding/xml"
+	"errors"
 )
 
 const (
@@ -22,6 +23,25 @@ type Token struct {
 	Kind       string
 	Contents   string
 	LineNumber int
+}
+
+// represents a token stream
+type TS struct {
+	Tokens  []Token
+	counter int
+	File    string
+}
+
+func (ts TS) curTok() Token {
+	return ts.Tokens[ts.counter]
+}
+
+// peek helper for LL(1) lookahead
+func (ts TS) peekNextToken() (Token, error) {
+	if ts.counter+1 >= len(ts.Tokens) {
+		return Token{}, errors.New("Cannot lookahead passed the end of token stream")
+	}
+	return ts.Tokens[ts.counter+1], nil
 }
 
 func (t TokensXML) MarshalXML(e *xml.Encoder, start xml.StartElement) error {

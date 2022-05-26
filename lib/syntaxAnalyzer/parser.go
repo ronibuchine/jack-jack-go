@@ -26,23 +26,6 @@ type Node struct {
 	children []*Node
 }
 
-// represents a token stream
-type TS struct {
-	tokens  []Token
-	counter int
-}
-
-func (ts TS) curTok() Token {
-	return ts.tokens[ts.counter]
-}
-
-// peek helper for LL(1) lookahead
-func (ts TS) peekNextToken() (Token, error) {
-	if ts.counter+1 >= len(ts.tokens) {
-		return Token{}, errors.New("Cannot lookahead passed the end of token stream")
-	}
-	return ts.tokens[ts.counter+1], nil
-}
 
 func (n Node) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 	if n.token.Kind == KEYWORD || n.token.Kind == SYMBOL ||
@@ -68,9 +51,8 @@ func (parent *Node) addChild(child *Node) {
 }
 
 // parse a stream of tokens and return the root Node of the AST
-func Parse(tokens []Token) *Node {
-    ts := &TS{tokens: tokens, counter: 0}
-	if ts.tokens[0].Contents != "class" {
+func Parse(ts *TS) *Node {
+	if ts.Tokens[0].Contents != "class" {
 		log.Fatal("Jack file must be contained in a class object")
 	}
 	rootNode := class(ts)
@@ -88,12 +70,6 @@ func NodeToXML(root *Node, w io.Writer) error {
 	return nil
 }
 
-// globals for matching
-/* var (
-	TokenStream  []Token
-	tokenCounter int
-) */
-
 var binaryOperators []string = []string{"+", "-", "*", "/", "&", "|", "<", ">", "="}
 var unaryOperators []string = []string{"~", "-"}
 var keywordConst []string = []string{"true", "false", "null", "this"}
@@ -108,7 +84,7 @@ func _matchSingle(token string, ts *TS) (*Node, error) {
 	if ((token == IDENT || token == INT || token == STRING) && (token == curr.Kind)) ||
 		((token == curr.Contents) && (curr.Kind == KEYWORD || curr.Kind == SYMBOL)) {
 		res := createNodeFromToken(curr)
-		ts.counter++
+        ts.counter++
 		return res, nil
 	}
 	return createNodeFromString("ERROR"), errors.New(fmt.Sprint("Failed to match ", token))
@@ -118,34 +94,36 @@ func _matchSingle(token string, ts *TS) (*Node, error) {
 // can either pass in a string or []string. If no matches, then an error will
 // occur, if at least one matches then the first match will be returned
 func match(token interface{}, ts *TS) (result *Node) {
-	if ts.counter >= len(ts.tokens) {
+	if ts.counter >= len(ts.Tokens) {
 		log.Fatal("end of token stream")
 	}
 
-	if t, ok := token.(string); ok {
-		if res, err := _matchSingle(t, ts); err == nil {
-			return res
+    switch token := token.(type) {
+    case string: 
+		if match, err := _matchSingle(token, ts); err == nil {
+            return match
 		} else {
-			parseError(t, ts)
+			parseError(token, ts)
+            return createNodeFromString("ERROR")
 		}
-	} else if tokens, ok := token.([]string); ok {
-		for _, t := range tokens {
-			if res, err := _matchSingle(t, ts); err == nil {
-				return res
+    case []string:
+		for _, t := range token {
+			if match, err := _matchSingle(t, ts); err == nil {
+                return match
 			}
 		}
-		parseError(strings.Join(tokens, ", "), ts)
-	} else {
+		parseError(strings.Join(token, ", "), ts)
+        ts.counter++
+        return createNodeFromString("ERROR")
+    default:
 		panic("match() should only be passed a string or a list of strings")
-	}
-
-	return createNodeFromString("ERROR")
+    }
 }
 
 // prints to stdout a parse error
 func parseError(expected string, ts *TS) {
 	curr := ts.curTok()
-	fmt.Print(fmt.Sprintf("ERROR line %d: Expected token(s) `%s` before %s %s\n", curr.LineNumber, expected, curr.Kind, curr.Contents))
+    fmt.Print(fmt.Sprintf("ERROR: %s: line %d: Expected token(s) `%s` before %s %s\n",ts.File, curr.LineNumber, expected, curr.Kind, curr.Contents))
 }
 
 // functions for grammar
@@ -258,24 +236,6 @@ func statements(ts *TS) *Node {
 	}
 	return result
 }
-
-/* func statement(ts *TS) *Node {
-	result := createNodeFromString("statement")
-    cur := ts.curTok()
-	switch cur.Contents {
-	case "let":
-		result.addChild(letStatement())
-	case "if":
-		result.addChild(ifStatement())
-	case "while":
-		result.addChild(whileStatement())
-	case "do":
-		result.addChild(doStatement())
-	case "return":
-		result.addChild(returnStatement())
-	}
-	return result
-} */
 
 func letStatement(ts *TS) *Node {
 	result := createNodeFromString("letStatement")
