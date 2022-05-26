@@ -16,13 +16,13 @@ Compile with `make` on linux. On windows?? -- calm your farm... you can use ming
 
 ### Usage 
 
-`jjg [-tokens] [-ast] [files]`
+`jjg [-tokens] [-ast] <files>`
 
 `-tokens` will output the xml of the tokenized jack file
 
 `-ast` will output the xml of the ast
 
-`files` can be any number of jack files that are in your current working directory. If no files are present, all jack files in the cwd will be compiled
+`files` can be any number of Jack files that are in your current working directory or can be a directoy with Jack files.
 
 ### Testing
 
