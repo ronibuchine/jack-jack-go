@@ -18,9 +18,9 @@ Compile with `make` on linux. On windows?? -- calm your farm... you can use ming
 
 `jjg [-tokens] [-ast] <files>`
 
-`-tokens` will output the xml of the tokenized jack file
+`-tokens` will output the xml of the tokenized jack file.
 
-`-ast` will output the xml of the ast
+`-ast` will output the xml of the abstract syntax tree.
 
 `files` can be any number of Jack files that are in your current working directory or can be a directoy with Jack files.
 
