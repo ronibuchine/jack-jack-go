@@ -1,29 +1,15 @@
-package compiler
+package syntaxAnalyzer
 
 import (
 	"bufio"
-	"fmt"
+	"encoding/xml"
+	"io"
+	"jack-jack-go/lib/util"
 	"log"
-	"os"
 	"strconv"
 	"strings"
 )
 
-type TokenType int64
-
-const (
-	KEYWORD TokenType = iota
-	SYMBOL
-	IDENT
-	INT
-	STRING
-)
-
-/* const (
-	NOT_A_KEYWORD = iota
-) */
-
-// that can't be const for... reasons
 var KEYWORDS_LIST []string = []string{
 	"class",
 	"constructor",
@@ -48,26 +34,26 @@ var KEYWORDS_LIST []string = []string{
 	"return",
 }
 
-var SYMBOL_LIST = map[byte]string{
-	'{': "{",
-	'}': "}",
-	'(': "(",
-	')': ")",
-	'[': "[",
-	']': "]",
-	'.': ".",
-	',': ",",
-	';': ";",
-	'+': "+",
-	'-': "-",
-	'*': "*",
-	'/': "/",
-	'&': "&amp;",
-	'|': "|",
-	'<': "&lt;",
-	'>': "&gt;",
-	'=': "=",
-	'~': "~",
+var SYMBOL_LIST = []byte{
+	'{',
+	'}',
+	'(',
+	')',
+	'[',
+	']',
+	'.',
+	',',
+	';',
+	'+',
+	'-',
+	'*',
+	'/',
+	'&',
+	'|',
+	'<',
+	'>',
+	'=',
+	'~',
 }
 
 func peekByte(r *bufio.Reader) byte {
@@ -87,58 +73,24 @@ func isWordStart(b byte) bool {
 }
 
 func isWhitespace(b byte) bool {
-	return b == ' ' || b == '\t'
+	return b == ' ' || b == '\t' || b == '\r'
 }
 
-func isKeyword(word string) bool {
-	for _, k := range KEYWORDS_LIST {
-		if k == word {
-			return true
-		}
-	}
-	return false
-}
-
-func getSymbol(b byte) string {
-	if symbol, ok := SYMBOL_LIST[b]; ok {
-		return symbol
-	}
-	return ""
-}
-
-func writeXMLHeader(output *os.File) error {
-	if _, err := output.WriteString(`<?xml version="1.0" encoding="UTF-8" ?>` + "\n"); err != nil {
+func TokenToXML(tokens []Token, w io.Writer) error {
+	bytes, err := xml.MarshalIndent(TokensXML{tokens}, "", "  ")
+	if err != nil {
 		return err
 	}
+	// bytes = []byte(xml.Header + string(bytes))
+	w.Write(bytes)
 	return nil
 }
 
-func Tokenize(file string) {
-
-	input, err := os.Open(file)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer input.Close()
-
-	output, err := os.Create(strings.TrimSuffix(file, ".jack") + "_tokenized.xml")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer output.Close()
-
-	reader := bufio.NewReader(input)
-
-	var (
-		tokenContents string
-		tokenType     string
-	)
+func Tokenize(reader *bufio.Reader) []Token {
 
 	inComment := false
-	if err := writeXMLHeader(output); err != nil {
-		log.Fatal("Failed to write the XML header to the output file.\n")
-	}
-	output.WriteString("<tokens>\n")
+	var curToken Token
+	var tokenStream []Token
 
 	lineNumber := 1
 	for {
@@ -191,7 +143,8 @@ func Tokenize(file string) {
 		}
 
 		// now figure out what the next token is
-		tokenType = "UNKNOWN"
+		curToken.Kind = UNKNOWN
+		curToken.Contents = string(cur)
 
 		// strings
 		if cur == '"' {
@@ -201,8 +154,8 @@ func Tokenize(file string) {
 			if err != nil {
 				log.Fatal("Unclosed string")
 			}
-			tokenContents = strings.TrimSuffix(string(str), "\"")
-			tokenType = "stringConstant"
+			curToken.Contents = strings.TrimSuffix(string(str), "\"")
+			curToken.Kind = STRING
 		}
 
 		// digits
@@ -220,8 +173,8 @@ func Tokenize(file string) {
 			if err != nil || value < 0 || value > 32767 {
 				log.Fatal("Number is invalid")
 			}
-			tokenContents = integer
-			tokenType = "integerConstant"
+			curToken.Contents = integer
+			curToken.Kind = INT
 		}
 
 		// idents and keywords
@@ -235,23 +188,23 @@ func Tokenize(file string) {
 			}
 			reader.UnreadByte()
 
-			tokenContents = word
-			if isKeyword(word) {
-				tokenType = "keyword"
+			curToken.Contents = word
+			if util.Contains(KEYWORDS_LIST, word) {
+				curToken.Kind = KEYWORD
 			} else {
-				tokenType = "identifier"
+				curToken.Kind = IDENT
 			}
 		}
 
 		// symbols
-		if validSymbol := getSymbol(cur); validSymbol != "" {
-			tokenContents = validSymbol
-			tokenType = "symbol"
+		if util.Contains(SYMBOL_LIST, cur) {
+			curToken.Contents = string(cur)
+			curToken.Kind = SYMBOL
 		}
 
-		// write token to xml
-		tokenXml := fmt.Sprintf("\t<token type=\"%s\" line=\"%d\">%s</token>\n", tokenType, lineNumber, tokenContents)
-		output.WriteString(tokenXml)
+		curToken.LineNumber = lineNumber
+		tokenStream = append(tokenStream, curToken)
 	}
-	output.WriteString("</tokens>\n")
+
+    return tokenStream
 }

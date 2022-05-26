@@ -1,0 +1,29 @@
+
+
+
+/*class floogle {
+    constructor floogle new(int a, char b) {
+        let bar = "baz";
+        let floo = true;
+    }
+    // comment
+    function void bar(int a, char b) {
+        let i = 42;
+        if (i > 17) {
+            let blarb = "hello";
+            let world = "world";
+        }
+    }
+}
+*/
+
+class foo {
+    field int x;
+    constructor foo new(int x) {
+        let x = 2 * x
+        return this
+    }
+    method int getX() {
+        return x;
+    }
+}
