@@ -20,3 +20,9 @@ Currently only handles chapters 7 and 8
 
 Alternatively one can use the Makefile to run tests or compile an executable with `make` or `make test` for Linux systems
 and `mingw32-make` and `mingw32-make test` for Windows. To run tests for specific files use `make test<test-#>` or `mingw32-make test<test-#>`
+
+## Flabby Bird
+
+To play you can open up the VMEmulator program, press load program and select the flabby-bird directory. 
+
+Enjoy!

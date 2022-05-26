@@ -1,0 +1,16 @@
+if (x% < %034th) {
+    // comment
+    let quit = "yes"
+    123{}{}()
+}
+
+
+/**
+
+/* comments
+class {
+    constructor foo(int a, char b) {
+        let bar = "baz"
+        let floo = true
+    }
+} */
