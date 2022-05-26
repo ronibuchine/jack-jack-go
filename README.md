@@ -12,7 +12,7 @@ Features will be added by the following workflow:
 ## Test Script
 
 ### Compiling
-Compile with  `make` on linux. On windows??
+Compile with `make` on linux. On windows?? -- calm your farm... you can use mingw (command is `mingw32-make`)
 
 ### Usage 
 
