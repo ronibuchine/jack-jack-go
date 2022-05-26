@@ -5,10 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"jack-jack-go/lib/util"
 	"log"
 	"strings"
-    "jack-jack-go/lib/util"
-
 )
 
 /*
@@ -25,6 +24,24 @@ This file exposes:
 type Node struct {
 	token    Token
 	children []*Node
+}
+
+// represents a token stream
+type TS struct {
+	tokens  []Token
+	counter int
+}
+
+func (ts TS) curTok() Token {
+	return ts.tokens[ts.counter]
+}
+
+// peek helper for LL(1) lookahead
+func (ts TS) peekNextToken() (Token, error) {
+	if ts.counter+1 >= len(ts.tokens) {
+		return Token{}, errors.New("Cannot lookahead passed the end of token stream")
+	}
+	return ts.tokens[ts.counter+1], nil
 }
 
 func (n Node) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
@@ -52,12 +69,11 @@ func (parent *Node) addChild(child *Node) {
 
 // parse a stream of tokens and return the root Node of the AST
 func Parse(tokens []Token) *Node {
-	TokenStream = tokens
-	tokenCounter = 0
-	if TokenStream[0].Contents != "class" {
+    ts := &TS{tokens: tokens, counter: 0}
+	if ts.tokens[0].Contents != "class" {
 		log.Fatal("Jack file must be contained in a class object")
 	}
-	rootNode := class()
+	rootNode := class(ts)
 	return rootNode
 }
 
@@ -73,14 +89,10 @@ func NodeToXML(root *Node, w io.Writer) error {
 }
 
 // globals for matching
-var (
+/* var (
 	TokenStream  []Token
 	tokenCounter int
-)
-
-func curTok() Token {
-	return TokenStream[tokenCounter]
-}
+) */
 
 var binaryOperators []string = []string{"+", "-", "*", "/", "&", "|", "<", ">", "="}
 var unaryOperators []string = []string{"~", "-"}
@@ -89,22 +101,14 @@ var functionDecs []string = []string{"function", "constructor", "method"}
 var classVars []string = []string{"static", "field"}
 var statementKeywords []string = []string{"let", "do", "if", "while", "return"}
 
-// peek helper for LL(1) lookahead
-func peekNextToken() (Token, error) {
-	if tokenCounter+1 >= len(TokenStream) {
-		return Token{}, errors.New("Cannot lookahead passed the end of token stream")
-	}
-	return TokenStream[tokenCounter+1], nil
-}
-
-func _matchSingle(token string) (*Node, error) {
+func _matchSingle(token string, ts *TS) (*Node, error) {
 	// if we match a ident, int or string, we DONT care about the contents
 	// if we match a symbol or keyword, we DO care about contents
-	curr := curTok()
+	curr := ts.curTok()
 	if ((token == IDENT || token == INT || token == STRING) && (token == curr.Kind)) ||
 		((token == curr.Contents) && (curr.Kind == KEYWORD || curr.Kind == SYMBOL)) {
 		res := createNodeFromToken(curr)
-		tokenCounter++
+		ts.counter++
 		return res, nil
 	}
 	return createNodeFromString("ERROR"), errors.New(fmt.Sprint("Failed to match ", token))
@@ -113,24 +117,24 @@ func _matchSingle(token string) (*Node, error) {
 // global function used for token parsing and matching
 // can either pass in a string or []string. If no matches, then an error will
 // occur, if at least one matches then the first match will be returned
-func match(token interface{}) (result *Node) {
-	if tokenCounter >= len(TokenStream) {
+func match(token interface{}, ts *TS) (result *Node) {
+	if ts.counter >= len(ts.tokens) {
 		log.Fatal("end of token stream")
 	}
 
 	if t, ok := token.(string); ok {
-		if res, err := _matchSingle(t); err == nil {
+		if res, err := _matchSingle(t, ts); err == nil {
 			return res
 		} else {
-			parseError(t)
+			parseError(t, ts)
 		}
 	} else if tokens, ok := token.([]string); ok {
 		for _, t := range tokens {
-			if res, err := _matchSingle(t); err == nil {
+			if res, err := _matchSingle(t, ts); err == nil {
 				return res
 			}
 		}
-		parseError(strings.Join(tokens, ", "))
+		parseError(strings.Join(tokens, ", "), ts)
 	} else {
 		panic("match() should only be passed a string or a list of strings")
 	}
@@ -139,125 +143,126 @@ func match(token interface{}) (result *Node) {
 }
 
 // prints to stdout a parse error
-func parseError(expected string) {
-	curr := curTok()
+func parseError(expected string, ts *TS) {
+	curr := ts.curTok()
 	fmt.Print(fmt.Sprintf("ERROR line %d: Expected token(s) `%s` before %s %s\n", curr.LineNumber, expected, curr.Kind, curr.Contents))
 }
 
 // functions for grammar
-func class() *Node {
+func class(ts *TS) *Node {
 	result := createNodeFromString("class")
-	result.addChild(match("class"))
-	result.addChild(match(IDENT))
-	result.addChild(match("{"))
-	curr := curTok()
+	result.addChild(match("class", ts))
+	result.addChild(match(IDENT, ts))
+	result.addChild(match("{", ts))
+	curr := ts.curTok()
 	for util.Contains(classVars, curr.Contents) {
-		result.addChild(classVarDec())
-		curr = curTok()
+		result.addChild(classVarDec(ts))
+		curr = ts.curTok()
 	}
 	for util.Contains(functionDecs, curr.Contents) {
-		result.addChild(subroutineDec())
-		curr = curTok()
+		result.addChild(subroutineDec(ts))
+		curr = ts.curTok()
 	}
-	result.addChild(match("}"))
+	result.addChild(match("}", ts))
 	return result
 }
 
-func classVarDec() *Node {
+func classVarDec(ts *TS) *Node {
 	result := createNodeFromString("classVarDec")
-	result.addChild(match(classVars))
-	result.addChild(typeName())
-	result.addChild(match(IDENT))
-	for curTok().Contents == "," {
-		result.addChild(match(","))
-		result.addChild(match(IDENT))
+	result.addChild(match(classVars, ts))
+	result.addChild(typeName(ts))
+	result.addChild(match(IDENT, ts))
+	for ts.curTok().Contents == "," {
+		result.addChild(match(",", ts))
+		result.addChild(match(IDENT, ts))
 	}
-	result.addChild(match(";"))
+	result.addChild(match(";", ts))
 	return result
 }
 
-func typeName() *Node {
-	result := match([]string{"int", "char", "boolean", IDENT})
+func typeName(ts *TS) *Node {
+	result := match([]string{"int", "char", "boolean", IDENT}, ts)
 	return result
 }
 
-func subroutineDec() *Node {
+func subroutineDec(ts *TS) *Node {
 	result := createNodeFromString("subroutineDec")
-	result.addChild(match(functionDecs))
-	if curTok().Contents == "void" {
-		result.addChild(match("void"))
+	result.addChild(match(functionDecs, ts))
+	if ts.curTok().Contents == "void" {
+		result.addChild(match("void", ts))
 	} else {
-		result.addChild(typeName())
+		result.addChild(typeName(ts))
 	}
-	result.addChild(match(IDENT))
-	result.addChild(match("("))
-	result.addChild(parameterList())
-	result.addChild(match(")"))
-	result.addChild(subroutineBody())
+	result.addChild(match(IDENT, ts))
+	result.addChild(match("(", ts))
+	result.addChild(parameterList(ts))
+	result.addChild(match(")", ts))
+	result.addChild(subroutineBody(ts))
 	return result
 }
 
-func parameterList() *Node {
+func parameterList(ts *TS) *Node {
 	result := createNodeFromString("parameterList")
-	if curTok().Contents == ")" {
+	if ts.curTok().Contents == ")" {
 		return result
 	}
-	result.addChild(typeName())
-	result.addChild(match(IDENT))
-	for curTok().Contents == "," {
-		result.addChild(match(","))
-		result.addChild(typeName())
-		result.addChild(match(IDENT))
+	result.addChild(typeName(ts))
+	result.addChild(match(IDENT, ts))
+	for ts.curTok().Contents == "," {
+		result.addChild(match(",", ts))
+		result.addChild(typeName(ts))
+		result.addChild(match(IDENT, ts))
 	}
 	return result
 }
 
-func subroutineBody() *Node {
+func subroutineBody(ts *TS) *Node {
 	result := createNodeFromString("subroutineBody")
-	result.addChild(match("{"))
-	for curTok().Contents == "var" {
-		result.addChild(varDec())
+	result.addChild(match("{", ts))
+	for ts.curTok().Contents == "var" {
+		result.addChild(varDec(ts))
 	}
-	result.addChild(statements())
-	result.addChild(match("}"))
+	result.addChild(statements(ts))
+	result.addChild(match("}", ts))
 	return result
 }
 
-func varDec() *Node {
+func varDec(ts *TS) *Node {
 	result := createNodeFromString("varDec")
-	result.addChild(match("var"))
-	result.addChild(typeName())
-	result.addChild(match(IDENT))
-	for curTok().Contents == "," {
-		result.addChild(match(","))
-		result.addChild(match(IDENT))
+	result.addChild(match("var", ts))
+	result.addChild(typeName(ts))
+	result.addChild(match(IDENT, ts))
+	for ts.curTok().Contents == "," {
+		result.addChild(match(",", ts))
+		result.addChild(match(IDENT, ts))
 	}
-	result.addChild(match(";"))
+	result.addChild(match(";", ts))
 	return result
 }
 
-func statements() *Node {
+func statements(ts *TS) *Node {
 	result := createNodeFromString("statements")
-	for cur := curTok(); util.Contains(statementKeywords, cur.Contents); cur = curTok() {
+	for cur := ts.curTok(); util.Contains(statementKeywords, cur.Contents); cur = ts.curTok() {
 		switch cur.Contents {
 		case "let":
-			result.addChild(letStatement())
+			result.addChild(letStatement(ts))
 		case "if":
-			result.addChild(ifStatement())
+			result.addChild(ifStatement(ts))
 		case "while":
-			result.addChild(whileStatement())
+			result.addChild(whileStatement(ts))
 		case "do":
-			result.addChild(doStatement())
+			result.addChild(doStatement(ts))
 		case "return":
-			result.addChild(returnStatement())
+			result.addChild(returnStatement(ts))
 		}
 	}
 	return result
 }
 
-func statement() *Node {
+/* func statement(ts *TS) *Node {
 	result := createNodeFromString("statement")
-	switch curTok().Contents {
+    cur := ts.curTok()
+	switch cur.Contents {
 	case "let":
 		result.addChild(letStatement())
 	case "if":
@@ -270,164 +275,165 @@ func statement() *Node {
 		result.addChild(returnStatement())
 	}
 	return result
-}
+} */
 
-func letStatement() *Node {
+func letStatement(ts *TS) *Node {
 	result := createNodeFromString("letStatement")
-	result.addChild(match("let"))
-	result.addChild(match(IDENT))
-	if curTok().Contents == "[" {
-		result.addChild(match("["))
-		result.addChild(expression())
-		result.addChild(match("]"))
+	result.addChild(match("let", ts))
+	result.addChild(match(IDENT, ts))
+	if ts.curTok().Contents == "[" {
+		result.addChild(match("[", ts))
+		result.addChild(expression(ts))
+		result.addChild(match("]", ts))
 	}
-	result.addChild(match("="))
-	result.addChild(expression())
-	result.addChild(match(";"))
+	result.addChild(match("=", ts))
+	result.addChild(expression(ts))
+	result.addChild(match(";", ts))
 	return result
 }
 
-func whileStatement() *Node {
+func whileStatement(ts *TS) *Node {
 	result := createNodeFromString("whileStatement")
-	result.addChild(match("while"))
-	result.addChild(match("("))
-	result.addChild(expression())
-	result.addChild(match(")"))
-	result.addChild(match("{"))
-	result.addChild(statements())
-	result.addChild(match("}"))
+	result.addChild(match("while", ts))
+	result.addChild(match("(", ts))
+	result.addChild(expression(ts))
+	result.addChild(match(")", ts))
+	result.addChild(match("{", ts))
+	result.addChild(statements(ts))
+	result.addChild(match("}", ts))
 	return result
 }
 
-func ifStatement() *Node {
+func ifStatement(ts *TS) *Node {
 	result := createNodeFromString("ifStatement")
-	result.addChild(match("if"))
-	result.addChild(match("("))
-	result.addChild(expression())
-	result.addChild(match(")"))
-	result.addChild(match("{"))
-	result.addChild(statements())
-	result.addChild(match("}"))
-	if curTok().Contents == "else" {
-		result.addChild(match("else"))
-		result.addChild(match("{"))
-		result.addChild(statements())
-		result.addChild(match("}"))
+	result.addChild(match("if", ts))
+	result.addChild(match("(", ts))
+	result.addChild(expression(ts))
+	result.addChild(match(")", ts))
+	result.addChild(match("{", ts))
+	result.addChild(statements(ts))
+	result.addChild(match("}", ts))
+	if ts.curTok().Contents == "else" {
+		result.addChild(match("else", ts))
+		result.addChild(match("{", ts))
+		result.addChild(statements(ts))
+		result.addChild(match("}", ts))
 	}
 	return result
 }
 
-func doStatement() *Node {
+func doStatement(ts *TS) *Node {
 	result := createNodeFromString("doStatement")
-	result.addChild(match("do"))
-	result.addChild(match(IDENT))
-	if curTok().Contents == "." {
-		result.addChild(match("."))
-		result.addChild(match(IDENT))
+	result.addChild(match("do", ts))
+	result.addChild(match(IDENT, ts))
+	if ts.curTok().Contents == "." {
+		result.addChild(match(".", ts))
+		result.addChild(match(IDENT, ts))
 	}
-	result.addChild(match("("))
-	result.addChild(expressionList())
-	result.addChild(match(")"))
-	result.addChild(match(";"))
+	result.addChild(match("(", ts))
+	result.addChild(expressionList(ts))
+	result.addChild(match(")", ts))
+	result.addChild(match(";", ts))
 	return result
 }
 
-func _subroutineCall(result *Node) *Node {
-	result.addChild(match(IDENT))
-	if curTok().Contents == "." {
-		result.addChild(match("."))
-		result.addChild(match(IDENT))
+func _subroutineCallHelper(result *Node, ts *TS) *Node {
+	result.addChild(match(IDENT, ts))
+	if ts.curTok().Contents == "." {
+		result.addChild(match(".", ts))
+		result.addChild(match(IDENT, ts))
 	}
-	result.addChild(match("("))
-	result.addChild(expressionList())
-	result.addChild(match(")"))
+	result.addChild(match("(", ts))
+	result.addChild(expressionList(ts))
+	result.addChild(match(")", ts))
 	return result
 }
-func subroutineCall() *Node {
+
+func subroutineCall(ts *TS) *Node {
 	result := createNodeFromString("subroutineCall")
-    result = _subroutineCall(result)
-    return result
+	result = _subroutineCallHelper(result, ts)
+	return result
 }
 
-func expressionList() *Node {
+func expressionList(ts *TS) *Node {
 	result := createNodeFromString("expressionList")
-	if curTok().Contents == ")" {
+	if ts.curTok().Contents == ")" {
 		return result
 	}
-	result.addChild(expression())
-	for curTok().Contents == "," {
-		result.addChild(match(","))
-		result.addChild(expression())
+	result.addChild(expression(ts))
+	for ts.curTok().Contents == "," {
+		result.addChild(match(",", ts))
+		result.addChild(expression(ts))
 	}
 	return result
 }
 
-func returnStatement() *Node {
+func returnStatement(ts *TS) *Node {
 	result := createNodeFromString("returnStatement")
-	result.addChild(match("return"))
-	if curTok().Contents != ";" {
-		result.addChild(expression())
+	result.addChild(match("return", ts))
+	if ts.curTok().Contents != ";" {
+		result.addChild(expression(ts))
 	}
-	result.addChild(match(";"))
+	result.addChild(match(";", ts))
 	return result
 }
 
-func expression() *Node {
+func expression(ts *TS) *Node {
 	result := createNodeFromString("expression")
-	result.addChild(term())
+	result.addChild(term(ts))
 	// will continue checking the next op if it is an operator
-	for curr := curTok(); util.Contains(binaryOperators, curr.Contents); curr = curTok() {
-		result.addChild(match(curr.Contents))
-		result.addChild(term())
+	for curr := ts.curTok(); util.Contains(binaryOperators, curr.Contents); curr = ts.curTok() {
+		result.addChild(match(curr.Contents, ts))
+		result.addChild(term(ts))
 	}
 	return result
 }
 
-func term() *Node {
+func term(ts *TS) *Node {
 	result := createNodeFromString("term")
-	curr := curTok()
+	curr := ts.curTok()
 
 	switch {
-	case util.Contains(unaryOperators, curr.Contents, ):
-		result.addChild(match(curr.Contents))
-		result.addChild(term())
-	case util.Contains(keywordConst, curr.Contents, ):
-		result.addChild(match(curr.Contents))
+	case util.Contains(unaryOperators, curr.Contents):
+		result.addChild(match(curr.Contents, ts))
+		result.addChild(term(ts))
+	case util.Contains(keywordConst, curr.Contents):
+		result.addChild(match(curr.Contents, ts))
 	case curr.Contents == "(":
-		result.addChild(match("("))
-		result.addChild(expression())
-		result.addChild(match(")"))
+		result.addChild(match("(", ts))
+		result.addChild(expression(ts))
+		result.addChild(match(")", ts))
 	case curr.Kind == INT:
-		result.addChild(match(INT))
+		result.addChild(match(INT, ts))
 	case curr.Kind == STRING:
-		result.addChild(match(STRING))
+		result.addChild(match(STRING, ts))
 	case curr.Kind == IDENT:
-		next, err := peekNextToken()
+		next, err := ts.peekNextToken()
 		if err != nil {
 			panic(err)
 		}
 		if next.Contents == "[" {
-			result.addChild(match(IDENT))
-			result.addChild(match("["))
-			result.addChild(expression())
-			result.addChild(match("]"))
+			result.addChild(match(IDENT, ts))
+			result.addChild(match("[", ts))
+			result.addChild(expression(ts))
+			result.addChild(match("]", ts))
 		} else if next.Contents == "(" || next.Contents == "." {
-			result = _subroutineCall(result)
+			result = _subroutineCallHelper(result, ts)
 		} else {
-			result.addChild(match(IDENT))
+			result.addChild(match(IDENT, ts))
 		}
 	}
 	return result
 }
 
-func op() *Node {
-	return match(binaryOperators)
+func op(ts *TS) *Node {
+	return match(binaryOperators, ts)
 }
 
-func unaryOp() *Node {
-	return match(unaryOperators)
+func unaryOp(ts *TS) *Node {
+	return match(unaryOperators, ts)
 }
 
-func keywordConstant() *Node {
-	return match(keywordConst)
+func keywordConstant(ts *TS) *Node {
+	return match(keywordConst, ts)
 }

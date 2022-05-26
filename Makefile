@@ -2,7 +2,7 @@
 MAIN=./cmd/compiler/compiler.go
 
 default:
-	go build -o jjg $(MAIN)
+	go build -race -o jjg $(MAIN)
 
 test:
 	python tester.py
