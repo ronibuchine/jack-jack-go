@@ -39,7 +39,7 @@ func tokenizeAndParse(jackFile string, wg *sync.WaitGroup) {
 	}
 	ts := fe.TS{Tokens: tokens, File: jackFile}
 	ast := fe.Parse(&ts)
-	if true {
+	if astXML {
 		astXmlFile, err := os.Create(filepath.Join("build", strings.TrimSuffix(util.CleanFilePath(file.Name()), ".jack")+"_AST.xml"))
 		if err != nil {
 			log.Fatal(err)
