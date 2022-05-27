@@ -14,5 +14,6 @@ func Contains[T string | int | byte](collection []T, item T) bool {
 }
 
 func CleanFilePath(path string) string {
-	return strings.ReplaceAll(strings.ReplaceAll(path, "/", "_"), "\\", "_")
+	result := strings.ReplaceAll(strings.ReplaceAll(path, "/", "_"), "\\", "_")
+	return strings.Split(result, "_")[len(strings.Split(result, "_"))-1]
 }
