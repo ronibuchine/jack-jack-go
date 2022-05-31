@@ -23,7 +23,7 @@ This file exposes:
 // Node struct for parsing and recursive descent
 type Node struct {
 	token    Token
-	children []*Node
+	Children []*Node
 }
 
 
