@@ -36,7 +36,9 @@ func (j *JackCompiler) Compile() {
         }
     }
 
+    // assign class level symbol table
     j.st = ClassTable(varDecs)
+
     for _, n := range subRoutines {
         j.compileSubroutine(n)
     }
@@ -55,6 +57,12 @@ func (j *JackCompiler) compileArray(node *fe.Node) {
 
 // functions
 func (j *JackCompiler) compileSubroutine(node *fe.Node) {
+    switch node.Token.Kind {
+    case "constructor":
+
+    case "function":
+    case "method":
+    }
 }
 
 // returns the local symbol table
