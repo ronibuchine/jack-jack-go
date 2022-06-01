@@ -12,7 +12,11 @@ type VMWriter struct {
 }
 
 func NewVMWriter(name string, w *bufio.Writer) *VMWriter {
-	return nil
+	return &VMWriter{
+		w:            w,
+		labelCounter: 0,
+		name:         name,
+	}
 }
 
 func (vmw *VMWriter) WritePush(segment string, index int) {
@@ -26,13 +30,13 @@ func (vmw *VMWriter) WritePop(segment string, index int) {
 func (vmw *VMWriter) WriteArithmetic(command string) {
 	switch command {
 	case "+":
-		vmw.w.WriteString("add")
+		vmw.w.WriteString("add\n")
 	case "-":
-		vmw.w.WriteString("sub")
+		vmw.w.WriteString("sub\n")
 	case "*":
-		vmw.w.WriteString("call Math.multiply 2")
+		vmw.w.WriteString("call Math.multiply 2\n")
 	case "/":
-		vmw.w.WriteString("call Math.divide 2")
+		vmw.w.WriteString("call Math.divide 2\n")
 	}
 }
 
