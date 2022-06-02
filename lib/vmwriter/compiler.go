@@ -22,26 +22,26 @@ func NewJackCompiler(ast *fe.Node, name string, w *bufio.Writer) *JackCompiler {
 }
 
 func (j *JackCompiler) Compile() {
-    var varDecs, subRoutines []*fe.Node
-    className := j.ast.Children[1];
-    if className.Token.Kind != j.name {
-        log.Fatal("class name must match the file name")
-    }
-    
-    for _, n := range j.ast.Children {
-        if n.Token.Kind == "classVarDec" {
-            varDecs = append(varDecs, n)
-        } else if n.Token.Kind == "subroutineDec" {
-            subRoutines = append(subRoutines, n)
-        }
-    }
+	var varDecs, subRoutines []*fe.Node
+	className := j.ast.Children[1]
+	if className.Token.Contents != j.name {
+		log.Fatal("class name must match the file name")
+	}
 
-    // assign class level symbol table
-    j.st = ClassTable(varDecs)
+	for _, n := range j.ast.Children {
+		if n.Token.Kind == "classVarDec" {
+			varDecs = append(varDecs, n)
+		} else if n.Token.Kind == "subroutineDec" {
+			subRoutines = append(subRoutines, n)
+		}
+	}
 
-    for _, n := range subRoutines {
-        j.compileSubroutine(n)
-    }
+	// assign class level symbol table
+	j.st, _ = ClassTable(varDecs)
+
+	for _, n := range subRoutines {
+		j.compileSubroutine(n)
+	}
 }
 
 // expressions
@@ -57,22 +57,21 @@ func (j *JackCompiler) compileArray(node *fe.Node) {
 
 // functions
 func (j *JackCompiler) compileSubroutine(node *fe.Node) {
-    switch node.Token.Kind {
-    case "constructor":
-
-    case "function":
-    case "method":
-    }
+	switch node.Token.Kind {
+	case "constructor":
+	case "function":
+	case "method":
+	}
 }
 
 // returns the local symbol table
 func (j *JackCompiler) compileParameterList(node *fe.Node) *SymbolTable {
-    return nil
+	return nil
 }
 
 func (j *JackCompiler) compileSubroutineBody(node *fe.Node) {
-    // first add all local variables to the local symbol table
-    // then compile all statements in the subroutine
+	// first add all local variables to the local symbol table
+	// then compile all statements in the subroutine
 }
 
 func (j *JackCompiler) compileVarDec(node *fe.Node) {

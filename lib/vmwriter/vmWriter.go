@@ -21,11 +21,11 @@ func NewVMWriter(name string, w *bufio.Writer) *VMWriter {
 }
 
 func (vmw *VMWriter) WritePush(segment string, index int) {
-	vmw.w.WriteString(fmt.Sprintf("push %s %s\n", segment, index))
+	vmw.w.WriteString(fmt.Sprintf("push %s %d\n", segment, index))
 }
 
 func (vmw *VMWriter) WritePop(segment string, index int) {
-	vmw.w.WriteString(fmt.Sprintf("pop %s %s\n", segment, index))
+	vmw.w.WriteString(fmt.Sprintf("pop %s %d\n", segment, index))
 }
 
 func (vmw *VMWriter) WriteArithmetic(command string) {
@@ -58,11 +58,11 @@ func (vmw *VMWriter) WriteIf(label string) {
 }
 
 func (vmw *VMWriter) WriteCall(name string, nargs int) {
-	vmw.w.WriteString(fmt.Sprintf("call %s %s\n", name, nargs))
+	vmw.w.WriteString(fmt.Sprintf("call %s %d\n", name, nargs))
 }
 
 func (vmw *VMWriter) WriteFunction(name string, nargs int) {
-	vmw.w.WriteString(fmt.Sprintf("function %s %s\n", name, nargs))
+	vmw.w.WriteString(fmt.Sprintf("function %s %d\n", name, nargs))
 }
 
 func (vmw *VMWriter) WriteReturn() {

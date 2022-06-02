@@ -22,19 +22,19 @@ This file exposes:
 
 // Node struct for parsing and recursive descent
 type Node struct {
-	token    Token
+	Token    Token
 	Children []*Node
 }
 
 
 func (n Node) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
-	if n.token.Kind == KEYWORD || n.token.Kind == SYMBOL ||
-		n.token.Kind == IDENT || n.token.Kind == INT || n.token.Kind == STRING {
-		return e.Encode(n.token)
+	if n.Token.Kind == KEYWORD || n.Token.Kind == SYMBOL ||
+		n.Token.Kind == IDENT || n.Token.Kind == INT || n.Token.Kind == STRING {
+		return e.Encode(n.Token)
 	} else {
-		e.EncodeToken(xml.StartElement{Name: xml.Name{Space: "", Local: n.token.Kind}})
-		e.Encode(n.children)
-		return e.EncodeToken(xml.EndElement{Name: xml.Name{Space: "", Local: n.token.Kind}})
+		e.EncodeToken(xml.StartElement{Name: xml.Name{Space: "", Local: n.Token.Kind}})
+		e.Encode(n.Children)
+		return e.EncodeToken(xml.EndElement{Name: xml.Name{Space: "", Local: n.Token.Kind}})
 	}
 }
 
@@ -47,7 +47,7 @@ func createNodeFromString(name string) *Node {
 }
 
 func (parent *Node) addChild(child *Node) {
-	parent.children = append(parent.children, child)
+	parent.Children = append(parent.Children, child)
 }
 
 // parse a stream of tokens and return the root Node of the AST
