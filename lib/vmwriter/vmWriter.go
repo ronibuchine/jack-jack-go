@@ -3,6 +3,7 @@ package vmwriter
 import (
 	"bufio"
 	"fmt"
+	"strconv"
 )
 
 type VMWriter struct {
@@ -42,6 +43,8 @@ func (vmw *VMWriter) WriteArithmetic(command string) {
 
 // returns the unique label that was written
 func (vmw *VMWriter) WriteLabel(label string) string {
+    label = vmw.name + "_" + strconv.Itoa(vmw.labelCounter) + "_" + label
+    vmw.labelCounter++
 	vmw.w.WriteString(fmt.Sprintf("label %s\n", label))
 	return label
 }
