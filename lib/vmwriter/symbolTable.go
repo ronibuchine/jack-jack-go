@@ -3,7 +3,6 @@ package vmwriter
 import (
 	"errors"
 	"fmt"
-	"go/format"
 	fe "jack-jack-go/lib/syntaxAnalyzer"
 	"strconv"
 )
@@ -34,22 +33,24 @@ func newSymbolTable() *SymbolTable {
 func ClassTable(varDecs []*fe.Node) (*SymbolTable, error) {
 	st := newSymbolTable()
 	for _, varDec := range varDecs {
-		st.AddDec(varDec)
+		err := st.addDec(varDec)
+		if err != nil {
+			return nil, err
+		}
 	}
 	return st, nil
 }
 
-
 // expects a node of kind subroutineDec
 func LocalTable(subroutine *fe.Node) (*SymbolTable, error) {
 	lst := newSymbolTable()
-	var name, vType, kind string
+	var name, vType string
 	if functionKind := subroutine.Children[0].Token.Kind; functionKind == "constructor" || functionKind == "method" {
 		vType = subroutine.Children[1].Token.Contents
 		if vType == "void" && functionKind == "constructor" {
 			return nil, errors.New("void constructor makes no sense")
 		}
-		lst.Add("this", "arg", vType)
+		lst.Add("arg", vType, "this")
 	}
 	var params *fe.Node
 	for _, child := range subroutine.Children {
@@ -61,7 +62,7 @@ func LocalTable(subroutine *fe.Node) (*SymbolTable, error) {
 	for i := 0; i < len(params.Children); i += 3 {
 		vType = params.Children[i].Token.Contents
 		name = params.Children[i+1].Token.Contents
-		err := lst.Add(name, "arg", vType)
+		err := lst.Add("arg", vType, name)
 		if err != nil {
 			return nil, formatError(subroutine, err)
 		}
@@ -70,8 +71,13 @@ func LocalTable(subroutine *fe.Node) (*SymbolTable, error) {
 	body := subroutine.Children[6]
 	for _, dec := range body.Children {
 		if dec.Token.Kind == "varDec" {
-            lst.addDec(dec)
-		}
+			err := lst.addDec(dec)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+            break
+        }
 	}
 	return lst, nil
 }
@@ -86,7 +92,7 @@ func (st *SymbolTable) addDec(node *fe.Node) error {
 	vType = node.Children[1].Token.Contents
 	for i := 2; i < len(node.Children); i += 2 {
 		name = node.Children[i].Token.Contents
-		err := st.Add(name, kind, vType)
+		err := st.Add(kind, vType, name)
 		if err != nil {
 			return formatError(node, err)
 		}
@@ -95,7 +101,7 @@ func (st *SymbolTable) addDec(node *fe.Node) error {
 }
 
 // returns error if cannot add variable to symbol table
-func (st *SymbolTable) Add(name string, kind string, vType string) error {
+func (st *SymbolTable) Add(kind string, vType string, name string) error {
 	id := st.counts[kind]
 	st.counts[kind]++
 	if _, exists := st.entries[name]; exists {
@@ -105,9 +111,8 @@ func (st *SymbolTable) Add(name string, kind string, vType string) error {
 	return nil
 }
 
-// the node is expected to be a line starting with
-func (st *SymbolTable) AddDeclarations(node *fe.Node) {
-
+func (st *SymbolTable) Clear() {
+    st = newSymbolTable()
 }
 
 // should only be passed static, field, arg, or local

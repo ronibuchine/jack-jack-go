@@ -2,58 +2,52 @@ package vmwriter
 
 import (
 	"bufio"
+	"errors"
 	fe "jack-jack-go/lib/syntaxAnalyzer"
-	"log"
 )
 
 type JackCompiler struct {
-	st   *SymbolTable
-	ast  *fe.Node
-	vmw  *VMWriter
-	name string
+	classST *SymbolTable
+	localST *SymbolTable
+	ast     *fe.Node
+	vmw     *VMWriter
+	className    string
 }
 
 func NewJackCompiler(ast *fe.Node, name string, w *bufio.Writer) *JackCompiler {
 	return &JackCompiler{
+        classST: newSymbolTable(),
+        localST: newSymbolTable(),
 		ast:  ast,
 		vmw:  NewVMWriter(name, w),
-		name: name,
+		className: name,
 	}
 }
 
-func (j *JackCompiler) Compile() error {
-	var varDecs, subRoutines []*fe.Node
+func (j *JackCompiler) CompileClass() error {
 	className := j.ast.Children[1]
-	if className.Token.Contents != j.name {
-		log.Fatal("class name must match the file name")
+	if className.Token.Contents != j.className {
+		return errors.New("class name must match the file name")
 	}
-
+    var err error
 	for _, n := range j.ast.Children {
 		if n.Token.Kind == "classVarDec" {
-			varDecs = append(varDecs, n)
+            err = j.compileVarDec(n)
 		} else if n.Token.Kind == "subroutineDec" {
-			subRoutines = append(subRoutines, n)
+            err = j.compileSubroutine(n)
 		}
+        if err != nil {
+            return err
+        }
 	}
-
-	// assign class level symbol table
-    classST, err := ClassTable(varDecs)
-    if err != nil {
-        return err
-    }
-    j.st = classST
-
-	for _, n := range subRoutines {
-		j.compileSubroutine(n)
-	}
-
-    return nil
+	return nil
 }
 
-// expressions
+// node should be of kind expression
 func (j *JackCompiler) compileExpression(node *fe.Node) {
 }
 
+// node should be of kind string
 func (j *JackCompiler) compileString(node *fe.Node) {
 }
 
@@ -61,79 +55,98 @@ func (j *JackCompiler) compileString(node *fe.Node) {
 func (j *JackCompiler) compileArray(node *fe.Node) {
 }
 
-// functions
-func (j *JackCompiler) compileSubroutine(node *fe.Node) error {
-    st, err := LocalTable(node)
+// node should be of kind constructor, function or method
+func (j *JackCompiler) compileSubroutine(node *fe.Node) (err error) {
+    j.localST.Clear()
+    if node.Children[0].Token.Contents == "method" {
+        j.localST.Add("arg", j.className, "this")
+	}
+    err = j.compileParameterList(node.Children[4])
     if err != nil {
         return err
     }
-	switch node.Token.Kind {
-	case "constructor":
-	case "function":
-	case "method":
+    err = j.compileSubroutineBody(node.Children[6])
+    if err != nil {
+        return err
+    }
+    if node.Children[0].Token.Contents == "constructor" {
+        // add `return this` in vmish
 	}
-    return nil
+	return nil
 }
 
-// returns the local symbol table
-// ahhh wtf!!
-// I need to just create a parameter list, but if it is a ctor or method then add `this`.
-// Where
-func (j *JackCompiler) compileParameterList(node *fe.Node, functionKind string) *SymbolTable {
-	lst := newSymbolTable()
+// adds all parameters in parameter list to the local symbol table
+// expects node of of type parameter list
+func (j *JackCompiler) compileParameterList(params *fe.Node) error {
 	var name, vType string
-	if functionKind := subroutine.Children[0].Token.Kind; functionKind == "constructor" || functionKind == "method" {
-		vType = subroutine.Children[1].Token.Contents
-		if vType == "void" && functionKind == "constructor" {
-			return nil, errors.New("void constructor makes no sense")
-		}
-		lst.Add("this", "arg", vType)
-	}
-	var params *fe.Node
-	for _, child := range subroutine.Children {
-		if child.Token.Kind == "parameterList" {
-			params = child
-			break
-		}
-	}
 	for i := 0; i < len(params.Children); i += 3 {
 		vType = params.Children[i].Token.Contents
 		name = params.Children[i+1].Token.Contents
-		err := lst.Add(name, "arg", vType)
+		err := j.localST.Add("arg", vType, name)
 		if err != nil {
-			return nil, formatError(subroutine, err)
+			return formatError(params, err)
 		}
 	}
 	return nil
 }
 
-func (j *JackCompiler) compileSubroutineBody(node *fe.Node) {
+// expects node of kind subroutineBody
+func (j *JackCompiler) compileSubroutineBody(node *fe.Node) error {
 	// first add all local variables to the local symbol table
 	// then compile all statements in the subroutine
+    return nil
 }
 
-func (j *JackCompiler) compileVarDec(node *fe.Node) {
+// expects node of kind varDec.
+// adds it to he appropiate symbol table
+func (j *JackCompiler) compileVarDec(node *fe.Node) error {
+	var (
+        kind, vType, name string
+        err error
+    )
+
+	kind = node.Children[0].Token.Contents
+	vType = node.Children[1].Token.Contents
+	for i := 2; i < len(node.Children); i += 2 {
+		name = node.Children[i].Token.Contents
+        switch kind {
+        case "static", "field":
+            err = j.classST.Add(kind, vType, name)
+        case "var", "arg":
+            err = j.localST.Add(kind, vType, name)
+        }
+		if err != nil {
+			return formatError(node, err)
+		}
+	}
+    return nil
 }
 
+// expects node of kind term
 func (j *JackCompiler) compileTerm(node *fe.Node) {
 }
 
+// expects node of kind expression
 func (j *JackCompiler) compileExpressionList(node *fe.Node) {
 }
 
-// statements
+// expects node of kind letStatement
 func (j *JackCompiler) compileLet(node *fe.Node) {
 }
 
 // this can be just compileExpression and then pop the return value away
+// expects node of kind doStatement
 func (j *JackCompiler) compileDo(node *fe.Node) {
 }
 
+// expects node of kind ifStatement
 func (j *JackCompiler) compileIf(node *fe.Node) {
 }
 
+// expects node of kind whileStatement
 func (j *JackCompiler) compileWhile(node *fe.Node) {
 }
 
+// expects node of kind return statement
 func (j *JackCompiler) compileReturn(node *fe.Node) {
 }
