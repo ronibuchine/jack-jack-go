@@ -33,42 +33,6 @@ func (j *JackCompiler) findSymbol(name string) (symbol TableEntry, err error) {
 	return j.classST.find(name)
 }
 
-func (j *JackCompiler) findSymbolKind(name string) (kind string, err error) {
-	kind, err = j.localST.KindOf(name)
-	if err == nil {
-		return kind, nil
-	}
-	kind, err = j.classST.KindOf(name)
-	if err == nil {
-		return kind, nil
-	}
-	return "", err
-}
-
-func (j *JackCompiler) findSymbolType(name string) (vType string, err error) {
-	vType, err = j.localST.TypeOf(name)
-	if err == nil {
-		return vType, nil
-	}
-	vType, err = j.classST.TypeOf(name)
-	if err == nil {
-		return vType, nil
-	}
-	return "", err
-}
-
-func (j *JackCompiler) findSymbolIndex(name string) (index int, err error) {
-	index, err = j.localST.IndexOf(name)
-	if err == nil {
-		return index, nil
-	}
-	index, err = j.classST.IndexOf(name)
-	if err == nil {
-		return index, nil
-	}
-	return 0, err
-}
-
 func (j *JackCompiler) CompileClass() error {
 	className := j.ast.Children[1]
 	if className.Token.Contents != j.className {
@@ -202,16 +166,16 @@ func (j *JackCompiler) compileTerm(node *fe.Node) {
 		j.compileTerm(node.Children[1])
 		switch firstChild.Token.Contents {
 		case "-":
-			j.vmw.w.WriteString("neg\n")
+			j.vmw.WriteArithmetic("neg")
 		case "~":
-			j.vmw.w.WriteString("not\n")
+			j.vmw.WriteArithmetic("not")
 		}
 	}
 
 	// identifiers
 	if firstChild.Token.Kind == fe.IDENT {
 		// variable
-		if symbol, err := j.findSymbol(firstChild.Token.Contents); err != nil {
+		if symbol, err := j.findSymbol(firstChild.Token.Contents); err == nil {
 			switch symbol.kind {
 			case "field":
 				j.vmw.WritePush("this", strconv.Itoa(symbol.id))
@@ -257,21 +221,64 @@ func (j *JackCompiler) compileExpressionList(node *fe.Node) int {
 
 // expects node of kind letStatement
 func (j *JackCompiler) compileLet(node *fe.Node) {
+	if symbol, err := j.findSymbol(node.Children[1].Token.Contents); err == nil {
+		for count, eq := range node.Children {
+			if eq.Token.Contents == "=" {
+				j.compileExpression(node.Children[count+1])
+			}
+		}
+		switch symbol.kind {
+		case "field":
+			j.vmw.WritePop("this", symbol.id)
+		case "arg":
+			j.vmw.WritePop("argument", symbol.id)
+		default:
+			j.vmw.WritePop(symbol.kind, symbol.id)
+		}
+	}
 }
 
 // this can be just compileExpression and then pop the return value away
 // expects node of kind doStatement
 func (j *JackCompiler) compileDo(node *fe.Node) {
+	j.compileExpression(&fe.Node{Children: node.Children[1:]})
+	j.vmw.WritePop("temp", 0)
 }
 
 // expects node of kind ifStatement
+var ifCounter = 0
+
 func (j *JackCompiler) compileIf(node *fe.Node) {
+	counter := ifCounter
+	ifCounter++
+	j.compileExpression(node.Children[2])
+	j.vmw.WriteGoto(j.className + "IfTrue" + strconv.Itoa(counter))
+	j.compileStatements(node.Children[9])
+	j.vmw.WriteGoto(j.className + "IfEnd" + strconv.Itoa(counter))
+	j.vmw.WriteLabel(j.className + "IfTrue" + strconv.Itoa(counter))
+	j.compileStatements(node.Children[5])
+	j.vmw.WriteLabel(j.className + "IfEnd" + strconv.Itoa(counter))
 }
 
 // expects node of kind whileStatement
+var whileCounter = 0
+
 func (j *JackCompiler) compileWhile(node *fe.Node) {
+	counter := whileCounter
+	whileCounter++
+	j.vmw.WriteLabel(j.className + "WhileBegin" + strconv.Itoa(counter))
+	j.compileExpression(node.Children[2])
+	j.vmw.WriteArithmetic("not")
+	j.vmw.WriteGoto(j.className + "WhileEnd" + strconv.Itoa(counter))
+	j.compileStatements(node.Children[5])
+	j.vmw.WriteGoto(j.className + "WhileBegin" + strconv.Itoa(counter))
+	j.vmw.WriteLabel(j.className + "WhileEnd" + strconv.Itoa(counter))
 }
 
 // expects node of kind return statement
 func (j *JackCompiler) compileReturn(node *fe.Node) {
+	if len(node.Children) > 2 {
+		j.compileExpression(node.Children[1])
+	}
+	j.vmw.WriteReturn()
 }

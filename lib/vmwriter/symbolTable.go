@@ -45,7 +45,7 @@ func (st *SymbolTable) Add(kind string, vType string, name string) error {
 }
 
 func (st *SymbolTable) Clear() {
-    *st = *newSymbolTable()
+	*st = *newSymbolTable()
 }
 
 // should only be passed static, field, arg, or local
@@ -58,29 +58,5 @@ func (st *SymbolTable) find(name string) (TableEntry, error) {
 		return entry, nil
 	} else {
 		return TableEntry{}, errors.New("Could not locate " + name + " in symbol table")
-	}
-}
-
-func (st *SymbolTable) KindOf(name string) (string, error) {
-	if entry, ok := st.entries[name]; ok {
-		return entry.kind, nil
-	} else {
-		return "", errors.New("Could not locate " + name + " in symbol table")
-	}
-}
-
-func (st *SymbolTable) TypeOf(name string) (string, error) {
-	if entry, ok := st.entries[name]; ok {
-		return entry.vType, nil
-	} else {
-		return "", errors.New("Could not locate " + name + " in symbol table")
-	}
-}
-
-func (st *SymbolTable) IndexOf(name string) (int, error) {
-	if entry, ok := st.entries[name]; ok {
-		return entry.id, nil
-	} else {
-		return 0, errors.New("Could not locate " + name + " in symbol table")
 	}
 }
