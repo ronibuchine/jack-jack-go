@@ -99,11 +99,12 @@ func (j *JackCompiler) compileExpression(node *fe.Node) {
 
 // node should be of kind string
 func (j *JackCompiler) compileString(node *fe.Node) {
-
-}
-
-// arr[expr1] = expr2?
-func (j *JackCompiler) compileArray(node *fe.Node) {
+	j.vmw.WritePush("constant", strconv.Itoa(len(node.Token.Contents)))
+	j.vmw.WriteCall("String.new", 1)
+	for _, char := range node.Token.Contents {
+		j.vmw.WritePush("constant", strconv.Itoa(int(char)))
+		j.vmw.WriteCall("String.appendChar", 2)
+	}
 }
 
 // node should be of kind constructor, function or method
@@ -127,7 +128,7 @@ func (j *JackCompiler) compileSubroutine(node *fe.Node) (err error) {
 }
 
 // adds all parameters in parameter list to the local symbol table
-// expects node of of type parameter list
+// expects node of type parameter list
 func (j *JackCompiler) compileParameterList(params *fe.Node) error {
 	var name, vType string
 	for i := 0; i < len(params.Children); i += 3 {
@@ -177,9 +178,9 @@ func (j *JackCompiler) compileVarDec(node *fe.Node) error {
 func (j *JackCompiler) compileTerm(node *fe.Node) {
 
 	// constant terms
-	firstChild := node.Children[0].Token
-	if firstChild.Kind == fe.KEYWORD {
-		switch keyword := firstChild.Contents; keyword {
+	firstChild := node.Children[0]
+	if firstChild.Token.Kind == fe.KEYWORD {
+		switch keyword := firstChild.Token.Contents; keyword {
 		case "true":
 			j.vmw.WritePush("constant", "1")
 			j.vmw.w.WriteString("neg\n")
@@ -189,17 +190,28 @@ func (j *JackCompiler) compileTerm(node *fe.Node) {
 			j.vmw.WritePush("pointer", "0")
 		}
 	}
-	if firstChild.Kind == fe.INT {
-		j.vmw.WritePush("constant", firstChild.Contents)
+	if firstChild.Token.Kind == fe.INT {
+		j.vmw.WritePush("constant", firstChild.Token.Contents)
 	}
-	if firstChild.Kind == fe.STRING {
-		//TODO
+	if firstChild.Token.Kind == fe.STRING {
+		j.compileString(firstChild)
+	}
+
+	// unary operator
+	if firstChild.Token.Kind == fe.SYMBOL {
+		j.compileTerm(node.Children[1])
+		switch firstChild.Token.Contents {
+		case "-":
+			j.vmw.w.WriteString("neg\n")
+		case "~":
+			j.vmw.w.WriteString("not\n")
+		}
 	}
 
 	// identifiers
-	if firstChild.Kind == fe.IDENT {
+	if firstChild.Token.Kind == fe.IDENT {
 		// variable
-		if symbol, err := j.findSymbol(firstChild.Contents); err != nil {
+		if symbol, err := j.findSymbol(firstChild.Token.Contents); err != nil {
 			switch symbol.kind {
 			case "field":
 				j.vmw.WritePush("this", strconv.Itoa(symbol.id))
@@ -211,7 +223,7 @@ func (j *JackCompiler) compileTerm(node *fe.Node) {
 			if len(node.Children) > 1 {
 				switch node.Children[1].Token.Contents {
 				case ".": // method
-					j.vmw.WriteCall(firstChild.Contents+"."+node.Children[2].Token.Contents, j.compileExpressionList(node.Children[4])+1) // +1 to account for the object reference being passed
+					j.vmw.WriteCall(symbol.vType+"."+node.Children[2].Token.Contents, j.compileExpressionList(node.Children[4])+1) // +1 to account for the object reference being passed
 				case "[": // array
 					j.compileExpression(node.Children[2])
 					j.vmw.WriteArithmetic("+")
@@ -220,17 +232,15 @@ func (j *JackCompiler) compileTerm(node *fe.Node) {
 				}
 			}
 		} else { // subroutineCall
-			switch node.Children[1].Token.Contents {
-			case ".": // function or constructor
-				j.vmw.WriteCall(firstChild.Contents+"."+node.Children[2].Token.Contents, j.compileExpressionList(node.Children[4]))
-			default:
-
+			if node.Children[1].Token.Contents == "." { // function or constructor
+				j.vmw.WriteCall(firstChild.Token.Contents+"."+node.Children[2].Token.Contents, j.compileExpressionList(node.Children[4]))
+			} else {
 				// if method, push "this" to stack
 				if _, err := j.localST.find("this"); err != nil {
 					j.vmw.WritePush("argument", "0")
-					j.vmw.WriteCall(firstChild.Contents, j.compileExpressionList(node.Children[2])+1)
+					j.vmw.WriteCall(j.className+"."+firstChild.Token.Contents, j.compileExpressionList(node.Children[2])+1)
 				} else { // function
-					j.vmw.WriteCall(firstChild.Contents, j.compileExpressionList(node.Children[2]))
+					j.vmw.WriteCall(j.className+"."+firstChild.Token.Contents, j.compileExpressionList(node.Children[2]))
 				}
 			}
 		}
