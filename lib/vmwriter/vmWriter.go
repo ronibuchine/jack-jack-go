@@ -20,7 +20,7 @@ func NewVMWriter(name string, w *bufio.Writer) *VMWriter {
 	}
 }
 
-func (vmw *VMWriter) WritePush(segment string, index int) {
+func (vmw *VMWriter) WritePush(segment string, index string) {
 	vmw.w.WriteString(fmt.Sprintf("push %s %d\n", segment, index))
 }
 
@@ -43,8 +43,8 @@ func (vmw *VMWriter) WriteArithmetic(command string) {
 
 // returns the unique label that was written
 func (vmw *VMWriter) WriteLabel(label string) string {
-    label = vmw.name + "_" + strconv.Itoa(vmw.labelCounter) + "_" + label
-    vmw.labelCounter++
+	label = vmw.name + "_" + strconv.Itoa(vmw.labelCounter) + "_" + label
+	vmw.labelCounter++
 	vmw.w.WriteString(fmt.Sprintf("label %s\n", label))
 	return label
 }

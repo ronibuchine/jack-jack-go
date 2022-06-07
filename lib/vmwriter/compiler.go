@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"errors"
 	fe "jack-jack-go/lib/syntaxAnalyzer"
+	"strconv"
 )
 
 type JackCompiler struct {
@@ -22,6 +23,14 @@ func NewJackCompiler(ast *fe.Node, name string, w *bufio.Writer) *JackCompiler {
 		vmw:       NewVMWriter(name, w),
 		className: name,
 	}
+}
+
+func (j *JackCompiler) findSymbol(name string) (symbol TableEntry, err error) {
+	symbol, err = j.localST.find(name)
+	if err == nil {
+		return symbol, nil
+	}
+	return j.classST.find(name)
 }
 
 func (j *JackCompiler) findSymbolKind(name string) (kind string, err error) {
@@ -81,10 +90,16 @@ func (j *JackCompiler) CompileClass() error {
 
 // node should be of kind expression
 func (j *JackCompiler) compileExpression(node *fe.Node) {
+	j.compileTerm(node.Children[0])
+	for termCount := 1; termCount < len(node.Children); termCount += 2 {
+		j.compileTerm(node.Children[termCount+1])
+		j.vmw.WriteArithmetic(node.Children[termCount].Token.Contents)
+	}
 }
 
 // node should be of kind string
 func (j *JackCompiler) compileString(node *fe.Node) {
+
 }
 
 // arr[expr1] = expr2?
@@ -134,7 +149,7 @@ func (j *JackCompiler) compileSubroutineBody(node *fe.Node) error {
 }
 
 // expects node of kind varDec.
-// adds it to he appropiate symbol table
+// adds it to the appropriate symbol table
 func (j *JackCompiler) compileVarDec(node *fe.Node) error {
 	var (
 		kind, vType, name string
@@ -160,10 +175,74 @@ func (j *JackCompiler) compileVarDec(node *fe.Node) error {
 
 // expects node of kind term
 func (j *JackCompiler) compileTerm(node *fe.Node) {
+
+	// constant terms
+	firstChild := node.Children[0].Token
+	if firstChild.Kind == fe.KEYWORD {
+		switch keyword := firstChild.Contents; keyword {
+		case "true":
+			j.vmw.WritePush("constant", "1")
+			j.vmw.w.WriteString("neg\n")
+		case "false", "null":
+			j.vmw.WritePush("constant", "0")
+		case "this":
+			j.vmw.WritePush("pointer", "0")
+		}
+	}
+	if firstChild.Kind == fe.INT {
+		j.vmw.WritePush("constant", firstChild.Contents)
+	}
+	if firstChild.Kind == fe.STRING {
+		//TODO
+	}
+
+	// identifiers
+	if firstChild.Kind == fe.IDENT {
+		// variable
+		if symbol, err := j.findSymbol(firstChild.Contents); err != nil {
+			switch symbol.kind {
+			case "field":
+				j.vmw.WritePush("this", strconv.Itoa(symbol.id))
+			case "arg":
+				j.vmw.WritePush("argument", strconv.Itoa(symbol.id))
+			default:
+				j.vmw.WritePush(symbol.kind, strconv.Itoa(symbol.id))
+			}
+			if len(node.Children) > 1 {
+				switch node.Children[1].Token.Contents {
+				case ".": // method
+					j.vmw.WriteCall(firstChild.Contents+"."+node.Children[2].Token.Contents, j.compileExpressionList(node.Children[4])+1) // +1 to account for the object reference being passed
+				case "[": // array
+					j.compileExpression(node.Children[2])
+					j.vmw.WriteArithmetic("+")
+					j.vmw.WritePop("pointer", 1)
+					j.vmw.WritePush("that", "0")
+				}
+			}
+		} else { // subroutineCall
+			switch node.Children[1].Token.Contents {
+			case ".": // function or constructor
+				j.vmw.WriteCall(firstChild.Contents+"."+node.Children[2].Token.Contents, j.compileExpressionList(node.Children[4]))
+			default:
+
+				// if method, push "this" to stack
+				if _, err := j.localST.find("this"); err != nil {
+					j.vmw.WritePush("argument", "0")
+					j.vmw.WriteCall(firstChild.Contents, j.compileExpressionList(node.Children[2])+1)
+				} else { // function
+					j.vmw.WriteCall(firstChild.Contents, j.compileExpressionList(node.Children[2]))
+				}
+			}
+		}
+	}
 }
 
 // expects node of kind expression
-func (j *JackCompiler) compileExpressionList(node *fe.Node) {
+func (j *JackCompiler) compileExpressionList(node *fe.Node) int {
+	for _, expression := range node.Children {
+		j.compileExpression(expression)
+	}
+	return len(node.Children)
 }
 
 // expects node of kind letStatement

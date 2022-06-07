@@ -53,6 +53,14 @@ func (st *SymbolTable) Count(kind string) int {
 	return st.counts[kind]
 }
 
+func (st *SymbolTable) find(name string) (TableEntry, error) {
+	if entry, ok := st.entries[name]; ok {
+		return entry, nil
+	} else {
+		return TableEntry{}, errors.New("Could not locate " + name + " in symbol table")
+	}
+}
+
 func (st *SymbolTable) KindOf(name string) (string, error) {
 	if entry, ok := st.entries[name]; ok {
 		return entry.kind, nil
