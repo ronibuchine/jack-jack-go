@@ -7,21 +7,57 @@ import (
 )
 
 type JackCompiler struct {
-	classST *SymbolTable
-	localST *SymbolTable
-	ast     *fe.Node
-	vmw     *VMWriter
-	className    string
+	classST   *SymbolTable
+	localST   *SymbolTable
+	ast       *fe.Node
+	vmw       *VMWriter
+	className string
 }
 
 func NewJackCompiler(ast *fe.Node, name string, w *bufio.Writer) *JackCompiler {
 	return &JackCompiler{
-        classST: newSymbolTable(),
-        localST: newSymbolTable(),
-		ast:  ast,
-		vmw:  NewVMWriter(name, w),
+		classST:   newSymbolTable(),
+		localST:   newSymbolTable(),
+		ast:       ast,
+		vmw:       NewVMWriter(name, w),
 		className: name,
 	}
+}
+
+func (j *JackCompiler) findSymbolKind(name string) (kind string, err error) {
+	kind, err = j.localST.KindOf(name)
+	if err == nil {
+		return kind, nil
+	}
+	kind, err = j.classST.KindOf(name)
+	if err == nil {
+		return kind, nil
+	}
+	return "", err
+}
+
+func (j *JackCompiler) findSymbolType(name string) (vType string, err error) {
+	vType, err = j.localST.TypeOf(name)
+	if err == nil {
+		return vType, nil
+	}
+	vType, err = j.classST.TypeOf(name)
+	if err == nil {
+		return vType, nil
+	}
+	return "", err
+}
+
+func (j *JackCompiler) findSymbolIndex(name string) (index int, err error) {
+	index, err = j.localST.IndexOf(name)
+	if err == nil {
+		return index, nil
+	}
+	index, err = j.classST.IndexOf(name)
+	if err == nil {
+		return index, nil
+	}
+	return 0, err
 }
 
 func (j *JackCompiler) CompileClass() error {
@@ -29,16 +65,16 @@ func (j *JackCompiler) CompileClass() error {
 	if className.Token.Contents != j.className {
 		return errors.New("class name must match the file name")
 	}
-    var err error
+	var err error
 	for _, n := range j.ast.Children {
 		if n.Token.Kind == "classVarDec" {
-            err = j.compileVarDec(n)
+			err = j.compileVarDec(n)
 		} else if n.Token.Kind == "subroutineDec" {
-            err = j.compileSubroutine(n)
+			err = j.compileSubroutine(n)
 		}
-        if err != nil {
-            return err
-        }
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -57,20 +93,20 @@ func (j *JackCompiler) compileArray(node *fe.Node) {
 
 // node should be of kind constructor, function or method
 func (j *JackCompiler) compileSubroutine(node *fe.Node) (err error) {
-    j.localST.Clear()
-    if node.Children[0].Token.Contents == "method" {
-        j.localST.Add("arg", j.className, "this")
+	j.localST.Clear()
+	if node.Children[0].Token.Contents == "method" {
+		j.localST.Add("arg", j.className, "this")
 	}
-    err = j.compileParameterList(node.Children[4])
-    if err != nil {
-        return err
-    }
-    err = j.compileSubroutineBody(node.Children[6])
-    if err != nil {
-        return err
-    }
-    if node.Children[0].Token.Contents == "constructor" {
-        // add `return this` in vmish
+	err = j.compileParameterList(node.Children[4])
+	if err != nil {
+		return err
+	}
+	err = j.compileSubroutineBody(node.Children[6])
+	if err != nil {
+		return err
+	}
+	if node.Children[0].Token.Contents == "constructor" {
+		// add `return this` in vmish
 	}
 	return nil
 }
@@ -94,32 +130,32 @@ func (j *JackCompiler) compileParameterList(params *fe.Node) error {
 func (j *JackCompiler) compileSubroutineBody(node *fe.Node) error {
 	// first add all local variables to the local symbol table
 	// then compile all statements in the subroutine
-    return nil
+	return nil
 }
 
 // expects node of kind varDec.
 // adds it to he appropiate symbol table
 func (j *JackCompiler) compileVarDec(node *fe.Node) error {
 	var (
-        kind, vType, name string
-        err error
-    )
+		kind, vType, name string
+		err               error
+	)
 
 	kind = node.Children[0].Token.Contents
 	vType = node.Children[1].Token.Contents
 	for i := 2; i < len(node.Children); i += 2 {
 		name = node.Children[i].Token.Contents
-        switch kind {
-        case "static", "field":
-            err = j.classST.Add(kind, vType, name)
-        case "var", "arg":
-            err = j.localST.Add(kind, vType, name)
-        }
+		switch kind {
+		case "static", "field":
+			err = j.classST.Add(kind, vType, name)
+		case "var", "arg":
+			err = j.localST.Add(kind, vType, name)
+		}
 		if err != nil {
 			return formatError(node, err)
 		}
 	}
-    return nil
+	return nil
 }
 
 // expects node of kind term
