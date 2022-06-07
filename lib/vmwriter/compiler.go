@@ -81,6 +81,11 @@ func (j *JackCompiler) CompileClass() error {
 
 // node should be of kind expression
 func (j *JackCompiler) compileExpression(node *fe.Node) {
+	j.compileTerm(node.Children[0])
+	for termCount := 1; termCount < len(node.Children); termCount += 2 {
+		j.compileTerm(node.Children[termCount+1])
+		j.vmw.WriteArithmetic(node.Children[termCount].Token.Contents)
+	}
 }
 
 // node should be of kind string
@@ -134,7 +139,7 @@ func (j *JackCompiler) compileSubroutineBody(node *fe.Node) error {
 }
 
 // expects node of kind varDec.
-// adds it to he appropiate symbol table
+// adds it to the appropriate symbol table
 func (j *JackCompiler) compileVarDec(node *fe.Node) error {
 	var (
 		kind, vType, name string
