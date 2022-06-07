@@ -45,7 +45,7 @@ func (st *SymbolTable) Add(kind string, vType string, name string) error {
 }
 
 func (st *SymbolTable) Clear() {
-    st = newSymbolTable()
+    *st = *newSymbolTable()
 }
 
 // should only be passed static, field, arg, or local
