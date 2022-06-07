@@ -29,75 +29,8 @@ func newSymbolTable() *SymbolTable {
 		}}
 }
 
-// create a symbol table from all the class variable declarations
-func ClassTable(varDecs []*fe.Node) (*SymbolTable, error) {
-	st := newSymbolTable()
-	for _, varDec := range varDecs {
-		err := st.addDec(varDec)
-		if err != nil {
-			return nil, err
-		}
-	}
-	return st, nil
-}
-
-// expects a node of kind subroutineDec
-func LocalTable(subroutine *fe.Node) (*SymbolTable, error) {
-	lst := newSymbolTable()
-	var name, vType string
-	if functionKind := subroutine.Children[0].Token.Kind; functionKind == "constructor" || functionKind == "method" {
-		vType = subroutine.Children[1].Token.Contents
-		if vType == "void" && functionKind == "constructor" {
-			return nil, errors.New("void constructor makes no sense")
-		}
-		lst.Add("arg", vType, "this")
-	}
-	var params *fe.Node
-	for _, child := range subroutine.Children {
-		if child.Token.Kind == "parameterList" {
-			params = child
-			break
-		}
-	}
-	for i := 0; i < len(params.Children); i += 3 {
-		vType = params.Children[i].Token.Contents
-		name = params.Children[i+1].Token.Contents
-		err := lst.Add("arg", vType, name)
-		if err != nil {
-			return nil, formatError(subroutine, err)
-		}
-	}
-
-	body := subroutine.Children[6]
-	for _, dec := range body.Children {
-		if dec.Token.Kind == "varDec" {
-			err := lst.addDec(dec)
-			if err != nil {
-				return nil, err
-			}
-		} else {
-            break
-        }
-	}
-	return lst, nil
-}
-
 func formatError(node *fe.Node, err error) error {
 	return fmt.Errorf("On line: "+strconv.Itoa(node.Token.LineNumber), err)
-}
-
-func (st *SymbolTable) addDec(node *fe.Node) error {
-	var kind, vType, name string
-	kind = node.Children[0].Token.Contents
-	vType = node.Children[1].Token.Contents
-	for i := 2; i < len(node.Children); i += 2 {
-		name = node.Children[i].Token.Contents
-		err := st.Add(kind, vType, name)
-		if err != nil {
-			return formatError(node, err)
-		}
-	}
-	return nil
 }
 
 // returns error if cannot add variable to symbol table
