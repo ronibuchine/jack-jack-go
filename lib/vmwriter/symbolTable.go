@@ -22,10 +22,10 @@ func newSymbolTable() *SymbolTable {
 	return &SymbolTable{
 		entries: make(map[string]TableEntry),
 		counts: map[string]int{
-			"static": 0,
-			"field":  0,
-			"arg":    0,
-			"var":    0,
+			"static":   0,
+			"this":     0,
+			"argument": 0,
+			"local":    0,
 		}}
 }
 

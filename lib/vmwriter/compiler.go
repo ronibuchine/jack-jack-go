@@ -33,32 +33,6 @@ func (j *JackCompiler) findSymbol(name string) (symbol TableEntry, err error) {
 	return j.classST.Find(name)
 }
 
-func (j *JackCompiler) pushSymbol(symbol TableEntry) {
-	switch symbol.kind {
-	case "field":
-		j.vmw.WritePush("this", strconv.Itoa(symbol.id))
-	case "arg":
-		j.vmw.WritePush("argument", strconv.Itoa(symbol.id))
-	case "var":
-		j.vmw.WritePush("local", strconv.Itoa(symbol.id))
-	case "static":
-		j.vmw.WritePush("static", strconv.Itoa(symbol.id))
-	}
-}
-
-func (j *JackCompiler) popSymbol(symbol TableEntry) {
-	switch symbol.kind {
-	case "field":
-		j.vmw.WritePop("this", strconv.Itoa(symbol.id))
-	case "arg":
-		j.vmw.WritePop("argument", strconv.Itoa(symbol.id))
-	case "var":
-		j.vmw.WritePop("local", strconv.Itoa(symbol.id))
-	case "static":
-		j.vmw.WritePop("static", strconv.Itoa(symbol.id))
-	}
-}
-
 func (j *JackCompiler) CompileClass() error {
 	className := j.ast.Children[1]
 	if className.Token.Contents != j.className {
@@ -91,10 +65,14 @@ func (j *JackCompiler) compileVarDec(node *fe.Node) error {
 	for i := 2; i < len(node.Children); i += 2 {
 		name = node.Children[i].Token.Contents
 		switch kind {
-		case "static", "field":
-			err = j.classST.Add(kind, vType, name)
-		case "var", "arg":
-			err = j.localST.Add(kind, vType, name)
+		case "static":
+			err = j.classST.Add("static", vType, name)
+		case "field":
+			err = j.classST.Add("this", vType, name)
+		case "var":
+			err = j.classST.Add("local", vType, name)
+		case "arg":
+			err = j.localST.Add("argument", vType, name)
 		}
 		if err != nil {
 			return formatError(node, err)
@@ -127,7 +105,7 @@ func (j *JackCompiler) compileParameterList(params *fe.Node) error {
 	for i := 0; i < len(params.Children); i += 3 {
 		vType = params.Children[i].Token.Contents
 		name = params.Children[i+1].Token.Contents
-		err := j.localST.Add("arg", vType, name)
+		err := j.localST.Add("argument", vType, name)
 		if err != nil {
 			return formatError(params, err)
 		}
@@ -144,9 +122,9 @@ func (j *JackCompiler) compileSubroutineBody(node *fe.Node, funcName string, con
 		case "varDec":
 			j.compileVarDec(element)
 		case "statements":
-			j.vmw.WriteFunction(j.className+"."+funcName, j.localST.counts["var"])
+			j.vmw.WriteFunction(j.className+"."+funcName, j.localST.counts["local"])
 			if constructor {
-				j.vmw.WritePush("constant", strconv.Itoa(j.classST.counts["field"]))
+				j.vmw.WritePush("constant", strconv.Itoa(j.classST.counts["this"]))
 				j.vmw.WriteCall("Memory.alloc", 1)
 				j.vmw.WritePop("pointer", "0")
 			}
@@ -190,22 +168,22 @@ func (j *JackCompiler) compileExpressionList(node *fe.Node) int {
 // expects node of kind letStatement
 func (j *JackCompiler) compileLet(node *fe.Node) error {
 	symbol, err := j.findSymbol(node.Children[1].Token.Contents)
-    if err != nil {
-        return err
-    }
-    j.compileExpression(node.Children[3])
-    if node.Children[2].Token.Contents == "[" {
-        j.pushSymbol(symbol)
-        j.vmw.WriteArithmetic("+")
-        j.compileExpression(node.Children[6])
-        j.vmw.WritePop("temp", "0")
-        j.vmw.WritePop("pointer", "1")
-        j.vmw.WritePush("temp", "0")
-        j.vmw.WritePop("that", "0")
-    } else {
-        j.popSymbol(symbol)
-    }
-    return nil
+	if err != nil {
+		return err
+	}
+	j.compileExpression(node.Children[3])
+	if node.Children[2].Token.Contents == "[" {
+		j.vmw.WritePush(symbol.kind, strconv.Itoa(symbol.id))
+		j.vmw.WriteArithmetic("+")
+		j.compileExpression(node.Children[6])
+		j.vmw.WritePop("temp", "0")
+		j.vmw.WritePop("pointer", "1")
+		j.vmw.WritePush("temp", "0")
+		j.vmw.WritePop("that", "0")
+	} else {
+		j.vmw.WritePop(symbol.kind, strconv.Itoa(symbol.id))
+	}
+	return nil
 }
 
 // this can be just compileExpression and then pop the return value away
@@ -310,7 +288,7 @@ func (j *JackCompiler) compileTerm(node *fe.Node) {
 	if firstChild.Token.Kind == fe.IDENT {
 		// variable
 		if symbol, err := j.findSymbol(firstChild.Token.Contents); err == nil {
-			j.pushSymbol(symbol)
+			j.vmw.WritePush(symbol.kind, strconv.Itoa(symbol.id))
 			if len(node.Children) > 1 {
 				switch node.Children[1].Token.Contents {
 				case ".": // method
