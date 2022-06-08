@@ -213,14 +213,14 @@ func (j *JackCompiler) compileTerm(node *fe.Node) {
 				switch node.Children[1].Token.Contents {
 				case ".": // method
 					j.vmw.WriteCall(symbol.vType+"."+node.Children[2].Token.Contents, j.compileExpressionList(node.Children[4])+1) // +1 to account for the object reference being passed
-				case "[": // array
+				case "[": // array element
 					j.compileExpression(node.Children[2])
 					j.vmw.WriteArithmetic("+")
 					j.vmw.WritePop("pointer", 1)
 					j.vmw.WritePush("that", "0")
 				}
 			}
-		} else { // subroutineCall
+		} else { // subroutine call
 			if node.Children[1].Token.Contents == "." { // function or constructor
 				j.vmw.WriteCall(firstChild.Token.Contents+"."+node.Children[2].Token.Contents, j.compileExpressionList(node.Children[4]))
 			} else {
@@ -325,18 +325,18 @@ func (j *JackCompiler) compileReturn(node *fe.Node) {
 
 // expects node of kind statements
 func (j *JackCompiler) compileStatements(node *fe.Node) {
-    for  _, statement := range node.Children {
-        switch statement.Token.Kind {
-        case "ifStatement":
-            j.compileIf(statement)
-        case "whileStatement":
-            j.compileWhile(statement)
-        case "doStatement":
-            j.compileDo(statement)
-        case "letStatement":
-            j.compileLet(statement)
-        case "returnStatement":
-            j.compileReturn(statement)
-        }
-    }
+	for _, statement := range node.Children {
+		switch statement.Token.Kind {
+		case "ifStatement":
+			j.compileIf(statement)
+		case "whileStatement":
+			j.compileWhile(statement)
+		case "doStatement":
+			j.compileDo(statement)
+		case "letStatement":
+			j.compileLet(statement)
+		case "returnStatement":
+			j.compileReturn(statement)
+		}
+	}
 }
