@@ -167,7 +167,6 @@ func (j *JackCompiler) compileExpressionList(node *fe.Node) int {
     count := 0
 	for _, expression := range node.Children {
 		if expression.Token.Kind == "expression" {
-            count++
 			j.compileExpression(expression)
 			count++
 		}
@@ -329,12 +328,12 @@ func (j *JackCompiler) compileTerm(node *fe.Node) {
 				j.vmw.WriteCall(firstChild.Token.Contents+"."+node.Children[2].Token.Contents, j.compileExpressionList(node.Children[4]))
 			} else {
 				// if method, push "this" to stack
+                nArgs := j.compileExpressionList(node.Children[2])
 				if _, err := j.localST.Find("this"); err == nil {
 					j.vmw.WritePush("pointer", "0")
-					j.vmw.WriteCall(j.className+"."+firstChild.Token.Contents, j.compileExpressionList(node.Children[2])+1)
-				} else { // function calling function
-					j.vmw.WriteCall(j.className+"."+firstChild.Token.Contents, j.compileExpressionList(node.Children[2]))
-				}
+                    nArgs += 1
+                }
+                j.vmw.WriteCall(j.className+"."+firstChild.Token.Contents, nArgs)
 			}
 		}
 	}
