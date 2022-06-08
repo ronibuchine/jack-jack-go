@@ -81,12 +81,9 @@ func (j *JackCompiler) compileSubroutine(node *fe.Node) (err error) {
 	if err != nil {
 		return err
 	}
-	err = j.compileSubroutineBody(node.Children[6])
+	err = j.compileSubroutineBody(node.Children[6], node.Children[2].Token.Contents, node.Children[0].Token.Contents == "constructor")
 	if err != nil {
 		return err
-	}
-	if node.Children[0].Token.Contents == "constructor" {
-		// add `return this` in vmish
 	}
 	return nil
 }
@@ -107,9 +104,28 @@ func (j *JackCompiler) compileParameterList(params *fe.Node) error {
 }
 
 // expects node of kind subroutineBody
-func (j *JackCompiler) compileSubroutineBody(node *fe.Node) error {
+func (j *JackCompiler) compileSubroutineBody(node *fe.Node, funcName string, constructor bool) error {
 	// first add all local variables to the local symbol table
 	// then compile all statements in the subroutine
+	for _, element := range node.Children[1:] {
+		switch element.Token.Kind {
+		case "varDec":
+			for _, variable := range element.Children {
+				if variable.Token.Kind == "identifier" {
+					j.localST.Add("local", element.Children[1].Token.Contents, variable.Token.Contents)
+				}
+			}
+		case "statements":
+			j.vmw.WriteFunction(j.className+"."+funcName, j.localST.counts["var"])
+			if constructor {
+				j.vmw.WritePush("constant", strconv.Itoa(j.classST.counts["field"]))
+				j.vmw.WriteCall("Memory.alloc", 1)
+				j.vmw.WritePop("pointer", 0)
+			}
+			j.compileStatements(element)
+		}
+
+	}
 	return nil
 }
 
@@ -197,13 +213,15 @@ func (j *JackCompiler) compileTerm(node *fe.Node) {
 			}
 		} else { // subroutineCall
 			if node.Children[1].Token.Contents == "." { // function or constructor
+				j.compileExpressionList(node.Children[4])
 				j.vmw.WriteCall(firstChild.Token.Contents+"."+node.Children[2].Token.Contents, j.compileExpressionList(node.Children[4]))
 			} else {
 				// if method, push "this" to stack
 				if _, err := j.localST.Find("this"); err != nil {
 					j.vmw.WritePush("argument", "0")
+					j.compileExpressionList(node.Children[2])
 					j.vmw.WriteCall(j.className+"."+firstChild.Token.Contents, j.compileExpressionList(node.Children[2])+1)
-				} else { // function
+				} else { // function calling function
 					j.vmw.WriteCall(j.className+"."+firstChild.Token.Contents, j.compileExpressionList(node.Children[2]))
 				}
 			}
@@ -252,8 +270,8 @@ func (j *JackCompiler) compileIf(node *fe.Node) {
 	/* counter := ifCounter
 	ifCounter++ */
 
-    endLabel := j.vmw.NewLabel("ifEnd")
-    trueLabel := j.vmw.NewLabel("ifTrue")
+	endLabel := j.vmw.NewLabel("ifEnd")
+	trueLabel := j.vmw.NewLabel("ifTrue")
 
 	j.compileExpression(node.Children[2])
 	j.vmw.WriteGoto(trueLabel)
