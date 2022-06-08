@@ -85,24 +85,23 @@ func (j *JackCompiler) compileVarDec(node *fe.Node) error {
 // node should be of kind constructor, function or method
 func (j *JackCompiler) compileSubroutine(node *fe.Node) (err error) {
 	j.localST.Clear()
-	if node.Children[0].Token.Contents == "method" {
-		j.localST.Add("arg", j.className, "this")
+	funcKind := node.Children[0].Token.Contents
+	funcName := node.Children[2].Token.Contents
+	if funcKind == "method" {
+		j.localST.Add("argument", j.className, "this")
 	}
 	err = j.compileParameterList(node.Children[4])
 	if err != nil {
 		return err
 	}
-	err = j.compileSubroutineBody(node.Children[6], node.Children[2].Token.Contents, node.Children[0].Token.Contents == "constructor")
-	if err != nil {
-		return err
-	}
-	return nil
+	return j.compileSubroutineBody(node.Children[6],funcName, funcKind == "constructor")
 }
 
 // adds all parameters in parameter list to the local symbol table
 // expects node of type parameter list
 func (j *JackCompiler) compileParameterList(params *fe.Node) error {
 	var name, vType string
+
 	for i := 0; i < len(params.Children); i += 3 {
 		vType = params.Children[i].Token.Contents
 		name = params.Children[i+1].Token.Contents
@@ -123,7 +122,7 @@ func (j *JackCompiler) compileSubroutineBody(node *fe.Node, funcName string, con
 		case "varDec":
 			j.compileVarDec(element)
 		case "statements":
-			j.vmw.WriteFunction(j.className+"."+funcName, j.localST.counts["local"])
+            j.vmw.WriteFunction(j.className+"."+funcName, j.localST.counts["local"])
 			if constructor {
 				j.vmw.WritePush("constant", strconv.Itoa(j.classST.counts["this"]))
 				j.vmw.WriteCall("Memory.alloc", 1)
@@ -141,7 +140,7 @@ func (j *JackCompiler) compileSubroutineBody(node *fe.Node, funcName string, con
 }
 
 // expects node of kind statements
-func (j *JackCompiler) compileStatements(node *fe.Node) (err error){
+func (j *JackCompiler) compileStatements(node *fe.Node) (err error) {
 	for _, statement := range node.Children {
 		switch statement.Token.Kind {
 		case "ifStatement":
@@ -155,26 +154,28 @@ func (j *JackCompiler) compileStatements(node *fe.Node) (err error){
 		case "returnStatement":
 			err = j.compileReturn(statement)
 		}
-        if err != nil {
-            return err
-        }
+		if err != nil {
+			return err
+		}
 	}
-    return nil
+	return nil
 }
 
 // expects node of kind expression
 func (j *JackCompiler) compileExpressionList(node *fe.Node) int {
+    count := 0
 	for _, expression := range node.Children {
 		if expression.Token.Kind == "expression" {
+            count++
 			j.compileExpression(expression)
 		}
 	}
-	return len(node.Children)
+	return count
 }
 
 // expects node of kind letStatement
 func (j *JackCompiler) compileLet(node *fe.Node) error {
-    symbolName := node.Children[1].Token.Contents
+	symbolName := node.Children[1].Token.Contents
 	symbol, err := j.findSymbol(symbolName)
 	if err != nil {
 		return fmt.Errorf("Symbol " + symbolName + " was never declared")
@@ -199,7 +200,7 @@ func (j *JackCompiler) compileLet(node *fe.Node) error {
 func (j *JackCompiler) compileDo(node *fe.Node) error {
 	j.compileTerm(&fe.Node{Children: node.Children[1 : len(node.Children)-1]})
 	j.vmw.WritePop("temp", "0")
-    return nil
+	return nil
 }
 
 func (j *JackCompiler) compileIf(node *fe.Node) error {
@@ -219,7 +220,7 @@ func (j *JackCompiler) compileIf(node *fe.Node) error {
 		j.compileStatements(node.Children[9])
 		j.vmw.WriteLabel(endLabel)
 	}
-    return nil
+	return nil
 }
 
 func (j *JackCompiler) compileWhile(node *fe.Node) error {
@@ -233,7 +234,7 @@ func (j *JackCompiler) compileWhile(node *fe.Node) error {
 	j.compileStatements(node.Children[5])
 	j.vmw.WriteGoto(beginLabel)
 	j.vmw.WriteLabel(endLabel)
-    return nil
+	return nil
 }
 
 // expects node of kind returnStatement
@@ -244,7 +245,7 @@ func (j *JackCompiler) compileReturn(node *fe.Node) error {
 		j.compileExpression(node.Children[1])
 	}
 	j.vmw.WriteReturn()
-    return nil
+	return nil
 }
 
 // node should be of kind expression
