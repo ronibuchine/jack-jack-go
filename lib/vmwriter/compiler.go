@@ -160,7 +160,9 @@ func (j *JackCompiler) compileStatements(node *fe.Node) {
 // expects node of kind expression
 func (j *JackCompiler) compileExpressionList(node *fe.Node) int {
 	for _, expression := range node.Children {
-		j.compileExpression(expression)
+		if expression.Token.Kind == "expression" {
+			j.compileExpression(expression)
+		}
 	}
 	return len(node.Children)
 }
