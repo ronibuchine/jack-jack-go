@@ -39,8 +39,10 @@ func (j *JackCompiler) pushSymbol(symbol TableEntry) {
 		j.vmw.WritePush("this", strconv.Itoa(symbol.id))
 	case "arg":
 		j.vmw.WritePush("argument", strconv.Itoa(symbol.id))
-	default:
-		j.vmw.WritePush(symbol.kind, strconv.Itoa(symbol.id))
+	case "var":
+		j.vmw.WritePush("local", strconv.Itoa(symbol.id))
+	case "static":
+		j.vmw.WritePush("static", strconv.Itoa(symbol.id))
 	}
 }
 
@@ -60,27 +62,32 @@ func (j *JackCompiler) CompileClass() error {
 			return err
 		}
 	}
-    j.vmw.FlushVMFile()
 	return nil
 }
 
-// node should be of kind expression
-func (j *JackCompiler) compileExpression(node *fe.Node) {
-	j.compileTerm(node.Children[0])
-	for termCount := 1; termCount < len(node.Children); termCount += 2 {
-		j.compileTerm(node.Children[termCount+1])
-		j.vmw.WriteArithmetic(node.Children[termCount].Token.Contents)
-	}
-}
+// expects node of kind varDec.
+// adds it to the appropriate symbol table
+func (j *JackCompiler) compileVarDec(node *fe.Node) error {
+	var (
+		kind, vType, name string
+		err               error
+	)
 
-// node should be of kind string
-func (j *JackCompiler) compileString(node *fe.Node) {
-	j.vmw.WritePush("constant", strconv.Itoa(len(node.Token.Contents)))
-	j.vmw.WriteCall("String.new", 1)
-	for _, char := range node.Token.Contents {
-		j.vmw.WritePush("constant", strconv.Itoa(int(char)))
-		j.vmw.WriteCall("String.appendChar", 2)
+	kind = node.Children[0].Token.Contents
+	vType = node.Children[1].Token.Contents
+	for i := 2; i < len(node.Children); i += 2 {
+		name = node.Children[i].Token.Contents
+		switch kind {
+		case "static", "field":
+			err = j.classST.Add(kind, vType, name)
+		case "var", "arg":
+			err = j.localST.Add(kind, vType, name)
+		}
+		if err != nil {
+			return formatError(node, err)
+		}
 	}
+	return nil
 }
 
 // node should be of kind constructor, function or method
@@ -122,11 +129,7 @@ func (j *JackCompiler) compileSubroutineBody(node *fe.Node, funcName string, con
 	for _, element := range node.Children[1:] {
 		switch element.Token.Kind {
 		case "varDec":
-			for _, variable := range element.Children {
-				if variable.Token.Kind == "identifier" {
-					j.localST.Add("local", element.Children[1].Token.Contents, variable.Token.Contents)
-				}
-			}
+			j.compileVarDec(element)
 		case "statements":
 			j.vmw.WriteFunction(j.className+"."+funcName, j.localST.counts["var"])
 			if constructor {
@@ -145,29 +148,118 @@ func (j *JackCompiler) compileSubroutineBody(node *fe.Node, funcName string, con
 	return nil
 }
 
-// expects node of kind varDec.
-// adds it to the appropriate symbol table
-func (j *JackCompiler) compileVarDec(node *fe.Node) error {
-	var (
-		kind, vType, name string
-		err               error
-	)
-
-	kind = node.Children[0].Token.Contents
-	vType = node.Children[1].Token.Contents
-	for i := 2; i < len(node.Children); i += 2 {
-		name = node.Children[i].Token.Contents
-		switch kind {
-		case "static", "field":
-			err = j.classST.Add(kind, vType, name)
-		case "var", "arg":
-			err = j.localST.Add(kind, vType, name)
-		}
-		if err != nil {
-			return formatError(node, err)
+// expects node of kind statements
+func (j *JackCompiler) compileStatements(node *fe.Node) {
+	for _, statement := range node.Children {
+		switch statement.Token.Kind {
+		case "ifStatement":
+			j.compileIf(statement)
+		case "whileStatement":
+			j.compileWhile(statement)
+		case "doStatement":
+			j.compileDo(statement)
+		case "letStatement":
+			j.compileLet(statement)
+		case "returnStatement":
+			j.compileReturn(statement)
 		}
 	}
-	return nil
+}
+
+// expects node of kind expression
+func (j *JackCompiler) compileExpressionList(node *fe.Node) int {
+	for _, expression := range node.Children {
+		j.compileExpression(expression)
+	}
+	return len(node.Children)
+}
+
+// expects node of kind letStatement
+func (j *JackCompiler) compileLet(node *fe.Node) {
+	if symbol, err := j.findSymbol(node.Children[1].Token.Contents); err == nil {
+		j.compileExpression(node.Children[3])
+		if node.Children[2].Token.Contents == "[" {
+			j.pushSymbol(symbol)
+			j.vmw.WriteArithmetic("+")
+			j.compileExpression(node.Children[6])
+			j.vmw.WritePop("temp", 0)
+			j.vmw.WritePop("pointer", 1)
+			j.vmw.WritePush("temp", "0")
+			j.vmw.WritePop("that", 0)
+		}
+
+		switch symbol.kind {
+		case "field":
+			j.vmw.WritePop("this", symbol.id)
+		case "arg":
+			j.vmw.WritePop("argument", symbol.id)
+		default:
+			j.vmw.WritePop(symbol.kind, symbol.id)
+		}
+	}
+}
+
+// this can be just compileExpression and then pop the return value away
+// expects node of kind doStatement
+func (j *JackCompiler) compileDo(node *fe.Node) {
+	j.compileTerm(&fe.Node{Children: node.Children[1 : len(node.Children)-1]})
+	j.vmw.WritePop("temp", 0)
+}
+
+func (j *JackCompiler) compileIf(node *fe.Node) {
+
+	endLabel := j.vmw.NewLabel("ifEnd")
+	trueLabel := j.vmw.NewLabel("ifTrue")
+
+	j.compileExpression(node.Children[2])
+	j.vmw.WriteIf(trueLabel)
+	j.compileStatements(node.Children[9])
+	j.vmw.WriteGoto(endLabel)
+	j.vmw.WriteLabel(trueLabel)
+	j.compileStatements(node.Children[5])
+	j.vmw.WriteLabel(endLabel)
+}
+
+func (j *JackCompiler) compileWhile(node *fe.Node) {
+	beginLabel := j.vmw.NewLabel("whileBegin")
+	endLabel := j.vmw.NewLabel("whileEnd")
+
+	j.vmw.WriteLabel(beginLabel)
+	j.compileExpression(node.Children[2])
+	j.vmw.WriteArithmetic("not")
+	j.vmw.WriteIf(endLabel)
+	j.compileStatements(node.Children[5])
+	j.vmw.WriteGoto(beginLabel)
+	j.vmw.WriteLabel(endLabel)
+}
+
+// expects node of kind returnStatement
+func (j *JackCompiler) compileReturn(node *fe.Node) {
+	if len(node.Children) == 2 {
+		j.vmw.WritePush("constant", "0")
+	} else {
+		j.compileExpression(node.Children[1])
+	}
+	j.vmw.WriteReturn()
+}
+
+// node should be of kind expression
+func (j *JackCompiler) compileExpression(node *fe.Node) {
+	j.compileTerm(node.Children[0])
+	for termCount := 1; termCount < len(node.Children); termCount += 2 {
+		j.compileTerm(node.Children[termCount+1])
+		j.vmw.WriteArithmetic(node.Children[termCount].Token.Contents)
+	}
+}
+
+// node should be of kind string
+func (j *JackCompiler) compileString(node *fe.Node) {
+	j.vmw.WritePush("constant", strconv.Itoa(len(node.Token.Contents)))
+	j.vmw.WriteCall("String.new", 1)
+	for _, char := range node.Token.Contents {
+		j.vmw.WritePush("constant", strconv.Itoa(int(char)))
+		j.vmw.WriteCall("String.appendChar", 2)
+	}
 }
 
 // expects node of kind term
@@ -233,101 +325,6 @@ func (j *JackCompiler) compileTerm(node *fe.Node) {
 					j.vmw.WriteCall(j.className+"."+firstChild.Token.Contents, j.compileExpressionList(node.Children[2]))
 				}
 			}
-		}
-	}
-}
-
-// expects node of kind expression
-func (j *JackCompiler) compileExpressionList(node *fe.Node) int {
-	for _, expression := range node.Children {
-		j.compileExpression(expression)
-	}
-	return len(node.Children)
-}
-
-// expects node of kind letStatement
-func (j *JackCompiler) compileLet(node *fe.Node) {
-	if symbol, err := j.findSymbol(node.Children[1].Token.Contents); err == nil {
-		j.compileExpression(node.Children[3])
-		if node.Children[2].Token.Contents == "[" {
-			j.pushSymbol(symbol)
-			j.vmw.WriteArithmetic("+")
-			j.compileExpression(node.Children[6])
-			j.vmw.WritePop("temp", 0)
-			j.vmw.WritePop("pointer", 1)
-			j.vmw.WritePush("temp", "0")
-			j.vmw.WritePop("that", 0)
-		}
-
-		switch symbol.kind {
-		case "field":
-			j.vmw.WritePop("this", symbol.id)
-		case "arg":
-			j.vmw.WritePop("argument", symbol.id)
-		default:
-			j.vmw.WritePop(symbol.kind, symbol.id)
-		}
-	}
-}
-
-// this can be just compileExpression and then pop the return value away
-// expects node of kind doStatement
-func (j *JackCompiler) compileDo(node *fe.Node) {
-	j.compileTerm(&fe.Node{Children: node.Children[1:len(node.Children)-1]})
-	j.vmw.WritePop("temp", 0)
-}
-
-func (j *JackCompiler) compileIf(node *fe.Node) {
-
-	endLabel := j.vmw.NewLabel("ifEnd")
-	trueLabel := j.vmw.NewLabel("ifTrue")
-
-	j.compileExpression(node.Children[2])
-	j.vmw.WriteIf(trueLabel)
-	j.compileStatements(node.Children[9])
-	j.vmw.WriteGoto(endLabel)
-	j.vmw.WriteLabel(trueLabel)
-	j.compileStatements(node.Children[5])
-	j.vmw.WriteLabel(endLabel)
-}
-
-func (j *JackCompiler) compileWhile(node *fe.Node) {
-	beginLabel := j.vmw.NewLabel("whileBegin")
-	endLabel := j.vmw.NewLabel("whileEnd")
-
-	j.vmw.WriteLabel(beginLabel)
-	j.compileExpression(node.Children[2])
-	j.vmw.WriteArithmetic("not")
-	j.vmw.WriteIf(endLabel)
-	j.compileStatements(node.Children[5])
-	j.vmw.WriteGoto(beginLabel)
-	j.vmw.WriteLabel(endLabel)
-}
-
-// expects node of kind returnStatement
-func (j *JackCompiler) compileReturn(node *fe.Node) {
-	if len(node.Children) == 2 {
-		j.vmw.WritePush("constant", "0")
-	} else {
-		j.compileExpression(node.Children[1])
-	}
-	j.vmw.WriteReturn()
-}
-
-// expects node of kind statements
-func (j *JackCompiler) compileStatements(node *fe.Node) {
-	for _, statement := range node.Children {
-		switch statement.Token.Kind {
-		case "ifStatement":
-			j.compileIf(statement)
-		case "whileStatement":
-			j.compileWhile(statement)
-		case "doStatement":
-			j.compileDo(statement)
-		case "letStatement":
-			j.compileLet(statement)
-		case "returnStatement":
-			j.compileReturn(statement)
 		}
 	}
 }
