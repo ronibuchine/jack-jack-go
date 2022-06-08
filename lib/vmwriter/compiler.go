@@ -188,28 +188,24 @@ func (j *JackCompiler) compileExpressionList(node *fe.Node) int {
 }
 
 // expects node of kind letStatement
-func (j *JackCompiler) compileLet(node *fe.Node) {
-	if symbol, err := j.findSymbol(node.Children[1].Token.Contents); err == nil {
-		j.compileExpression(node.Children[3])
-		if node.Children[2].Token.Contents == "[" {
-			j.pushSymbol(symbol)
-			j.vmw.WriteArithmetic("+")
-			j.compileExpression(node.Children[6])
-			j.vmw.WritePop("temp", "0")
-			j.vmw.WritePop("pointer", "1")
-			j.vmw.WritePush("temp", "0")
-			j.vmw.WritePop("that", "0")
-		}
-
-		switch symbol.kind {
-		case "field":
-			j.vmw.WritePop("this", strconv.Itoa(symbol.id))
-		case "arg":
-			j.vmw.WritePop("argument", strconv.Itoa(symbol.id))
-		default:
-			j.vmw.WritePop(symbol.kind, strconv.Itoa(symbol.id))
-		}
-	}
+func (j *JackCompiler) compileLet(node *fe.Node) error {
+	symbol, err := j.findSymbol(node.Children[1].Token.Contents)
+    if err != nil {
+        return err
+    }
+    j.compileExpression(node.Children[3])
+    if node.Children[2].Token.Contents == "[" {
+        j.pushSymbol(symbol)
+        j.vmw.WriteArithmetic("+")
+        j.compileExpression(node.Children[6])
+        j.vmw.WritePop("temp", "0")
+        j.vmw.WritePop("pointer", "1")
+        j.vmw.WritePush("temp", "0")
+        j.vmw.WritePop("that", "0")
+    } else {
+        j.popSymbol(symbol)
+    }
+    return nil
 }
 
 // this can be just compileExpression and then pop the return value away
