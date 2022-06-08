@@ -25,8 +25,8 @@ func (vmw *VMWriter) WritePush(segment string, index string) {
 	vmw.w.WriteString(fmt.Sprintf("push %s %s\n", segment, index))
 }
 
-func (vmw *VMWriter) WritePop(segment string, index int) {
-	vmw.w.WriteString(fmt.Sprintf("pop %s %d\n", segment, index))
+func (vmw *VMWriter) WritePop(segment string, index string) {
+	vmw.w.WriteString(fmt.Sprintf("pop %s %s\n", segment, index))
 }
 
 func (vmw *VMWriter) WriteArithmetic(command string) {

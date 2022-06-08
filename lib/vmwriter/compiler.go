@@ -46,6 +46,19 @@ func (j *JackCompiler) pushSymbol(symbol TableEntry) {
 	}
 }
 
+func (j *JackCompiler) popSymbol(symbol TableEntry) {
+	switch symbol.kind {
+	case "field":
+		j.vmw.WritePop("this", strconv.Itoa(symbol.id))
+	case "arg":
+		j.vmw.WritePop("argument", strconv.Itoa(symbol.id))
+	case "var":
+		j.vmw.WritePop("local", strconv.Itoa(symbol.id))
+	case "static":
+		j.vmw.WritePop("static", strconv.Itoa(symbol.id))
+	}
+}
+
 func (j *JackCompiler) CompileClass() error {
 	className := j.ast.Children[1]
 	if className.Token.Contents != j.className {
@@ -135,11 +148,11 @@ func (j *JackCompiler) compileSubroutineBody(node *fe.Node, funcName string, con
 			if constructor {
 				j.vmw.WritePush("constant", strconv.Itoa(j.classST.counts["field"]))
 				j.vmw.WriteCall("Memory.alloc", 1)
-				j.vmw.WritePop("pointer", 0)
+				j.vmw.WritePop("pointer", "0")
 			}
 			if _, err := j.localST.Find("this"); err == nil { // if method
 				j.vmw.WritePush("argument", "0")
-				j.vmw.WritePop("pointer", 0)
+				j.vmw.WritePop("pointer", "0")
 			}
 			j.compileStatements(element)
 		}
@@ -182,19 +195,19 @@ func (j *JackCompiler) compileLet(node *fe.Node) {
 			j.pushSymbol(symbol)
 			j.vmw.WriteArithmetic("+")
 			j.compileExpression(node.Children[6])
-			j.vmw.WritePop("temp", 0)
-			j.vmw.WritePop("pointer", 1)
+			j.vmw.WritePop("temp", "0")
+			j.vmw.WritePop("pointer", "1")
 			j.vmw.WritePush("temp", "0")
-			j.vmw.WritePop("that", 0)
+			j.vmw.WritePop("that", "0")
 		}
 
 		switch symbol.kind {
 		case "field":
-			j.vmw.WritePop("this", symbol.id)
+			j.vmw.WritePop("this", strconv.Itoa(symbol.id))
 		case "arg":
-			j.vmw.WritePop("argument", symbol.id)
+			j.vmw.WritePop("argument", strconv.Itoa(symbol.id))
 		default:
-			j.vmw.WritePop(symbol.kind, symbol.id)
+			j.vmw.WritePop(symbol.kind, strconv.Itoa(symbol.id))
 		}
 	}
 }
@@ -203,7 +216,7 @@ func (j *JackCompiler) compileLet(node *fe.Node) {
 // expects node of kind doStatement
 func (j *JackCompiler) compileDo(node *fe.Node) {
 	j.compileTerm(&fe.Node{Children: node.Children[1 : len(node.Children)-1]})
-	j.vmw.WritePop("temp", 0)
+	j.vmw.WritePop("temp", "0")
 }
 
 func (j *JackCompiler) compileIf(node *fe.Node) {
@@ -287,7 +300,7 @@ func (j *JackCompiler) compileTerm(node *fe.Node) {
 
 	// unary operator
 	if firstChild.Token.Kind == fe.SYMBOL {
-		j.compileTerm(node.Children[1])
+		j.compileExpression(node.Children[1])
 		switch firstChild.Token.Contents {
 		// implicitly handles (expression)
 		case "-":
@@ -309,7 +322,7 @@ func (j *JackCompiler) compileTerm(node *fe.Node) {
 				case "[": // array element
 					j.compileExpression(node.Children[2])
 					j.vmw.WriteArithmetic("+")
-					j.vmw.WritePop("pointer", 1)
+					j.vmw.WritePop("pointer", "0")
 					j.vmw.WritePush("that", "0")
 				}
 			}
