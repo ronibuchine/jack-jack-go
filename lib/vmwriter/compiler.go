@@ -60,7 +60,7 @@ func (j *JackCompiler) CompileClass() error {
 			return err
 		}
 	}
-    j.vmw.FlushVMFile()
+	j.vmw.FlushVMFile()
 	return nil
 }
 
@@ -195,7 +195,7 @@ func (j *JackCompiler) compileTerm(node *fe.Node) {
 
 	// unary operator
 	if firstChild.Token.Kind == fe.SYMBOL {
-		j.compileTerm(node.Children[1])
+		j.compileExpression(node.Children[1])
 		switch firstChild.Token.Contents {
 		// implicitly handles (expression)
 		case "-":
@@ -273,7 +273,7 @@ func (j *JackCompiler) compileLet(node *fe.Node) {
 // this can be just compileExpression and then pop the return value away
 // expects node of kind doStatement
 func (j *JackCompiler) compileDo(node *fe.Node) {
-	j.compileTerm(&fe.Node{Children: node.Children[1:len(node.Children)-1]})
+	j.compileTerm(&fe.Node{Children: node.Children[1 : len(node.Children)-1]})
 	j.vmw.WritePop("temp", 0)
 }
 
