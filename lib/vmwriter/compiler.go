@@ -315,10 +315,28 @@ func (j *JackCompiler) compileWhile(node *fe.Node) {
 	j.vmw.WriteLabel(endLabel)
 }
 
-// expects node of kind return statement
+// expects node of kind returnStatement
 func (j *JackCompiler) compileReturn(node *fe.Node) {
 	if len(node.Children) > 2 {
 		j.compileExpression(node.Children[1])
 	}
 	j.vmw.WriteReturn()
+}
+
+// expects node of kind statements
+func (j *JackCompiler) compileStatements(node *fe.Node) {
+    for  _, statement := range node.Children {
+        switch statement.Token.Kind {
+        case "ifStatement":
+            j.compileIf(statement)
+        case "whileStatement":
+            j.compileWhile(statement)
+        case "doStatement":
+            j.compileDo(statement)
+        case "letStatement":
+            j.compileLet(statement)
+        case "returnStatement":
+            j.compileReturn(statement)
+        }
+    }
 }
