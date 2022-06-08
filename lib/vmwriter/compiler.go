@@ -3,6 +3,7 @@ package vmwriter
 import (
 	"bufio"
 	"errors"
+	"fmt"
 	fe "jack-jack-go/lib/syntaxAnalyzer"
 	"strconv"
 )
@@ -162,21 +163,25 @@ func (j *JackCompiler) compileSubroutineBody(node *fe.Node, funcName string, con
 }
 
 // expects node of kind statements
-func (j *JackCompiler) compileStatements(node *fe.Node) {
+func (j *JackCompiler) compileStatements(node *fe.Node) (err error){
 	for _, statement := range node.Children {
 		switch statement.Token.Kind {
 		case "ifStatement":
-			j.compileIf(statement)
+			err = j.compileIf(statement)
 		case "whileStatement":
-			j.compileWhile(statement)
+			err = j.compileWhile(statement)
 		case "doStatement":
-			j.compileDo(statement)
+			err = j.compileDo(statement)
 		case "letStatement":
-			j.compileLet(statement)
+			err = j.compileLet(statement)
 		case "returnStatement":
-			j.compileReturn(statement)
+			err = j.compileReturn(statement)
 		}
+        if err != nil {
+            return err
+        }
 	}
+    return nil
 }
 
 // expects node of kind expression
@@ -189,33 +194,35 @@ func (j *JackCompiler) compileExpressionList(node *fe.Node) int {
 
 // expects node of kind letStatement
 func (j *JackCompiler) compileLet(node *fe.Node) error {
-	symbol, err := j.findSymbol(node.Children[1].Token.Contents)
-    if err != nil {
-        return err
-    }
-    j.compileExpression(node.Children[3])
-    if node.Children[2].Token.Contents == "[" {
-        j.pushSymbol(symbol)
-        j.vmw.WriteArithmetic("+")
-        j.compileExpression(node.Children[6])
-        j.vmw.WritePop("temp", "0")
-        j.vmw.WritePop("pointer", "1")
-        j.vmw.WritePush("temp", "0")
-        j.vmw.WritePop("that", "0")
-    } else {
-        j.popSymbol(symbol)
-    }
-    return nil
+    symbolName := node.Children[1].Token.Contents
+	symbol, err := j.findSymbol(symbolName)
+	if err != nil {
+		return fmt.Errorf("Symbol " + symbolName + " was never declared")
+	}
+	j.compileExpression(node.Children[3])
+	if node.Children[2].Token.Contents == "[" {
+		j.pushSymbol(symbol)
+		j.vmw.WriteArithmetic("+")
+		j.compileExpression(node.Children[6])
+		j.vmw.WritePop("temp", "0")
+		j.vmw.WritePop("pointer", "1")
+		j.vmw.WritePush("temp", "0")
+		j.vmw.WritePop("that", "0")
+	} else {
+		j.popSymbol(symbol)
+	}
+	return nil
 }
 
 // this can be just compileExpression and then pop the return value away
 // expects node of kind doStatement
-func (j *JackCompiler) compileDo(node *fe.Node) {
+func (j *JackCompiler) compileDo(node *fe.Node) error {
 	j.compileTerm(&fe.Node{Children: node.Children[1 : len(node.Children)-1]})
 	j.vmw.WritePop("temp", "0")
+    return nil
 }
 
-func (j *JackCompiler) compileIf(node *fe.Node) {
+func (j *JackCompiler) compileIf(node *fe.Node) error {
 
 	endLabel := j.vmw.NewLabel("ifEnd")
 	trueLabel := j.vmw.NewLabel("ifTrue")
@@ -227,9 +234,10 @@ func (j *JackCompiler) compileIf(node *fe.Node) {
 	j.vmw.WriteLabel(trueLabel)
 	j.compileStatements(node.Children[5])
 	j.vmw.WriteLabel(endLabel)
+    return nil
 }
 
-func (j *JackCompiler) compileWhile(node *fe.Node) {
+func (j *JackCompiler) compileWhile(node *fe.Node) error {
 	beginLabel := j.vmw.NewLabel("whileBegin")
 	endLabel := j.vmw.NewLabel("whileEnd")
 
@@ -240,16 +248,18 @@ func (j *JackCompiler) compileWhile(node *fe.Node) {
 	j.compileStatements(node.Children[5])
 	j.vmw.WriteGoto(beginLabel)
 	j.vmw.WriteLabel(endLabel)
+    return nil
 }
 
 // expects node of kind returnStatement
-func (j *JackCompiler) compileReturn(node *fe.Node) {
+func (j *JackCompiler) compileReturn(node *fe.Node) error {
 	if len(node.Children) == 2 {
 		j.vmw.WritePush("constant", "0")
 	} else {
 		j.compileExpression(node.Children[1])
 	}
 	j.vmw.WriteReturn()
+    return nil
 }
 
 // node should be of kind expression
@@ -309,7 +319,8 @@ func (j *JackCompiler) compileTerm(node *fe.Node) {
 	// identifiers
 	if firstChild.Token.Kind == fe.IDENT {
 		// variable
-		if symbol, err := j.findSymbol(firstChild.Token.Contents); err == nil {
+		symbol, err := j.findSymbol(firstChild.Token.Contents)
+		if err == nil { // ident is in symbol table
 			j.pushSymbol(symbol)
 			if len(node.Children) > 1 {
 				switch node.Children[1].Token.Contents {
