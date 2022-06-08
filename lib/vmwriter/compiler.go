@@ -26,11 +26,11 @@ func NewJackCompiler(ast *fe.Node, name string, w *bufio.Writer) *JackCompiler {
 }
 
 func (j *JackCompiler) findSymbol(name string) (symbol TableEntry, err error) {
-	symbol, err = j.localST.find(name)
+	symbol, err = j.localST.Find(name)
 	if err == nil {
 		return symbol, nil
 	}
-	return j.classST.find(name)
+	return j.classST.Find(name)
 }
 
 func (j *JackCompiler) CompileClass() error {
@@ -200,7 +200,7 @@ func (j *JackCompiler) compileTerm(node *fe.Node) {
 				j.vmw.WriteCall(firstChild.Token.Contents+"."+node.Children[2].Token.Contents, j.compileExpressionList(node.Children[4]))
 			} else {
 				// if method, push "this" to stack
-				if _, err := j.localST.find("this"); err != nil {
+				if _, err := j.localST.Find("this"); err != nil {
 					j.vmw.WritePush("argument", "0")
 					j.vmw.WriteCall(j.className+"."+firstChild.Token.Contents, j.compileExpressionList(node.Children[2])+1)
 				} else { // function
@@ -246,18 +246,22 @@ func (j *JackCompiler) compileDo(node *fe.Node) {
 }
 
 // expects node of kind ifStatement
-var ifCounter = 0
+// var ifCounter = 0
 
 func (j *JackCompiler) compileIf(node *fe.Node) {
-	counter := ifCounter
-	ifCounter++
+	/* counter := ifCounter
+	ifCounter++ */
+
+    endLabel := j.vmw.NewLabel("ifEnd")
+    trueLabel := j.vmw.NewLabel("ifTrue")
+
 	j.compileExpression(node.Children[2])
-	j.vmw.WriteGoto(j.className + "IfTrue" + strconv.Itoa(counter))
+	j.vmw.WriteGoto(trueLabel)
 	j.compileStatements(node.Children[9])
-	j.vmw.WriteGoto(j.className + "IfEnd" + strconv.Itoa(counter))
-	j.vmw.WriteLabel(j.className + "IfTrue" + strconv.Itoa(counter))
+	j.vmw.WriteGoto(endLabel)
+	j.vmw.WriteLabel(trueLabel)
 	j.compileStatements(node.Children[5])
-	j.vmw.WriteLabel(j.className + "IfEnd" + strconv.Itoa(counter))
+	j.vmw.WriteLabel(endLabel)
 }
 
 // expects node of kind whileStatement

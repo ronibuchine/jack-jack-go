@@ -6,6 +6,8 @@ import (
 	"strconv"
 )
 
+type UniqueLabel string
+
 type VMWriter struct {
 	w            *bufio.Writer
 	labelCounter int
@@ -45,19 +47,22 @@ func (vmw *VMWriter) WriteArithmetic(command string) {
 	}
 }
 
-// returns the unique label that was written
-func (vmw *VMWriter) WriteLabel(label string) string {
-	label = vmw.name + "_" + strconv.Itoa(vmw.labelCounter) + "_" + label
+func (vmw *VMWriter) NewLabel(label string) UniqueLabel {
+    s := fmt.Sprintf("%s_%s_%d", vmw.name, label, vmw.labelCounter)
 	vmw.labelCounter++
-	vmw.w.WriteString(fmt.Sprintf("label %s\n", label))
-	return label
+	return UniqueLabel(s)
 }
 
-func (vmw *VMWriter) WriteGoto(label string) {
+// returns the unique label that was written
+func (vmw *VMWriter) WriteLabel(label UniqueLabel) {
+	vmw.w.WriteString(fmt.Sprintf("label %s\n", label))
+}
+
+func (vmw *VMWriter) WriteGoto(label UniqueLabel) {
 	vmw.w.WriteString(fmt.Sprintf("goto %s\n", label))
 }
 
-func (vmw *VMWriter) WriteIf(label string) {
+func (vmw *VMWriter) WriteIf(label UniqueLabel) {
 	vmw.w.WriteString(fmt.Sprintf("if-goto %s\n", label))
 }
 

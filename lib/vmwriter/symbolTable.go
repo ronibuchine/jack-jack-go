@@ -53,7 +53,7 @@ func (st *SymbolTable) Count(kind string) int {
 	return st.counts[kind]
 }
 
-func (st *SymbolTable) find(name string) (TableEntry, error) {
+func (st *SymbolTable) Find(name string) (TableEntry, error) {
 	if entry, ok := st.entries[name]; ok {
 		return entry, nil
 	} else {
