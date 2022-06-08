@@ -85,25 +85,24 @@ func (j *JackCompiler) compileVarDec(node *fe.Node) error {
 // node should be of kind constructor, function or method
 func (j *JackCompiler) compileSubroutine(node *fe.Node) (err error) {
 	j.localST.Clear()
-	funcKind := node.Children[0].Token.Contents
-	funcName := node.Children[2].Token.Contents
+    funcKind := node.Children[0].Token.Contents
+    funcName := node.Children[2].Token.Contents
 	if funcKind == "method" {
 		j.localST.Add("argument", j.className, "this")
-	} else if node.Children[0].Token.Contents == "constructor" {
+	} else if funcKind == "constructor" {
 		j.localST.Add("pointer", j.className, "this")
 	}
 	err = j.compileParameterList(node.Children[4])
 	if err != nil {
 		return err
 	}
-	return j.compileSubroutineBody(node.Children[6],funcName, funcKind == "constructor")
+	return j.compileSubroutineBody(node.Children[6], funcName, funcKind == "constructor")
 }
 
 // adds all parameters in parameter list to the local symbol table
 // expects node of type parameter list
 func (j *JackCompiler) compileParameterList(params *fe.Node) error {
 	var name, vType string
-
 	for i := 0; i < len(params.Children); i += 3 {
 		vType = params.Children[i].Token.Contents
 		name = params.Children[i+1].Token.Contents
@@ -163,16 +162,14 @@ func (j *JackCompiler) compileStatements(node *fe.Node) (err error) {
 }
 
 // expects node of kind expression
-func (j *JackCompiler) compileExpressionList(node *fe.Node) int {
-    count := 0
+func (j *JackCompiler) compileExpressionList(node *fe.Node) (count int) {
 	for _, expression := range node.Children {
 		if expression.Token.Kind == "expression" {
-            count++
 			j.compileExpression(expression)
 			count++
 		}
 	}
-	return count
+	return
 }
 
 // expects node of kind letStatement
