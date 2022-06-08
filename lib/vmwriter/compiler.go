@@ -71,7 +71,7 @@ func (j *JackCompiler) compileVarDec(node *fe.Node) error {
 		case "field":
 			err = j.classST.Add("this", vType, name)
 		case "var":
-			err = j.classST.Add("local", vType, name)
+			err = j.localST.Add("local", vType, name)
 		case "arg":
 			err = j.localST.Add("argument", vType, name)
 		}
@@ -89,6 +89,8 @@ func (j *JackCompiler) compileSubroutine(node *fe.Node) (err error) {
 	funcName := node.Children[2].Token.Contents
 	if funcKind == "method" {
 		j.localST.Add("argument", j.className, "this")
+	} else if node.Children[0].Token.Contents == "constructor" {
+		j.localST.Add("pointer", j.className, "this")
 	}
 	err = j.compileParameterList(node.Children[4])
 	if err != nil {
@@ -127,8 +129,7 @@ func (j *JackCompiler) compileSubroutineBody(node *fe.Node, funcName string, con
 				j.vmw.WritePush("constant", strconv.Itoa(j.classST.counts["this"]))
 				j.vmw.WriteCall("Memory.alloc", 1)
 				j.vmw.WritePop("pointer", "0")
-			}
-			if _, err := j.localST.Find("this"); err == nil { // if method
+			} else if _, err := j.localST.Find("this"); err == nil { // if method
 				j.vmw.WritePush("argument", "0")
 				j.vmw.WritePop("pointer", "0")
 			}
@@ -168,6 +169,7 @@ func (j *JackCompiler) compileExpressionList(node *fe.Node) int {
 		if expression.Token.Kind == "expression" {
             count++
 			j.compileExpression(expression)
+			count++
 		}
 	}
 	return count
@@ -318,7 +320,7 @@ func (j *JackCompiler) compileTerm(node *fe.Node) {
 				case "[": // array element
 					j.compileExpression(node.Children[2])
 					j.vmw.WriteArithmetic("+")
-					j.vmw.WritePop("pointer", "0")
+					j.vmw.WritePop("pointer", "1")
 					j.vmw.WritePush("that", "0")
 				}
 			}
@@ -327,8 +329,8 @@ func (j *JackCompiler) compileTerm(node *fe.Node) {
 				j.vmw.WriteCall(firstChild.Token.Contents+"."+node.Children[2].Token.Contents, j.compileExpressionList(node.Children[4]))
 			} else {
 				// if method, push "this" to stack
-				if _, err := j.localST.Find("this"); err != nil {
-					j.vmw.WritePush("argument", "0")
+				if _, err := j.localST.Find("this"); err == nil {
+					j.vmw.WritePush("pointer", "0")
 					j.vmw.WriteCall(j.className+"."+firstChild.Token.Contents, j.compileExpressionList(node.Children[2])+1)
 				} else { // function calling function
 					j.vmw.WriteCall(j.className+"."+firstChild.Token.Contents, j.compileExpressionList(node.Children[2]))
