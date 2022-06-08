@@ -205,15 +205,20 @@ func (j *JackCompiler) compileDo(node *fe.Node) error {
 func (j *JackCompiler) compileIf(node *fe.Node) error {
 
 	endLabel := j.vmw.NewLabel("ifEnd")
-	trueLabel := j.vmw.NewLabel("ifTrue")
+	falseLabel := j.vmw.NewLabel("ifTrue")
 
 	j.compileExpression(node.Children[2])
-	j.vmw.WriteIf(trueLabel)
-	j.compileStatements(node.Children[9])
-	j.vmw.WriteGoto(endLabel)
-	j.vmw.WriteLabel(trueLabel)
+	j.vmw.WriteArithmetic("not")
+	j.vmw.WriteIf(falseLabel)
 	j.compileStatements(node.Children[5])
-	j.vmw.WriteLabel(endLabel)
+	if len(node.Children) == 11 {
+		j.vmw.WriteGoto(endLabel)
+	}
+	j.vmw.WriteLabel(falseLabel)
+	if len(node.Children) == 11 {
+		j.compileStatements(node.Children[9])
+		j.vmw.WriteLabel(endLabel)
+	}
     return nil
 }
 
@@ -286,13 +291,16 @@ func (j *JackCompiler) compileTerm(node *fe.Node) {
 
 	// unary operator
 	if firstChild.Token.Kind == fe.SYMBOL {
-		j.compileExpression(node.Children[1])
-		switch firstChild.Token.Contents {
-		// implicitly handles (expression)
-		case "-":
-			j.vmw.WriteArithmetic("neg")
-		case "~":
-			j.vmw.WriteArithmetic("not")
+		if firstChild.Token.Contents == "(" {
+			j.compileExpression(node.Children[1])
+		} else {
+			j.compileTerm(node.Children[1])
+			switch firstChild.Token.Contents {
+			case "-":
+				j.vmw.WriteArithmetic("neg")
+			case "~":
+				j.vmw.WriteArithmetic("not")
+			}
 		}
 	}
 
