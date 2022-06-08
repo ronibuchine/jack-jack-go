@@ -47,7 +47,7 @@ func (vmw *VMWriter) WriteArithmetic(command string) {
 		vmw.w.WriteString("lt\n")
 	case ">":
 		vmw.w.WriteString("gt\n")
-	case "eq":
+	case "=":
 		vmw.w.WriteString("eq\n")
 	case "neg":
 		vmw.w.WriteString("neg\n")

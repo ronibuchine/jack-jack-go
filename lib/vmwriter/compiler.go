@@ -71,7 +71,7 @@ func (j *JackCompiler) compileVarDec(node *fe.Node) error {
 		case "field":
 			err = j.classST.Add("this", vType, name)
 		case "var":
-			err = j.classST.Add("local", vType, name)
+			err = j.localST.Add("local", vType, name)
 		case "arg":
 			err = j.localST.Add("argument", vType, name)
 		}
@@ -86,7 +86,9 @@ func (j *JackCompiler) compileVarDec(node *fe.Node) error {
 func (j *JackCompiler) compileSubroutine(node *fe.Node) (err error) {
 	j.localST.Clear()
 	if node.Children[0].Token.Contents == "method" {
-		j.localST.Add("arg", j.className, "this")
+		j.localST.Add("argument", j.className, "this")
+	} else if node.Children[0].Token.Contents == "constructor" {
+		j.localST.Add("pointer", j.className, "this")
 	}
 	err = j.compileParameterList(node.Children[4])
 	if err != nil {
@@ -128,8 +130,7 @@ func (j *JackCompiler) compileSubroutineBody(node *fe.Node, funcName string, con
 				j.vmw.WritePush("constant", strconv.Itoa(j.classST.counts["this"]))
 				j.vmw.WriteCall("Memory.alloc", 1)
 				j.vmw.WritePop("pointer", "0")
-			}
-			if _, err := j.localST.Find("this"); err == nil { // if method
+			} else if _, err := j.localST.Find("this"); err == nil { // if method
 				j.vmw.WritePush("argument", "0")
 				j.vmw.WritePop("pointer", "0")
 			}
@@ -141,7 +142,7 @@ func (j *JackCompiler) compileSubroutineBody(node *fe.Node, funcName string, con
 }
 
 // expects node of kind statements
-func (j *JackCompiler) compileStatements(node *fe.Node) (err error){
+func (j *JackCompiler) compileStatements(node *fe.Node) (err error) {
 	for _, statement := range node.Children {
 		switch statement.Token.Kind {
 		case "ifStatement":
@@ -155,26 +156,27 @@ func (j *JackCompiler) compileStatements(node *fe.Node) (err error){
 		case "returnStatement":
 			err = j.compileReturn(statement)
 		}
-        if err != nil {
-            return err
-        }
+		if err != nil {
+			return err
+		}
 	}
-    return nil
+	return nil
 }
 
 // expects node of kind expression
-func (j *JackCompiler) compileExpressionList(node *fe.Node) int {
+func (j *JackCompiler) compileExpressionList(node *fe.Node) (count int) {
 	for _, expression := range node.Children {
 		if expression.Token.Kind == "expression" {
 			j.compileExpression(expression)
+			count++
 		}
 	}
-	return len(node.Children)
+	return
 }
 
 // expects node of kind letStatement
 func (j *JackCompiler) compileLet(node *fe.Node) error {
-    symbolName := node.Children[1].Token.Contents
+	symbolName := node.Children[1].Token.Contents
 	symbol, err := j.findSymbol(symbolName)
 	if err != nil {
 		return fmt.Errorf("Symbol " + symbolName + " was never declared")
@@ -199,7 +201,7 @@ func (j *JackCompiler) compileLet(node *fe.Node) error {
 func (j *JackCompiler) compileDo(node *fe.Node) error {
 	j.compileTerm(&fe.Node{Children: node.Children[1 : len(node.Children)-1]})
 	j.vmw.WritePop("temp", "0")
-    return nil
+	return nil
 }
 
 func (j *JackCompiler) compileIf(node *fe.Node) error {
@@ -219,7 +221,7 @@ func (j *JackCompiler) compileIf(node *fe.Node) error {
 		j.compileStatements(node.Children[9])
 		j.vmw.WriteLabel(endLabel)
 	}
-    return nil
+	return nil
 }
 
 func (j *JackCompiler) compileWhile(node *fe.Node) error {
@@ -233,7 +235,7 @@ func (j *JackCompiler) compileWhile(node *fe.Node) error {
 	j.compileStatements(node.Children[5])
 	j.vmw.WriteGoto(beginLabel)
 	j.vmw.WriteLabel(endLabel)
-    return nil
+	return nil
 }
 
 // expects node of kind returnStatement
@@ -244,7 +246,7 @@ func (j *JackCompiler) compileReturn(node *fe.Node) error {
 		j.compileExpression(node.Children[1])
 	}
 	j.vmw.WriteReturn()
-    return nil
+	return nil
 }
 
 // node should be of kind expression
@@ -317,7 +319,7 @@ func (j *JackCompiler) compileTerm(node *fe.Node) {
 				case "[": // array element
 					j.compileExpression(node.Children[2])
 					j.vmw.WriteArithmetic("+")
-					j.vmw.WritePop("pointer", "0")
+					j.vmw.WritePop("pointer", "1")
 					j.vmw.WritePush("that", "0")
 				}
 			}
@@ -326,8 +328,8 @@ func (j *JackCompiler) compileTerm(node *fe.Node) {
 				j.vmw.WriteCall(firstChild.Token.Contents+"."+node.Children[2].Token.Contents, j.compileExpressionList(node.Children[4]))
 			} else {
 				// if method, push "this" to stack
-				if _, err := j.localST.Find("this"); err != nil {
-					j.vmw.WritePush("argument", "0")
+				if _, err := j.localST.Find("this"); err == nil {
+					j.vmw.WritePush("pointer", "0")
 					j.vmw.WriteCall(j.className+"."+firstChild.Token.Contents, j.compileExpressionList(node.Children[2])+1)
 				} else { // function calling function
 					j.vmw.WriteCall(j.className+"."+firstChild.Token.Contents, j.compileExpressionList(node.Children[2]))
