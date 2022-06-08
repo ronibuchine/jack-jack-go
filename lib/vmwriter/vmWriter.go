@@ -3,7 +3,6 @@ package vmwriter
 import (
 	"bufio"
 	"fmt"
-	"strconv"
 )
 
 type UniqueLabel string
@@ -48,7 +47,7 @@ func (vmw *VMWriter) WriteArithmetic(command string) {
 }
 
 func (vmw *VMWriter) NewLabel(label string) UniqueLabel {
-    s := fmt.Sprintf("%s_%s_%d", vmw.name, label, vmw.labelCounter)
+	s := fmt.Sprintf("%s_%s_%d", vmw.name, label, vmw.labelCounter)
 	vmw.labelCounter++
 	return UniqueLabel(s)
 }

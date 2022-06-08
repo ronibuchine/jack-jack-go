@@ -33,6 +33,17 @@ func (j *JackCompiler) findSymbol(name string) (symbol TableEntry, err error) {
 	return j.classST.Find(name)
 }
 
+func (j *JackCompiler) pushSymbol(symbol TableEntry) {
+	switch symbol.kind {
+	case "field":
+		j.vmw.WritePush("this", strconv.Itoa(symbol.id))
+	case "arg":
+		j.vmw.WritePush("argument", strconv.Itoa(symbol.id))
+	default:
+		j.vmw.WritePush(symbol.kind, strconv.Itoa(symbol.id))
+	}
+}
+
 func (j *JackCompiler) CompileClass() error {
 	className := j.ast.Children[1]
 	if className.Token.Contents != j.className {
@@ -122,6 +133,10 @@ func (j *JackCompiler) compileSubroutineBody(node *fe.Node, funcName string, con
 				j.vmw.WriteCall("Memory.alloc", 1)
 				j.vmw.WritePop("pointer", 0)
 			}
+			if _, err := j.localST.Find("this"); err == nil { // if method
+				j.vmw.WritePush("argument", "0")
+				j.vmw.WritePop("pointer", 0)
+			}
 			j.compileStatements(element)
 		}
 
@@ -181,6 +196,7 @@ func (j *JackCompiler) compileTerm(node *fe.Node) {
 	if firstChild.Token.Kind == fe.SYMBOL {
 		j.compileTerm(node.Children[1])
 		switch firstChild.Token.Contents {
+		// implicitly handles (expression)
 		case "-":
 			j.vmw.WriteArithmetic("neg")
 		case "~":
@@ -192,14 +208,7 @@ func (j *JackCompiler) compileTerm(node *fe.Node) {
 	if firstChild.Token.Kind == fe.IDENT {
 		// variable
 		if symbol, err := j.findSymbol(firstChild.Token.Contents); err == nil {
-			switch symbol.kind {
-			case "field":
-				j.vmw.WritePush("this", strconv.Itoa(symbol.id))
-			case "arg":
-				j.vmw.WritePush("argument", strconv.Itoa(symbol.id))
-			default:
-				j.vmw.WritePush(symbol.kind, strconv.Itoa(symbol.id))
-			}
+			j.pushSymbol(symbol)
 			if len(node.Children) > 1 {
 				switch node.Children[1].Token.Contents {
 				case ".": // method
@@ -240,11 +249,17 @@ func (j *JackCompiler) compileExpressionList(node *fe.Node) int {
 // expects node of kind letStatement
 func (j *JackCompiler) compileLet(node *fe.Node) {
 	if symbol, err := j.findSymbol(node.Children[1].Token.Contents); err == nil {
-		for count, eq := range node.Children {
-			if eq.Token.Contents == "=" {
-				j.compileExpression(node.Children[count+1])
-			}
+		j.compileExpression(node.Children[3])
+		if node.Children[2].Token.Contents == "[" {
+			j.pushSymbol(symbol)
+			j.vmw.WriteArithmetic("+")
+			j.compileExpression(node.Children[6])
+			j.vmw.WritePop("temp", 0)
+			j.vmw.WritePop("pointer", 1)
+			j.vmw.WritePush("temp", "0")
+			j.vmw.WritePop("that", 0)
 		}
+
 		switch symbol.kind {
 		case "field":
 			j.vmw.WritePop("this", symbol.id)
@@ -274,7 +289,7 @@ func (j *JackCompiler) compileIf(node *fe.Node) {
 	trueLabel := j.vmw.NewLabel("ifTrue")
 
 	j.compileExpression(node.Children[2])
-	j.vmw.WriteGoto(trueLabel)
+	j.vmw.WriteIf(trueLabel)
 	j.compileStatements(node.Children[9])
 	j.vmw.WriteGoto(endLabel)
 	j.vmw.WriteLabel(trueLabel)
@@ -283,18 +298,21 @@ func (j *JackCompiler) compileIf(node *fe.Node) {
 }
 
 // expects node of kind whileStatement
-var whileCounter = 0
+// var whileCounter = 0
 
 func (j *JackCompiler) compileWhile(node *fe.Node) {
-	counter := whileCounter
-	whileCounter++
-	j.vmw.WriteLabel(j.className + "WhileBegin" + strconv.Itoa(counter))
+	/*counter := whileCounter
+	whileCounter++*/
+	beginLabel := j.vmw.NewLabel("whileBegin")
+	endLabel := j.vmw.NewLabel("whileEnd")
+
+	j.vmw.WriteLabel(beginLabel)
 	j.compileExpression(node.Children[2])
 	j.vmw.WriteArithmetic("not")
-	j.vmw.WriteGoto(j.className + "WhileEnd" + strconv.Itoa(counter))
+	j.vmw.WriteIf(endLabel)
 	j.compileStatements(node.Children[5])
-	j.vmw.WriteGoto(j.className + "WhileBegin" + strconv.Itoa(counter))
-	j.vmw.WriteLabel(j.className + "WhileEnd" + strconv.Itoa(counter))
+	j.vmw.WriteGoto(beginLabel)
+	j.vmw.WriteLabel(endLabel)
 }
 
 // expects node of kind return statement
