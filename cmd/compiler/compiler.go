@@ -5,7 +5,9 @@ import (
 	"flag"
 	"fmt"
 	fe "jack-jack-go/lib/syntaxAnalyzer"
-	"jack-jack-go/lib/util"
+
+	// "jack-jack-go/lib/util"
+	co "jack-jack-go/lib/vmwriter"
 
 	// be "jack-jack-go/lib/vmtranslator"
 	"log"
@@ -22,10 +24,11 @@ func tokenizeAndParse(jackFile string, wg *sync.WaitGroup) {
 	if err != nil {
 		log.Print(fmt.Sprint("Could not open file ", file))
 	}
+	name := strings.TrimSuffix(filepath.Base(file.Name()), ".jack")
 	reader := bufio.NewReader(file)
 	tokens := fe.Tokenize(reader)
 	if tokenXML {
-		tokenXmlFile, err := os.Create(filepath.Join("build", strings.TrimSuffix(file.Name(), ".jack")+"_TOKENS.xml"))
+		tokenXmlFile, err := os.Create(filepath.Join("build", name+"_TOKENS.xml"))
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -39,8 +42,8 @@ func tokenizeAndParse(jackFile string, wg *sync.WaitGroup) {
 	}
 	ts := fe.TS{Tokens: tokens, File: jackFile}
 	ast := fe.Parse(&ts)
-	if true {
-		astXmlFile, err := os.Create(filepath.Join("build", strings.TrimSuffix(util.CleanFilePath(file.Name()), ".jack")+"_AST.xml"))
+	if astXML {
+		astXmlFile, err := os.Create(filepath.Join("build", name+"_AST.xml"))
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -52,7 +55,18 @@ func tokenizeAndParse(jackFile string, wg *sync.WaitGroup) {
 		}
 		w.Flush()
 	}
-
+	vmFile, err := os.Create(filepath.Join("build", name+".vm"))
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer vmFile.Close()
+	w := bufio.NewWriter(vmFile)
+	compiler := co.NewJackCompiler(ast, name, w)
+	err = compiler.CompileClass()
+	if err != nil {
+		log.Print(err)
+	}
+    w.Flush()
 }
 
 var (

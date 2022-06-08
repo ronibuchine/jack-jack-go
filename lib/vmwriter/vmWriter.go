@@ -21,8 +21,12 @@ func NewVMWriter(name string, w *bufio.Writer) *VMWriter {
 	}
 }
 
+func (vmw *VMWriter) FlushVMFile() {
+    vmw.w.Flush()
+}
+
 func (vmw *VMWriter) WritePush(segment string, index string) {
-	vmw.w.WriteString(fmt.Sprintf("push %s %d\n", segment, index))
+	vmw.w.WriteString(fmt.Sprintf("push %s %s\n", segment, index))
 }
 
 func (vmw *VMWriter) WritePop(segment string, index int) {

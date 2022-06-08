@@ -60,6 +60,7 @@ func (j *JackCompiler) CompileClass() error {
 			return err
 		}
 	}
+    j.vmw.FlushVMFile()
 	return nil
 }
 
@@ -272,16 +273,11 @@ func (j *JackCompiler) compileLet(node *fe.Node) {
 // this can be just compileExpression and then pop the return value away
 // expects node of kind doStatement
 func (j *JackCompiler) compileDo(node *fe.Node) {
-	j.compileExpression(&fe.Node{Children: node.Children[1:]})
+	j.compileTerm(&fe.Node{Children: node.Children[1:len(node.Children)-1]})
 	j.vmw.WritePop("temp", 0)
 }
 
-// expects node of kind ifStatement
-// var ifCounter = 0
-
 func (j *JackCompiler) compileIf(node *fe.Node) {
-	/* counter := ifCounter
-	ifCounter++ */
 
 	endLabel := j.vmw.NewLabel("ifEnd")
 	trueLabel := j.vmw.NewLabel("ifTrue")
@@ -295,12 +291,7 @@ func (j *JackCompiler) compileIf(node *fe.Node) {
 	j.vmw.WriteLabel(endLabel)
 }
 
-// expects node of kind whileStatement
-// var whileCounter = 0
-
 func (j *JackCompiler) compileWhile(node *fe.Node) {
-	/*counter := whileCounter
-	whileCounter++*/
 	beginLabel := j.vmw.NewLabel("whileBegin")
 	endLabel := j.vmw.NewLabel("whileEnd")
 
