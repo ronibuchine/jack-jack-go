@@ -43,6 +43,16 @@ func (vmw *VMWriter) WriteArithmetic(command string) {
 		vmw.w.WriteString("call Math.multiply 2\n")
 	case "/":
 		vmw.w.WriteString("call Math.divide 2\n")
+	case "&":
+		vmw.w.WriteString("and\n")
+	case "|":
+		vmw.w.WriteString("or\n")
+	case "<":
+		vmw.w.WriteString("lt\n")
+	case ">":
+		vmw.w.WriteString("gt\n")
+	case "eq":
+		vmw.w.WriteString("eq\n")
 	case "neg":
 		vmw.w.WriteString("neg\n")
 	case "not":

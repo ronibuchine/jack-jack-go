@@ -182,7 +182,7 @@ func callToHack(cmd *Command) (hack string) {
 	if cmd.arg2 == "0" && cmd.arg1 != "Sys.init" {
 		cmd.arg2 = "1"
 		hack = "@SP\nM=M+1\n"
-	} // Ensures space for return value
+	} // Ensures space in ARG for return value
 	hack += "@" + cmd.arg1 + "$ret." + strconv.Itoa(funcCallCounter) + "\nD=A\n" + pushFromD // Creates a return label and pushes it onto stack
 	hack += "@LCL\nD=M\n" + pushFromD                                                        // Pushes LCL onto stack
 	hack += "@ARG\nD=M\n" + pushFromD                                                        // Pushes ARG onto stack
