@@ -178,7 +178,7 @@ func (j *JackCompiler) compileTerm(node *fe.Node) {
 		switch keyword := firstChild.Token.Contents; keyword {
 		case "true":
 			j.vmw.WritePush("constant", "1")
-			j.vmw.w.WriteString("neg\n")
+			j.vmw.WriteArithmetic("neg")
 		case "false", "null":
 			j.vmw.WritePush("constant", "0")
 		case "this":
@@ -222,13 +222,11 @@ func (j *JackCompiler) compileTerm(node *fe.Node) {
 			}
 		} else { // subroutineCall
 			if node.Children[1].Token.Contents == "." { // function or constructor
-				j.compileExpressionList(node.Children[4])
 				j.vmw.WriteCall(firstChild.Token.Contents+"."+node.Children[2].Token.Contents, j.compileExpressionList(node.Children[4]))
 			} else {
 				// if method, push "this" to stack
 				if _, err := j.localST.Find("this"); err != nil {
 					j.vmw.WritePush("argument", "0")
-					j.compileExpressionList(node.Children[2])
 					j.vmw.WriteCall(j.className+"."+firstChild.Token.Contents, j.compileExpressionList(node.Children[2])+1)
 				} else { // function calling function
 					j.vmw.WriteCall(j.className+"."+firstChild.Token.Contents, j.compileExpressionList(node.Children[2]))
@@ -315,10 +313,30 @@ func (j *JackCompiler) compileWhile(node *fe.Node) {
 	j.vmw.WriteLabel(endLabel)
 }
 
-// expects node of kind return statement
+// expects node of kind returnStatement
 func (j *JackCompiler) compileReturn(node *fe.Node) {
-	if len(node.Children) > 2 {
+	if len(node.Children) == 2 {
+		j.vmw.WritePush("constant", "0")
+	} else {
 		j.compileExpression(node.Children[1])
 	}
 	j.vmw.WriteReturn()
+}
+
+// expects node of kind statements
+func (j *JackCompiler) compileStatements(node *fe.Node) {
+    for  _, statement := range node.Children {
+        switch statement.Token.Kind {
+        case "ifStatement":
+            j.compileIf(statement)
+        case "whileStatement":
+            j.compileWhile(statement)
+        case "doStatement":
+            j.compileDo(statement)
+        case "letStatement":
+            j.compileLet(statement)
+        case "returnStatement":
+            j.compileReturn(statement)
+        }
+    }
 }
