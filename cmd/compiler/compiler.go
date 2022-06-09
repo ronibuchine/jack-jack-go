@@ -9,7 +9,7 @@ import (
 	// "jack-jack-go/lib/util"
 	co "jack-jack-go/lib/vmwriter"
 
-	// be "jack-jack-go/lib/vmtranslator"
+	be "jack-jack-go/lib/vmtranslator"
 	"log"
 	"os"
 	"path/filepath"
@@ -124,4 +124,6 @@ func main() {
 		go tokenizeAndParse(jackFile, &wg)
 	}
 	wg.Wait()
+    
+    be.Translate("build") // I don't think this outputs where we want it. Maybe this should just return a string?
 }
