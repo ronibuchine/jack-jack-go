@@ -85,8 +85,8 @@ func (j *JackCompiler) compileVarDec(node *fe.Node) error {
 // node should be of kind constructor, function or method
 func (j *JackCompiler) compileSubroutine(node *fe.Node) (err error) {
 	j.localST.Clear()
-    funcKind := node.Children[0].Token.Contents
-    funcName := node.Children[2].Token.Contents
+	funcKind := node.Children[0].Token.Contents
+	funcName := node.Children[2].Token.Contents
 	if funcKind == "method" {
 		j.localST.Add("argument", j.className, "this")
 	} else if funcKind == "constructor" {
@@ -123,7 +123,7 @@ func (j *JackCompiler) compileSubroutineBody(node *fe.Node, funcName string, con
 		case "varDec":
 			j.compileVarDec(element)
 		case "statements":
-            j.vmw.WriteFunction(j.className+"."+funcName, j.localST.counts["local"])
+			j.vmw.WriteFunction(j.className+"."+funcName, j.localST.counts["local"])
 			if constructor {
 				j.vmw.WritePush("constant", strconv.Itoa(j.classST.counts["this"]))
 				j.vmw.WriteCall("Memory.alloc", 1)
@@ -205,7 +205,7 @@ func (j *JackCompiler) compileDo(node *fe.Node) error {
 func (j *JackCompiler) compileIf(node *fe.Node) error {
 
 	endLabel := j.vmw.NewLabel("ifEnd")
-	falseLabel := j.vmw.NewLabel("ifTrue")
+	falseLabel := j.vmw.NewLabel("ifFalse")
 
 	j.compileExpression(node.Children[2])
 	j.vmw.WriteArithmetic("not")
@@ -325,7 +325,7 @@ func (j *JackCompiler) compileTerm(node *fe.Node) {
 			if node.Children[1].Token.Contents == "." { // function or constructor
 				j.vmw.WriteCall(firstChild.Token.Contents+"."+node.Children[2].Token.Contents, j.compileExpressionList(node.Children[4]))
 			} else {
-				// if method, push "this" to stack
+				// if method or constructor, push "this" to stack
 				if _, err := j.localST.Find("this"); err == nil {
 					j.vmw.WritePush("pointer", "0")
 					j.vmw.WriteCall(j.className+"."+firstChild.Token.Contents, j.compileExpressionList(node.Children[2])+1)
