@@ -36,14 +36,13 @@ func Translate(path string) {
 		if err != nil {
 			log.Fatal("Failed to read directory")
 		}
-		hack = bootstrap
 
-		/* for _, file := range files {
+		for _, file := range files {
 			if file.Name() == "Sys.vm" {
 				hack = bootstrap
 				break
 			}
-		} */
+		}
 
 		for _, file := range files {
 			if filepath.Ext(file.Name()) == ".vm" {

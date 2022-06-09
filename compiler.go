@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"flag"
 	"fmt"
+	"io"
 	fe "jack-jack-go/lib/syntaxAnalyzer"
 
 	// "jack-jack-go/lib/util"
@@ -28,34 +29,14 @@ func tokenizeAndParse(jackFile string, wg *sync.WaitGroup) {
 	reader := bufio.NewReader(file)
 	tokens := fe.Tokenize(reader)
 	if tokenXML {
-		tokenXmlFile, err := os.Create(filepath.Join("build", name+"_TOKENS.xml"))
-		if err != nil {
-			log.Fatal(err)
-		}
-		defer tokenXmlFile.Close()
-		w := bufio.NewWriter(tokenXmlFile)
-		err = fe.TokenToXML(tokens, w)
-		if err != nil {
-			log.Print(fmt.Sprint("Could not write token XML for ", file.Name()))
-		}
-		w.Flush()
+		writeOptionalFile(name, tokens)
 	}
 	ts := fe.TS{Tokens: tokens, File: jackFile}
 	ast := fe.Parse(&ts)
 	if astXML {
-		astXmlFile, err := os.Create(filepath.Join("build", name+"_AST.xml"))
-		if err != nil {
-			log.Fatal(err)
-		}
-		defer astXmlFile.Close()
-		w := bufio.NewWriter(astXmlFile)
-		err = fe.NodeToXML(ast, w)
-		if err != nil {
-			log.Print(fmt.Sprint("Could not write ast XML for ", file.Name()))
-		}
-		w.Flush()
+		writeOptionalFile(name, ast)
 	}
-	vmFile, err := os.Create(filepath.Join("build", name+".vm"))
+	vmFile, err := os.Create(filepath.Join(buildDirName, name+".vm"))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -66,22 +47,42 @@ func tokenizeAndParse(jackFile string, wg *sync.WaitGroup) {
 	if err != nil {
 		log.Print(err)
 	}
-    w.Flush()
+	w.Flush()
+}
+
+func writeOptionalFile(name string, data interface{}) {
+	optionFile, err := os.Create(filepath.Join(buildDirName, name+"_TOKENS.xml"))
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer optionFile.Close()
+	w := bufio.NewWriter(optionFile)
+	switch d := data.(type) {
+	case []fe.Token:
+		err = fe.TokenToXML(d, w)
+	case *fe.Node:
+		err = fe.NodeToXML(d, w)
+	}
+	if err != nil {
+		log.Print(fmt.Sprint("Could not write token XML for ", name, ".jack"))
+	}
+	w.Flush()
 }
 
 var (
 	tokenXML, astXML bool
+    buildDirName string
 )
 
 // takes command line args and returns all files inside
-func expandDirectories(jackFiles []string) []string {
-	files := make([]string, 0)
+func expandDirectories(jackFiles []string) (files []string, parent string) {
 	for _, arg := range jackFiles {
 		fileInfo, err := os.Stat(arg)
 		if err != nil {
 			log.Fatal(err)
 		}
 		if fileInfo.IsDir() {
+			parent = fileInfo.Name()
 			filepath.Walk(arg, func(path string, info os.FileInfo, _ error) error {
 				if info.IsDir() {
 					// ensures that only goes 1 layer down
@@ -93,10 +94,11 @@ func expandDirectories(jackFiles []string) []string {
 				return nil
 			})
 		} else {
+			parent, _ = filepath.Split(fileInfo.Name())
 			files = append(files, arg)
 		}
 	}
-	return files
+	return files, parent
 }
 
 // the main function for the compiler, the entry point to the program
@@ -107,13 +109,41 @@ func main() {
 	flag.Parse()
 
 	// lol this function is so not intuitive...
-	jackFiles := expandDirectories(flag.Args())
-	if _, err := os.Stat("build"); !os.IsNotExist(err) {
-		os.RemoveAll("build")
+	jackFiles, parent := expandDirectories(flag.Args())
+	buildDirName = filepath.Join(parent, "build")
+	if _, err := os.Stat(buildDirName); !os.IsNotExist(err) {
+		os.RemoveAll(buildDirName)
 	}
-	err := os.Mkdir("build", os.ModePerm)
+	err := os.Mkdir(buildDirName, os.ModePerm)
 	if err != nil {
 		log.Fatal("Could not create build/ folder")
+	}
+
+	fileInfo, err := os.Open("os")
+	if err != nil {
+		log.Fatal(err)
+	}
+	files, err := fileInfo.ReadDir(0)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for _, file := range files {
+		srcName := filepath.Join("os", file.Name())
+		src, err := os.Open(srcName)
+		if err != nil {
+			log.Fatal(err)
+		}
+		destName := filepath.Join(buildDirName, file.Name())
+		dest, err := os.Create(destName)
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer dest.Close()
+		_, err = io.Copy(dest, src)
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 
 	//  multi threading in GO is luvly
@@ -124,6 +154,6 @@ func main() {
 		go tokenizeAndParse(jackFile, &wg)
 	}
 	wg.Wait()
-    
-    be.Translate("build") // I don't think this outputs where we want it. Maybe this should just return a string?
+
+	be.Translate(buildDirName) // I don't think this outputs where we want it. Maybe this should just return a string?
 }

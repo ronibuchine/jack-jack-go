@@ -1,5 +1,5 @@
 
-MAIN=./cmd/compiler/compiler.go
+MAIN=compiler.go
 
 default:
 	go build -o jjg $(MAIN)
