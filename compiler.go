@@ -10,7 +10,7 @@ import (
 	// "jack-jack-go/lib/util"
 	co "jack-jack-go/lib/vmwriter"
 
-	be "jack-jack-go/lib/vmtranslator"
+	// be "jack-jack-go/lib/vmtranslator"
 	"log"
 	"os"
 	"path/filepath"
@@ -82,7 +82,7 @@ func expandDirectories(jackFiles []string) (files []string, parent string) {
 			log.Fatal(err)
 		}
 		if fileInfo.IsDir() {
-			parent = fileInfo.Name()
+			parent = arg
 			filepath.Walk(arg, func(path string, info os.FileInfo, _ error) error {
 				if info.IsDir() {
 					// ensures that only goes 1 layer down
@@ -155,5 +155,5 @@ func main() {
 	}
 	wg.Wait()
 
-	be.Translate(buildDirName) // I don't think this outputs where we want it. Maybe this should just return a string?
+    // be.Translate(buildDirName)    :( :( :(
 }
