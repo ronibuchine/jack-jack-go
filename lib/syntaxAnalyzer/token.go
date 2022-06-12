@@ -3,6 +3,7 @@ package syntaxAnalyzer
 import (
 	"encoding/xml"
 	"errors"
+    "log"
 )
 
 const (
@@ -33,6 +34,9 @@ type TokensXML struct {
 }
 
 func (ts TS) curTok() Token {
+    if ts.counter >= len(ts.Tokens) {
+        log.Fatal("Parse error, token stream ended unexpectedly")
+    }
 	return ts.Tokens[ts.counter]
 }
 

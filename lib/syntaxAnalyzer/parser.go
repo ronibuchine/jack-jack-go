@@ -382,7 +382,10 @@ func term(ts *TS) *Node {
 		} else {
 			result.addChild(match(IDENT, ts))
 		}
+    default:
+        result.addChild(createNodeFromString("ERROR"))
 	}
+
 	return result
 }
 

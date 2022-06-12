@@ -1,4 +1,7 @@
 
+
+
+
 class redeclare {
         static int x;
         field int x;

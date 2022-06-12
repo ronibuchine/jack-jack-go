@@ -3,8 +3,6 @@ package vmwriter
 import (
 	"errors"
 	"fmt"
-	fe "jack-jack-go/lib/syntaxAnalyzer"
-	"strconv"
 )
 
 type TableEntry struct {
@@ -29,8 +27,8 @@ func newSymbolTable() *SymbolTable {
 		}}
 }
 
-func formatError(node *fe.Node, err error) error {
-	return fmt.Errorf("On line: "+strconv.Itoa(node.Token.LineNumber), err)
+func formatError(ln int, err error) error {
+    return fmt.Errorf("On line: %d: %v", ln, err)
 }
 
 // returns error if cannot add variable to symbol table

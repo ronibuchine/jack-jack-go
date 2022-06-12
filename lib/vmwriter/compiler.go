@@ -76,7 +76,7 @@ func (j *JackCompiler) compileVarDec(node *fe.Node) error {
 			err = j.localST.Add("argument", vType, name)
 		}
 		if err != nil {
-			return formatError(node, err)
+			return formatError(node.Children[i].Token.LineNumber, err)
 		}
 	}
 	return nil
@@ -108,7 +108,7 @@ func (j *JackCompiler) compileParameterList(params *fe.Node) error {
 		name = params.Children[i+1].Token.Contents
 		err := j.localST.Add("argument", vType, name)
 		if err != nil {
-			return formatError(params, err)
+			return formatError(params.Children[i].Token.LineNumber, err)
 		}
 	}
 	return nil
